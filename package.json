@@ -1,0 +1,35 @@
+{
+  "name": "@expressen/local-esi",
+  "version": "1.0.0",
+  "description": "Local Edge Side Includes parser",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha && eslint . --cache"
+  },
+  "keywords": [
+    "esi"
+  ],
+  "author": "AB Kvällstidningen Expressen",
+  "license": "MIT",
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "nock": "^10.0.1"
+  },
+  "dependencies": {
+    "atlas-html-stream": "^1.1.0",
+    "request": "^2.88.0"
+  },
+  "engines": {
+    "node": ">=8.9.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ExpressenAB/local-esi.git"
+  },
+  "files": [
+    "lib/",
+    "index.js",
+    "LICENSE"
+  ]
+}

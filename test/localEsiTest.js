@@ -1,0 +1,801 @@
+"use strict";
+
+const {expect} = require("chai");
+const localEsi = require("../index");
+const nock = require("nock");
+
+describe("local ESI", () => {
+
+  it("should not touch regular markup", (done) => {
+    const markup = "<!DOCTYPE html><html><head><title>This is a title</title></head><body>Test: <b>Testsson</b></body></html>";
+    localEsi(markup, {}, (err, parsedMarkup) => {
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(markup);
+      done();
+    });
+  });
+
+  it("should render the otherwise statement of an esi:choose when not matching our specific test", (done) => {
+    let markup = "<esi:choose>";
+    markup += `<esi:when test="$exists($(HTTP_COOKIE{'someCookie'})) | $exists($(HTTP_COOKIE{'someOtherCookie'}))">`; //eslint-disable-line quotes
+    markup += "<pre>When</pre>";
+    markup += "</esi:when>";
+    markup += "<esi:otherwise>";
+    markup += "<pre>Otherwise</pre>";
+    markup += "</esi:otherwise>";
+    markup += "</esi:choose>";
+
+    const expectedMarkup = "<pre>Otherwise</pre>";
+
+    localEsi(markup, { cookies: { someThirdCookie: "no" } }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should render the when statement of an esi:choose when testing existance of assigned esi variable", (done) => {
+    let markup = "<esi:assign name=\"user_email\" value=\"jan.bananberg@test.com\"/>";
+    markup += "<esi:choose>";
+    markup += `<esi:when test="$exists($(user_email))">`; //eslint-disable-line quotes
+    markup += "<pre>When</pre>";
+    markup += "</esi:when>";
+    markup += "<esi:otherwise>";
+    markup += "<pre>Otherwise</pre>";
+    markup += "</esi:otherwise>";
+    markup += "</esi:choose>";
+
+    const expectedMarkup = "<pre>When</pre>";
+
+    localEsi(markup, { }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should render the otherwise statement of an esi:choose when missing assigned esi variable", (done) => {
+    let markup = "<esi:choose>";
+    markup += `<esi:when test="$exists($(user_email))">`; //eslint-disable-line quotes
+    markup += "<pre>When</pre>";
+    markup += "</esi:when>";
+    markup += "<esi:otherwise>";
+    markup += "<pre>Otherwise</pre>";
+    markup += "</esi:otherwise>";
+    markup += "</esi:choose>";
+
+    const expectedMarkup = "<pre>Otherwise</pre>";
+
+    localEsi(markup, { }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should fetch and evaluate esi:eval", (done) => {
+    const markup = "<div><esi:eval src=\"http://mystuff/\" dca=\"none\"/></div>";
+    const evalResponse = `<esi:choose>
+      <esi:when test="$exists($(HTTP_COOKIE{'cookie_1'})) | $exists($(HTTP_COOKIE{'cookie_2'}))">
+      </esi:when>
+      <esi:otherwise>
+        <p>hej</p>
+      </esi:otherwise>
+    </esi:choose>`.replace(/^\s+|\n/gm, "");
+
+    nock("http://mystuff")
+      .get("/")
+      .reply(200, evalResponse);
+    const expectedMarkup = "<div><p>hej</p></div>";
+
+    localEsi(markup, { }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should handle test of assigned variable value", (done) => {
+    const markup = `<esi:assign name="someVar" value="true" />
+    <esi:choose>
+      <esi:when test="$(someVar)=='true'">
+        <p>hej</p>
+      </esi:when>
+      <esi:otherwise>
+        <p>då</p>
+      </esi:otherwise>
+    </esi:choose>`.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>hej</p>";
+
+    localEsi(markup, { }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should not evaluate nested choose when in otherwise if first test evaluates to true", (done) => {
+    const markup = `<esi:assign name="blahonga" value="true" />
+    <esi:choose>
+      <esi:when test="$(blahonga)=='true'">
+        <p>hej</p>
+      </esi:when>
+      <esi:otherwise>
+        <esi:choose>
+          <esi:when test="$exists($(user_email))">
+            <p>hej igen</p>
+          </esi:when>
+          <esi:otherwise>
+            <p>då</p>
+          </esi:otherwise>
+        </esi:choose>
+      </esi:otherwise>
+    </esi:choose>`.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>hej</p>";
+
+    localEsi(markup, {}, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should handle nested choose in when when test evaluates to true", (done) => {
+    const markup = `<esi:assign name="var_a" value="true" />
+    <esi:choose>
+      <esi:when test="$(var_a)=='true'">
+        <esi:choose>
+          <esi:when test="$exists($(user_email))">
+            <p>hej</p>
+          </esi:when>
+          <esi:otherwise>
+            <p>då</p>
+          </esi:otherwise>
+        </esi:choose>
+      </esi:when>
+      <esi:otherwise>
+        <p>då igen</p>
+      </esi:otherwise>
+    </esi:choose>`.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>då</p>";
+
+    localEsi(markup, {}, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup.trim()).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should fetch and insert esi:include with relative url when dca=none", (done) => {
+    const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
+
+    nock("http://localhost:1234")
+      .get("/mystuff/")
+      .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+
+    localEsi(markup, {
+      socket: {
+        server: {
+          address() {
+            return {
+              port: 1234
+            };
+          }
+        }
+      }
+    }, (err, parsedMarkup) => {
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal("<p><esi:vars>hej</esi:vars></p><p>efter</p>");
+      done();
+    });
+  });
+
+  it("should fetch and evaluate esi:include with relative url when dca=esi", (done) => {
+    const markup = "<esi:include src=\"/mystuff/\" dca=\"esi\"/><p>efter</p>";
+
+    nock("http://localhost:1234", {
+      reqheaders: { cookie: "da_cookie=cookie_value"}
+    })
+      .get("/mystuff/")
+      .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+
+    localEsi(markup, {
+      socket: {
+        server: {
+          address() {
+            return {
+              port: 1234
+            };
+          }
+        }
+      },
+      headers: {
+        cookie: "da_cookie=cookie_value"
+      }
+    }, (err, parsedMarkup) => {
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal("<p>hej</p><p>efter</p>");
+      done();
+    });
+  });
+
+  it("should fetch and evaluate esi:include with absolute url", (done) => {
+    const markup = "<esi:include src=\"http://mystuff.com/\" dca=\"esi\"/><p>efter</p>";
+
+    nock("http://mystuff.com", {
+      reqheaders: { host: "mystuff.com"}
+    })
+      .get("/")
+      .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+
+    localEsi(markup, {
+      socket: {
+        server: {
+          address() {
+            return {
+              port: 1234
+            };
+          }
+        }
+      }
+    }, (err, parsedMarkup) => {
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal("<p>hej</p><p>efter</p>");
+      done();
+    });
+  });
+
+  it("should handle include source query parameters", (done) => {
+    let markup = "<esi:assign name=\"user_email\" value=\"sammy_g@test.com\"/>";
+    markup += "<esi:include src=\"/mystuff/?a=b&user=$url_encode($(user_email))\" dca=\"esi\"/>";
+
+    nock("http://localhost:1234")
+      .get("/mystuff/")
+      .query({
+        a: "b",
+        user: "sammy_g@test.com"
+      })
+      .reply(200, "<p>hej</p>");
+
+    localEsi(markup, {
+      socket: {
+        server: {
+          address() {
+            return {
+              port: 1234
+            };
+          }
+        }
+      }
+    }, (err, parsedMarkup) => {
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal("<p>hej</p>");
+      done();
+    });
+  });
+
+  it("should set cookies when instructed", (done) => {
+    let markup = "<esi:vars>";
+    markup += "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
+    markup += "</esi:vars>";
+
+    const cookies = {};
+    function cookie(name, value) {
+      cookies[name] = value;
+    }
+    localEsi(markup, { res: { cookie } }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal("");
+      expect(cookies).to.have.property("MyCookie1", "SomeValue");
+      done();
+    });
+  });
+
+  it("should set multiple cookies when instructed", (done) => {
+    let markup = "<esi:vars>";
+    markup += "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
+    markup += "$add_header('Set-Cookie', 'MyCookie2=SomeValue2; Htt')";
+    markup += "</esi:vars>";
+
+    const cookies = {};
+    function cookie(name, value) {
+      cookies[name] = value;
+    }
+    localEsi(markup, { res: { cookie } }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal("");
+      expect(cookies).to.have.property("MyCookie1", "SomeValue");
+      expect(cookies).to.have.property("MyCookie2", "SomeValue2");
+      done();
+    });
+  });
+
+  it("should NOT set cookies when instructed outside an ESI tag", (done) => {
+    const markup = "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
+
+    const cookies = {};
+    function cookie(name, value) {
+      cookies[name] = value;
+    }
+    localEsi(markup, { res: { cookie } }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(markup);
+      expect(cookies).to.not.have.property("MyCookie1");
+      done();
+    });
+  });
+
+  it("should handle errors when esi:including using esi:try", (done) => {
+    let markup = "<esi:try>";
+    markup += "<esi:attempt>";
+    markup += "<esi:include src=\"/mystuff/\" dca=\"none\"/>";
+    markup += "</esi:attempt>";
+    markup += "<esi:except>";
+    markup += "<p>Hej kom och hjälp mig!</p>";
+    markup += "</esi:except>";
+    markup += "</esi:try>";
+
+    nock("http://localhost:1234")
+      .get("/mystuff")
+      .reply(500, "<p>Error</p>");
+
+    localEsi(markup, {
+      socket: {
+        server: {
+          address() {
+            return {
+              port: 1234
+            };
+          }
+        }
+      }
+    }, (err, parsedMarkup) => {
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal("<p>Hej kom och hjälp mig!</p>");
+      done();
+    });
+  });
+
+  it("should handle successfull response when esi:including using esi:try", (done) => {
+    let markup = "<p>innan</p>";
+    markup += "<esi:try>";
+    markup += "<esi:attempt>";
+    markup += "<esi:include src=\"/mystuff/\" dca=\"none\"/>";
+    markup += "</esi:attempt>";
+    markup += "<esi:except>";
+    markup += "<p>Hej kom och hjälp mig!</p>";
+    markup += "</esi:except>";
+    markup += "</esi:try>";
+    markup += "<p>efter</p>";
+
+    nock("http://localhost:1234")
+      .get("/mystuff/")
+      .reply(200, "<p>Frid och fröjd</p>");
+
+    localEsi(markup, {
+      socket: {
+        server: {
+          address() {
+            return {
+              port: 1234
+            };
+          }
+        }
+      }
+    }, (err, parsedMarkup) => {
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal("<p>innan</p><p>Frid och fröjd</p><p>efter</p>");
+      done();
+    });
+  });
+
+  it("should return error when the response to an esi:include returns 500 (outside try/attempt)", (done) => {
+    const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/>";
+
+    nock("http://localhost:1234")
+      .get("/mystuff")
+      .reply(500, "<p>Error</p>");
+
+    localEsi(markup, {
+      socket: {
+        server: {
+          address() {
+            return {
+              port: 1234
+            };
+          }
+        }
+      }
+    }, (err) => {
+      expect(err).to.not.be.undefined;
+      expect(err).to.not.be.null;
+      done();
+    });
+  });
+
+  it("should handle re-assign variable value from esi:eval", (done) => {
+    const markup = `<esi:assign name="some_variable" value="true" />
+    <esi:eval src="http://mystuff" dca="none"/>
+    <esi:choose>
+      <esi:when test="$(some_variable)=='true'">
+        <p>hej</p>
+      </esi:when>
+      <esi:otherwise>
+        <p>då</p>
+      </esi:otherwise>
+    </esi:choose>`.replace(/^\s+|\n/gm, "");
+
+    const evalResponse = "<esi:assign name=\"some_variable\" value=\"false\" />".replace(/^\s+|\n/gm, "");
+
+    nock("http://mystuff")
+      .get("/")
+      .reply(200, evalResponse);
+
+    const expectedMarkup = "<p>då</p>";
+    localEsi(markup, { }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should not execute esi:assign from esi:include in the original scope", (done) => {
+    const markup = `<esi:assign name="some_variable" value="true" />
+    <esi:include src="http://mystuff" dca="esi"/>
+    <esi:choose>
+      <esi:when test="$(some_variable)=='true'">
+        <p>hej</p>
+      </esi:when>
+      <esi:otherwise>
+        <p>då</p>
+      </esi:otherwise>
+    </esi:choose>`.replace(/^\s+|\n/gm, "");
+
+    const includeResponse = `<esi:assign name="some_variable" value="false" />
+        <esi:choose>
+        <esi:when test="$(some_variable)=='true'">
+          <p>hej</p>
+        </esi:when>
+        <esi:otherwise>
+          <p>då</p>
+        </esi:otherwise>
+      </esi:choose>`.replace(/^\s+|\n/gm, "");
+
+    nock("http://mystuff")
+      .get("/")
+      .reply(200, includeResponse);
+
+    const expectedMarkup = "<p>då</p><p>hej</p>";
+    localEsi(markup, { }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should support OR test when first criteria is true", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="$exists($(HTTP_COOKIE{'cookie1'})) | $exists($(HTTP_COOKIE{'cookie2'}))">
+          <p>Approved</p>
+        </esi:when>
+        <esi:otherwise>
+          <p>Rejected</p>
+        </esi:otherwise>
+      </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>Approved</p>";
+    localEsi(markup, { cookies: { cookie1: "jklöjl" } }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should support OR test when second criteria is true", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="$exists($(HTTP_COOKIE{'cookie1'})) | $exists($(HTTP_COOKIE{'cookie2'}))">
+          <p>Approved</p>
+        </esi:when>
+        <esi:otherwise>
+          <p>Rejected</p>
+        </esi:otherwise>
+      </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>Approved</p>";
+    localEsi(markup, { cookies: { cookie2: "jklöjl" } }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should support OR test when no criteria is true", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="$exists($(HTTP_COOKIE{'cookie1'})) | $exists($(HTTP_COOKIE{'cookie2'}))">
+          <p>Approved</p>
+        </esi:when>
+        <esi:otherwise>
+          <p>Rejected</p>
+        </esi:otherwise>
+      </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>Rejected</p>";
+    localEsi(markup, { cookies: { } }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should support test with unary expression", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="!$exists($(HTTP_COOKIE{'cookie1'}))">
+          <p>Rejected</p>
+        </esi:when>
+        <esi:otherwise>
+          <p>Approved</p>
+        </esi:otherwise>
+      </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>Rejected</p>";
+    localEsi(markup, { }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should return error when the trying to include a URL where the path doesn't end with /", (done) => {
+    const markup = "<esi:include src=\"/mystuff\" dca=\"none\"/>";
+
+    localEsi(markup, { }, (err) => {
+      expect(err).to.not.be.undefined;
+      expect(err).to.not.be.null;
+      expect(err.message).to.contain("path");
+      done();
+    });
+  });
+
+  it("should return error when the trying to include a URL where the path doesn't end with /, even when in esi:try", (done) => {
+    let markup = "<esi:try>";
+    markup += "<esi:attempt>";
+    markup += "<esi:include src=\"/mystuff\" dca=\"none\"/>";
+    markup += "</esi:attempt>";
+    markup += "<esi:except>";
+    markup += "<p>Hej kom och hjälp mig!</p>";
+    markup += "</esi:except>";
+    markup += "</esi:try>";
+
+    localEsi(markup, { }, (err) => {
+      expect(err).to.not.be.undefined;
+      expect(err).to.not.be.null;
+      expect(err.message).to.contain("path");
+      done();
+    });
+  });
+
+  it("should support choose with multiple when when both are true", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="!$exists($(HTTP_COOKIE{'cookie1'}))">
+          <p>First when</p>
+        </esi:when>
+        <esi:when test="!$exists($(HTTP_COOKIE{'some_cookie'}))">
+          <p>Second when</p>
+        </esi:when>
+    </esi:choose>
+    `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>First when</p>";
+    localEsi(markup, { cookies: { } }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should support choose with multiple when where the first evaluates to false", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="$exists($(HTTP_COOKIE{'cookie1'}))">
+          <p>First when</p>
+        </esi:when>
+        <esi:when test="!$exists($(HTTP_COOKIE{'some_cookie'}))">
+          <p>Second when</p>
+        </esi:when>
+    </esi:choose>
+    `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>Second when</p>";
+    localEsi(markup, { }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should support choose with multiple when and otherwise where both whens are false", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="$exists($(HTTP_COOKIE{'cookie1'}))">
+          <p>First when</p>
+        </esi:when>
+        <esi:when test="$exists($(HTTP_COOKIE{'some_cookie'}))">
+          <p>Second when</p>
+        </esi:when>
+        <esi:otherwise>
+          <p>Otherwise</p>
+        </esi:otherwise>
+    </esi:choose>
+    `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>Otherwise</p>";
+    localEsi(markup, { }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should support choose with multiple when and otherwise where the first when is true", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="!$exists($(HTTP_COOKIE{'cookie1'}))">
+          <p>First when</p>
+        </esi:when>
+        <esi:when test="$exists($(HTTP_COOKIE{'some_cookie'}))">
+          <p>Second when</p>
+        </esi:when>
+        <esi:otherwise>
+          <p>Otherwise</p>
+        </esi:otherwise>
+    </esi:choose>
+    `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>First when</p>";
+    localEsi(markup, { }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should support when test with &&", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="$(HTTP_COOKIE{'intCookie'}) == 1 && $(HTTP_COOKIE{'intCookie'}) == 59">
+          <p>Hej</p>
+        </esi:when>
+    </esi:choose>
+    `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "";
+    localEsi(markup, { }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should support when test with int function call", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="$int($(HTTP_COOKIE{'int_cookie'})) == 1">
+          <p>Hej</p>
+        </esi:when>
+    </esi:choose>
+    `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>Hej</p>";
+    localEsi(markup, { cookies: { "int_cookie": 1 } }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should support when test with >= and <=", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="$int($(HTTP_COOKIE{'_int_cookie'})) >= 1 && $int($(HTTP_COOKIE{'_int_cookie'})) <= 59">
+          <p>Hej</p>
+        </esi:when>
+    </esi:choose>
+    `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>Hej</p>";
+    localEsi(markup, { cookies: { "_int_cookie": 50 } }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should handle multiple unneeded parentheses", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="($int($(HTTP_COOKIE{'inte_cookie'})) >= 1) && ($int($(HTTP_COOKIE{'inte_cookie'})) <= 59)">
+          <p>Hej</p>
+        </esi:when>
+    </esi:choose>
+    `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>Hej</p>";
+    localEsi(markup, { cookies: { "inte_cookie": 50 } }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  it("should handle QUERY_STRING", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="$(QUERY_STRING{'q'})=='blahong'">
+          <p>Hej</p>
+        </esi:when>
+      </esi:choose>
+    `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>Hej</p>";
+    localEsi(markup, { query: { q: "blahong" } }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+      if (err) return done(err);
+      expect(parsedMarkup).to.equal(expectedMarkup);
+      done();
+    });
+  });
+
+  describe("esi:choose", () => {
+    it("supports nested esi:choose when all match", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$(QUERY_STRING{'q'})=='1'">
+            <esi:choose>
+              <esi:when test="$(QUERY_STRING{'p'})=='1'">
+                <p>Hej</p>
+              </esi:when>
+            </esi:choose>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "<p>Hej</p>";
+      localEsi(markup, { query: { q: "1", p: "1"} }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+        if (err) return done(err);
+        expect(parsedMarkup).to.equal(expectedMarkup);
+        done();
+      });
+    });
+
+    it("hides nested esi:choose outcome if first level evaluates to false", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$(QUERY_STRING{'q'})=='1'">
+            <esi:choose>
+              <esi:when test="$(QUERY_STRING{'p'})=='1'">
+                <p>Hej</p>
+              </esi:when>
+            </esi:choose>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { query: { q: "2", p: "1"} }, (err, parsedMarkup) => { // eslint-disable-line camelcase
+        if (err) return done(err);
+        expect(parsedMarkup).to.equal("");
+        done();
+      });
+    });
+  });
+});
