@@ -31,5 +31,13 @@
     "lib/",
     "index.js",
     "LICENSE"
-  ]
+  ],
+  "bugs": {
+    "url": "https://github.com/BonnierNews/local-esi/issues"
+  },
+  "homepage": "https://github.com/BonnierNews/local-esi#readme",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  }
 }
