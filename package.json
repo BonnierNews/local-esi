@@ -1,6 +1,6 @@
 {
   "name": "@expressen/local-esi",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Local Edge Side Includes parser",
   "main": "index.js",
   "scripts": {
