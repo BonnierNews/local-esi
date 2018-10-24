@@ -6,12 +6,15 @@ const voidElements = ["area", "base", "br", "col", "embed", "hr", "img", "input"
 const transformHtml = require("./lib/transformHtml");
 const esiExpressionParser = require("./lib/esiExpressionParser");
 
-function localEsi(html, req, callback) {
-  const listener = ESIListener(ListenerContext(req));
-  transformHtml(html, listener, callback);
+function localEsi(html, req, res, next) {
+  const listener = ESIListener(ListenerContext(req, res));
+  transformHtml(html, listener, (err, parsed) => {
+    if (err) return next(err);
+    res.send(parsed);
+  });
 }
 
-function ListenerContext(req) {
+function ListenerContext(req, res) {
   return {
     esiChooseTags: [],
     assigns: {
@@ -21,6 +24,7 @@ function ListenerContext(req) {
     },
     cookies: req.cookies,
     req,
+    res,
     isInEsiVarsContext: false,
     inAttempt: false,
     lastAttemptWasError: false,
@@ -238,7 +242,7 @@ function ESIListener(context) {
 
     text = text.replace(/\$add_header\('Set-Cookie', '([^']+).*?\)/ig, (_, cookieString) => { // Pål should have all the credit for this
       const splitCookie = cookieString.split(/=|;/);
-      context.req.res.cookie(splitCookie[0], splitCookie[1].replace(";", ""));
+      context.res.cookie(splitCookie[0], splitCookie[1].replace(";", ""));
       return "";
     });
 
