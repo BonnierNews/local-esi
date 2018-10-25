@@ -289,66 +289,6 @@ describe("local ESI", () => {
     }, done);
   });
 
-  it("should set cookies when instructed", (done) => {
-    let markup = "<esi:vars>";
-    markup += "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
-    markup += "</esi:vars>";
-
-    const cookies = {};
-    function cookie(name, value) {
-      cookies[name] = value;
-    }
-
-    localEsi(markup, { }, {
-      cookie,
-      send(body) {
-        expect(body).to.equal("");
-        expect(cookies).to.have.property("MyCookie1", "SomeValue");
-        done();
-      }
-    }, done);
-  });
-
-  it("should set multiple cookies when instructed", (done) => {
-    let markup = "<esi:vars>";
-    markup += "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
-    markup += "$add_header('Set-Cookie', 'MyCookie2=SomeValue2; Htt')";
-    markup += "</esi:vars>";
-
-    const cookies = {};
-    function cookie(name, value) {
-      cookies[name] = value;
-    }
-
-    localEsi(markup, { }, {
-      cookie,
-      send(body) {
-        expect(body).to.equal("");
-        expect(cookies).to.have.property("MyCookie1", "SomeValue");
-        expect(cookies).to.have.property("MyCookie2", "SomeValue2");
-        done();
-      }
-    }, done);
-  });
-
-  it("should NOT set cookies when instructed outside an ESI tag", (done) => {
-    const markup = "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
-
-    const cookies = {};
-    function cookie(name, value) {
-      cookies[name] = value;
-    }
-
-    localEsi(markup, { }, {
-      cookie,
-      send(body) {
-        expect(body).to.equal(markup);
-        expect(cookies).to.not.have.property("MyCookie1");
-        done();
-      }
-    }, done);
-  });
-
   it("should handle errors when esi:including using esi:try", (done) => {
     let markup = "<esi:try>";
     markup += "<esi:attempt>";
@@ -847,6 +787,291 @@ describe("local ESI", () => {
       localEsi(markup, { query: { q: "2", p: "1"} }, {
         send(body) {
           expect(body).to.equal("");
+          done();
+        }
+      }, done);
+    });
+  });
+
+  describe("$add_header", () => {
+    it("should set cookies when instructed", (done) => {
+      let markup = "<esi:vars>";
+      markup += "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
+      markup += "</esi:vars>";
+
+      const cookies = {};
+      function cookie(name, value) {
+        cookies[name] = value;
+      }
+
+      localEsi(markup, { }, {
+        cookie,
+        send(body) {
+          expect(body).to.equal("");
+          expect(cookies).to.have.property("MyCookie1", "SomeValue");
+          done();
+        }
+      }, done);
+    });
+
+    it("should set multiple cookies when instructed", (done) => {
+      let markup = "<esi:vars>";
+      markup += "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
+      markup += "$add_header('Set-Cookie', 'MyCookie2=SomeValue2; Htt')";
+      markup += "</esi:vars>";
+
+      const cookies = {};
+      function cookie(name, value) {
+        cookies[name] = value;
+      }
+
+      localEsi(markup, { }, {
+        cookie,
+        send(body) {
+          expect(body).to.equal("");
+          expect(cookies).to.have.property("MyCookie1", "SomeValue");
+          expect(cookies).to.have.property("MyCookie2", "SomeValue2");
+          done();
+        }
+      }, done);
+    });
+
+    it("should NOT set cookies when instructed outside an ESI tag", (done) => {
+      const markup = "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
+
+      const cookies = {};
+      function cookie(name, value) {
+        cookies[name] = value;
+      }
+
+      localEsi(markup, { }, {
+        cookie,
+        send(body) {
+          expect(body).to.equal(markup);
+          expect(cookies).to.not.have.property("MyCookie1");
+          done();
+        }
+      }, done);
+    });
+
+    it("should set cookies when instructed in esi:choose", (done) => {
+      const markup = `
+        <esi:assign name="authorized" value="true"/>
+        <esi:choose>
+          <esi:when test="$(authorized)=='true'">
+            $add_header('Set-Cookie', 'MyCookie1=SomeValue;')
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="$(authorized)=='false'">
+          </esi:when>
+          <esi:otherwise>
+            $add_header('Set-Cookie', 'MyCookie2=SomeValue2;')
+          </esi:otherwise>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const cookies = {};
+      function cookie(name, value) {
+        cookies[name] = value;
+      }
+
+      localEsi(markup, { }, {
+        cookie,
+        send(body) {
+          expect(body).to.equal("");
+          expect(cookies).to.have.property("MyCookie1", "SomeValue");
+          expect(cookies).to.have.property("MyCookie2", "SomeValue2");
+          done();
+        }
+      }, done);
+    });
+
+    it("should not set cookies when in esi:choose clause that doesn't match", (done) => {
+      const markup = `
+        <esi:assign name="authorized" value="false"/>
+        <esi:choose>
+          <esi:when test="$(authorized)=='true'">
+            $add_header('Set-Cookie', 'MyCookie1=SomeValue;')
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const cookies = {};
+      function cookie(name, value) {
+        cookies[name] = value;
+      }
+
+      localEsi(markup, { }, {
+        cookie,
+        send(body) {
+          expect(body).to.equal("");
+          expect(cookies).to.not.have.property("MyCookie1", "SomeValue");
+          done();
+        }
+      }, done);
+    });
+  });
+
+  describe("$set_response_code", () => {
+    it("supports $set_response_code with status as only parameter", (done) => {
+      const markup = `
+        <esi:vars>
+          $set_response_code( 401 )
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      let setStatus;
+      localEsi(markup, { }, {
+        status(status) {
+          setStatus = status;
+        },
+        send(body) {
+          expect(body).to.equal("");
+          expect(setStatus).to.not.be.undefined;
+          expect(setStatus).to.equal(401);
+          done();
+        }
+      }, done);
+    });
+
+    it("supports $set_response_code with status and replacement markup", (done) => {
+      const markup = `
+        <esi:vars>
+          $set_response_code(400, '<p>hej</p>')
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      let setStatus;
+      localEsi(markup, { }, {
+        status(status) {
+          setStatus = status;
+        },
+        send(body) {
+          expect(body).to.equal("<p>hej</p>");
+          expect(setStatus).to.not.be.undefined;
+          expect(setStatus).to.equal(400);
+          done();
+        }
+      }, done);
+    });
+
+    it.skip("supports $set_response_code with status and replacement markup containing what looks like the end of the statement", (done) => {
+      const markup = `
+        <esi:vars>
+          $set_response_code(400, '<p>')</p>')
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      let setStatus;
+      localEsi(markup, { }, {
+        status(status) {
+          setStatus = status;
+        },
+        send(body) {
+          expect(body).to.equal("<p>')</p>");
+          expect(setStatus).to.not.be.undefined;
+          expect(setStatus).to.equal(400);
+          done();
+        }
+      }, done);
+    });
+
+    it("supports $set_response_code with status and replacement string", (done) => {
+      const markup = `
+        <esi:vars>
+          $set_response_code(400, 'OK')
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      let setStatus;
+      localEsi(markup, { }, {
+        status(status) {
+          setStatus = status;
+        },
+        send(body) {
+          expect(body).to.equal("OK");
+          expect(setStatus).to.not.be.undefined;
+          expect(setStatus).to.equal(400);
+          done();
+        }
+      }, done);
+    });
+
+    it("supports $set_response_code in esi:choose", (done) => {
+      const markup = `
+        <esi:assign name="authorized" value="false"/>
+        <esi:choose>
+          <esi:when test="$(authorized)=='true'">
+            <p>Content for you</p>
+          </esi:when>
+          <esi:otherwise>
+            $set_response_code(401, '<p>Unauthorized</p>')
+          </esi:otherwise>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      let setStatus;
+      localEsi(markup, { }, {
+        status(status) {
+          setStatus = status;
+        },
+        send(body) {
+          expect(body).to.equal("<p>Unauthorized</p>");
+          expect(setStatus).to.not.be.undefined;
+          expect(setStatus).to.equal(401);
+          done();
+        }
+      }, done);
+    });
+
+    it("should not set response code in esi:choose clause that doesn't match", (done) => {
+      const markup = `
+        <esi:assign name="authorized" value="true"/>
+        <esi:choose>
+          <esi:when test="$(authorized)=='true'">
+            <p>Content for you</p>
+          </esi:when>
+          <esi:otherwise>
+            $set_response_code(401)
+          </esi:otherwise>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      let setStatus;
+      localEsi(markup, { }, {
+        status(status) {
+          setStatus = status;
+        },
+        send(body) {
+          expect(body).to.equal("<p>Content for you</p>");
+          expect(setStatus).to.be.undefined;
+          done();
+        }
+      }, done);
+    });
+
+    it("should not set response code or modify body when in esi:choose clause that doesn't match", (done) => {
+      const markup = `
+        <esi:assign name="authorized" value="true"/>
+        <esi:choose>
+          <esi:when test="$(authorized)=='true'">
+            <p>Content for you</p>
+          </esi:when>
+          <esi:otherwise>
+            $set_response_code(401, '<p>Unauthorized</p>')
+          </esi:otherwise>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      let setStatus;
+      localEsi(markup, { }, {
+        status(status) {
+          setStatus = status;
+        },
+        send(body) {
+          expect(body).to.equal("<p>Content for you</p>");
+          expect(setStatus).to.be.undefined;
           done();
         }
       }, done);

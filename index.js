@@ -7,9 +7,13 @@ const transformHtml = require("./lib/transformHtml");
 const esiExpressionParser = require("./lib/esiExpressionParser");
 
 function localEsi(html, req, res, next) {
-  const listener = ESIListener(ListenerContext(req, res));
+  const context = ListenerContext(req, res);
+  const listener = ESIListener(context);
   transformHtml(html, listener, (err, parsed) => {
     if (err) return next(err);
+    if (context.replacement) {
+      return res.send(context.replacement);
+    }
     res.send(parsed);
   });
 }
@@ -25,12 +29,13 @@ function ListenerContext(req, res) {
     cookies: req.cookies,
     req,
     res,
-    isInEsiVarsContext: false,
+    inEsiStatementProcessingContext: false,
     inAttempt: false,
     lastAttemptWasError: false,
     inExcept: false,
     includeError: false,
-    ignoreUntilNextEndChoose: false
+    ignoreUntilNextEndChoose: false,
+    replacement: ""
   };
 }
 
@@ -77,11 +82,11 @@ function ESIListener(context) {
 
   esiTags["esi:vars"] = {
     open(attribs, next) {
-      context.isInEsiVarsContext = true;
+      context.inEsiStatementProcessingContext = true;
       next();
     },
     close(next) {
-      context.isInEsiVarsContext = false;
+      context.inEsiStatementProcessingContext = false;
       next();
     }
   };
@@ -144,15 +149,25 @@ function ESIListener(context) {
 
       lastChooseTag.foundMatchingTestAttribute = result;
       lastChooseTag.shouldWrite = result;
+      context.inEsiStatementProcessingContext = true;
 
       return next();
+    },
+    close(next) {
+      context.inEsiStatementProcessingContext = false;
+      next();
     }
   };
 
   esiTags["esi:otherwise"] = {
     open(attribs, next) {
       getLastChooseTag().shouldWrite = !getLastChooseTag().foundMatchingTestAttribute;
+      context.inEsiStatementProcessingContext = true;
       return next();
+    },
+    close(next) {
+      context.inEsiStatementProcessingContext = false;
+      next();
     }
   };
 
@@ -236,15 +251,42 @@ function ESIListener(context) {
   }
 
   function ontext(text, next) {
-    if (!context.isInEsiVarsContext) {
+    if (!context.inEsiStatementProcessingContext) {
       return writeToResult(text, next);
     }
 
     text = text.replace(/\$add_header\('Set-Cookie', '([^']+).*?\)/ig, (_, cookieString) => { // Pål should have all the credit for this
       const splitCookie = cookieString.split(/=|;/);
-      context.res.cookie(splitCookie[0], splitCookie[1].replace(";", ""));
+      if (shouldWrite()) {
+        context.res.cookie(splitCookie[0], splitCookie[1].replace(";", ""));
+      }
       return "";
     });
+
+    text = text.replace(/\$set_response_code\(\s*(\d{3})\s*\)/ig, (_, responseCode) => {
+      if (shouldWrite()) {
+        context.res.status(parseInt(responseCode));
+      }
+      return "";
+    });
+
+
+    text = text.replace(/\$set_response_code\(\s*(\d{3})\s*,\s*(')((.*?)\2\s*\))?/ig, (_, responseCode, _2, _3, content) => {
+      if (!shouldWrite()) return "";
+      context.res.status(parseInt(responseCode));
+      if (content) {
+        context.replacement = content;
+        return "";
+      }
+      context.inReplacement = true;
+      return "";
+    });
+
+    if (context.inReplacement && text === "')") {
+      context.inReplacement = false;
+      text = "";
+
+    }
 
     writeToResult(text, next);
   }
@@ -284,6 +326,10 @@ function ESIListener(context) {
   }
 
   function writeToResult(chunk, next) {
+    if (context.inReplacement) {
+      context.replacement += chunk;
+      return next();
+    }
     if (shouldWrite()) {
       return next(null, chunk);
     }
