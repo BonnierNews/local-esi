@@ -251,10 +251,14 @@ function ESIListener(context) {
   }
 
   function ontext(text, next) {
-    if (!context.inEsiStatementProcessingContext) {
-      return writeToResult(text, next);
+    if (context.inEsiStatementProcessingContext) {
+      return writeToResult(handleProcessingInstructions(text), next);
     }
 
+    writeToResult(text, next);
+  }
+
+  function handleProcessingInstructions(text) {
     text = text.replace(/\$add_header\('Set-Cookie', '([^']+).*?\)/ig, (_, cookieString) => { // Pål should have all the credit for this
       const splitCookie = cookieString.split(/=|;/);
       if (shouldWrite()) {
@@ -285,10 +289,9 @@ function ESIListener(context) {
     if (context.inReplacement && text === "')") {
       context.inReplacement = false;
       text = "";
-
     }
 
-    writeToResult(text, next);
+    return text;
   }
 
   function onclosetag(tagname, next) {
