@@ -16,10 +16,7 @@ module.exports = (req, res, next) => {
   res.render("index", { data: "a" }, (err, html) => {
     if (err) return next(err);
 
-    localEsi(html, req, (esiErr, esializedHtml) => {
-      if (esiErr) return next(esiErr);
-      res.send(esializedHtml);
-    });
+    localEsi(html, req, res, next);
   });
 };
 ```
