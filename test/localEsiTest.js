@@ -177,275 +177,6 @@ describe("local ESI", () => {
     }, done);
   });
 
-  it("should fetch and insert esi:include with relative url when dca=none", (done) => {
-    const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
-
-    nock("http://localhost:1234")
-      .get("/mystuff/")
-      .reply(200, "<p><esi:vars>hej</esi:vars></p>");
-
-    localEsi(markup, {
-      socket: {
-        server: {
-          address() {
-            return {
-              port: 1234
-            };
-          }
-        }
-      }
-    }, {
-      send(body) {
-        expect(body).to.equal("<p><esi:vars>hej</esi:vars></p><p>efter</p>");
-        done();
-      }
-    }, done);
-  });
-
-  it("should fetch and evaluate esi:include with relative url when dca=esi", (done) => {
-    const markup = "<esi:include src=\"/mystuff/\" dca=\"esi\"/><p>efter</p>";
-
-    nock("http://localhost:1234", {
-      reqheaders: { cookie: "da_cookie=cookie_value"}
-    })
-      .get("/mystuff/")
-      .reply(200, "<p><esi:vars>hej</esi:vars></p>");
-
-    localEsi(markup, {
-      socket: {
-        server: {
-          address() {
-            return {
-              port: 1234
-            };
-          }
-        }
-      },
-      headers: {
-        cookie: "da_cookie=cookie_value"
-      }
-    }, {
-      send(body) {
-        expect(body).to.equal("<p>hej</p><p>efter</p>");
-        done();
-      }
-    }, done);
-  });
-
-  it("should fetch and evaluate esi:include with absolute url", (done) => {
-    const markup = "<esi:include src=\"http://mystuff.com/\" dca=\"esi\"/><p>efter</p>";
-
-    nock("http://mystuff.com", {
-      reqheaders: { host: "mystuff.com"}
-    })
-      .get("/")
-      .reply(200, "<p><esi:vars>hej</esi:vars></p>");
-
-    localEsi(markup, {
-      socket: {
-        server: {
-          address() {
-            return {
-              port: 1234
-            };
-          }
-        }
-      }
-    }, {
-      send(body) {
-        expect(body).to.equal("<p>hej</p><p>efter</p>");
-        done();
-      }
-    }, done);
-  });
-
-  it("should handle include source query parameters", (done) => {
-    let markup = "<esi:assign name=\"user_email\" value=\"sammy_g@test.com\"/>";
-    markup += "<esi:include src=\"/mystuff/?a=b&user=$url_encode($(user_email))\" dca=\"esi\"/>";
-
-    nock("http://localhost:1234")
-      .get("/mystuff/")
-      .query({
-        a: "b",
-        user: "sammy_g@test.com"
-      })
-      .reply(200, "<p>hej</p>");
-
-    localEsi(markup, {
-      socket: {
-        server: {
-          address() {
-            return {
-              port: 1234
-            };
-          }
-        }
-      }
-    }, {
-      send(body) {
-        expect(body).to.equal("<p>hej</p>");
-        done();
-      }
-    }, done);
-  });
-
-  it("should handle errors when esi:including using esi:try", (done) => {
-    let markup = "<esi:try>";
-    markup += "<esi:attempt>";
-    markup += "<esi:include src=\"/mystuff/\" dca=\"none\"/>";
-    markup += "</esi:attempt>";
-    markup += "<esi:except>";
-    markup += "<p>Hej kom och hjälp mig!</p>";
-    markup += "</esi:except>";
-    markup += "</esi:try>";
-
-    nock("http://localhost:1234")
-      .get("/mystuff")
-      .reply(500, "<p>Error</p>");
-
-    localEsi(markup, {
-      socket: {
-        server: {
-          address() {
-            return {
-              port: 1234
-            };
-          }
-        }
-      }
-    }, {
-      send(body) {
-        expect(body).to.equal("<p>Hej kom och hjälp mig!</p>");
-        done();
-      }
-    }, done);
-  });
-
-  it("should handle successfull response when esi:including using esi:try", (done) => {
-    let markup = "<p>innan</p>";
-    markup += "<esi:try>";
-    markup += "<esi:attempt>";
-    markup += "<esi:include src=\"/mystuff/\" dca=\"none\"/>";
-    markup += "</esi:attempt>";
-    markup += "<esi:except>";
-    markup += "<p>Hej kom och hjälp mig!</p>";
-    markup += "</esi:except>";
-    markup += "</esi:try>";
-    markup += "<p>efter</p>";
-
-    nock("http://localhost:1234")
-      .get("/mystuff/")
-      .reply(200, "<p>Frid och fröjd</p>");
-
-    localEsi(markup, {
-      socket: {
-        server: {
-          address() {
-            return {
-              port: 1234
-            };
-          }
-        }
-      }
-    }, {
-      send(body) {
-        expect(body).to.equal("<p>innan</p><p>Frid och fröjd</p><p>efter</p>");
-        done();
-      }
-    }, done);
-  });
-
-  it("should call next with error when the response to an esi:include returns 500 (outside try/attempt)", (done) => {
-    const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/>";
-
-    nock("http://localhost:1234")
-      .get("/mystuff")
-      .reply(500, "<p>Error</p>");
-
-    localEsi(markup, {
-      socket: {
-        server: {
-          address() {
-            return {
-              port: 1234
-            };
-          }
-        }
-      }
-    }, {
-      send() {
-        done(new Error("We should not be here"));
-      }
-    }, (err) => {
-      expect(err).to.not.be.undefined;
-      expect(err).to.not.be.null;
-      done();
-    });
-  });
-
-  it("should handle re-assign variable value from esi:eval", (done) => {
-    const markup = `<esi:assign name="some_variable" value="true" />
-    <esi:eval src="http://mystuff" dca="none"/>
-    <esi:choose>
-      <esi:when test="$(some_variable)=='true'">
-        <p>hej</p>
-      </esi:when>
-      <esi:otherwise>
-        <p>då</p>
-      </esi:otherwise>
-    </esi:choose>`.replace(/^\s+|\n/gm, "");
-
-    const evalResponse = "<esi:assign name=\"some_variable\" value=\"false\" />".replace(/^\s+|\n/gm, "");
-
-    nock("http://mystuff")
-      .get("/")
-      .reply(200, evalResponse);
-
-    const expectedMarkup = "<p>då</p>";
-
-    localEsi(markup, { }, {
-      send(body) {
-        expect(body).to.equal(expectedMarkup);
-        done();
-      }
-    }, done);
-  });
-
-  it("should not execute esi:assign from esi:include in the original scope", (done) => {
-    const markup = `<esi:assign name="some_variable" value="true" />
-    <esi:include src="http://mystuff" dca="esi"/>
-    <esi:choose>
-      <esi:when test="$(some_variable)=='true'">
-        <p>hej</p>
-      </esi:when>
-      <esi:otherwise>
-        <p>då</p>
-      </esi:otherwise>
-    </esi:choose>`.replace(/^\s+|\n/gm, "");
-
-    const includeResponse = `<esi:assign name="some_variable" value="false" />
-        <esi:choose>
-        <esi:when test="$(some_variable)=='true'">
-          <p>hej</p>
-        </esi:when>
-        <esi:otherwise>
-          <p>då</p>
-        </esi:otherwise>
-      </esi:choose>`.replace(/^\s+|\n/gm, "");
-
-    nock("http://mystuff")
-      .get("/")
-      .reply(200, includeResponse);
-
-    const expectedMarkup = "<p>då</p><p>hej</p>";
-    localEsi(markup, { }, {
-      send(body) {
-        expect(body).to.equal(expectedMarkup);
-        done();
-      }
-    }, done);
-  });
-
   it("should support OR test when first criteria is true", (done) => {
     const markup = `
       <esi:choose>
@@ -746,6 +477,341 @@ describe("local ESI", () => {
         done();
       }
     }, done);
+  });
+
+  describe("esi:include", () => {
+    it("should fetch and insert esi:include with relative url when dca=none", (done) => {
+      const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
+
+      nock("http://localhost:1234")
+        .get("/mystuff/")
+        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p><esi:vars>hej</esi:vars></p><p>efter</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("should fetch and evaluate esi:include with relative url when dca=esi", (done) => {
+      const markup = "<esi:include src=\"/mystuff/\" dca=\"esi\"/><p>efter</p>";
+
+      nock("http://localhost:1234", {
+        reqheaders: { cookie: "da_cookie=cookie_value"}
+      })
+        .get("/mystuff/")
+        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        },
+        headers: {
+          cookie: "da_cookie=cookie_value"
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>hej</p><p>efter</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("should fetch and evaluate esi:include with absolute url", (done) => {
+      const markup = "<esi:include src=\"http://mystuff.com/\" dca=\"esi\"/><p>efter</p>";
+
+      nock("http://mystuff.com", {
+        reqheaders: { host: "mystuff.com"}
+      })
+        .get("/")
+        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>hej</p><p>efter</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("should handle include source query parameters", (done) => {
+      let markup = "<esi:assign name=\"user_email\" value=\"sammy_g@test.com\"/>";
+      markup += "<esi:include src=\"/mystuff/?a=b&user=$url_encode($(user_email))\" dca=\"esi\"/>";
+
+      nock("http://localhost:1234")
+        .get("/mystuff/")
+        .query({
+          a: "b",
+          user: "sammy_g@test.com"
+        })
+        .reply(200, "<p>hej</p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>hej</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("should handle errors when esi:including using esi:try", (done) => {
+      let markup = "<esi:try>";
+      markup += "<esi:attempt>";
+      markup += "<esi:include src=\"/mystuff/\" dca=\"none\"/>";
+      markup += "</esi:attempt>";
+      markup += "<esi:except>";
+      markup += "<p>Hej kom och hjälp mig!</p>";
+      markup += "</esi:except>";
+      markup += "</esi:try>";
+
+      nock("http://localhost:1234")
+        .get("/mystuff")
+        .reply(500, "<p>Error</p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>Hej kom och hjälp mig!</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("should handle successfull response when esi:including using esi:try", (done) => {
+      let markup = "<p>innan</p>";
+      markup += "<esi:try>";
+      markup += "<esi:attempt>";
+      markup += "<esi:include src=\"/mystuff/\" dca=\"none\"/>";
+      markup += "</esi:attempt>";
+      markup += "<esi:except>";
+      markup += "<p>Hej kom och hjälp mig!</p>";
+      markup += "</esi:except>";
+      markup += "</esi:try>";
+      markup += "<p>efter</p>";
+
+      nock("http://localhost:1234")
+        .get("/mystuff/")
+        .reply(200, "<p>Frid och fröjd</p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>innan</p><p>Frid och fröjd</p><p>efter</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("should call next with error when the response to an esi:include returns 500 (outside try/attempt)", (done) => {
+      const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/>";
+
+      nock("http://localhost:1234")
+        .get("/mystuff")
+        .reply(500, "<p>Error</p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send() {
+          done(new Error("We should not be here"));
+        }
+      }, (err) => {
+        expect(err).to.not.be.undefined;
+        expect(err).to.not.be.null;
+        done();
+      });
+    });
+
+    it("should handle re-assign variable value from esi:eval", (done) => {
+      const markup = `<esi:assign name="some_variable" value="true" />
+      <esi:eval src="http://mystuff" dca="none"/>
+      <esi:choose>
+        <esi:when test="$(some_variable)=='true'">
+          <p>hej</p>
+        </esi:when>
+        <esi:otherwise>
+          <p>då</p>
+        </esi:otherwise>
+      </esi:choose>`.replace(/^\s+|\n/gm, "");
+
+      const evalResponse = "<esi:assign name=\"some_variable\" value=\"false\" />".replace(/^\s+|\n/gm, "");
+
+      nock("http://mystuff")
+        .get("/")
+        .reply(200, evalResponse);
+
+      const expectedMarkup = "<p>då</p>";
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should not execute esi:assign from esi:include in the original scope", (done) => {
+      const markup = `<esi:assign name="some_variable" value="true" />
+      <esi:include src="http://mystuff" dca="esi"/>
+      <esi:choose>
+        <esi:when test="$(some_variable)=='true'">
+          <p>hej</p>
+        </esi:when>
+        <esi:otherwise>
+          <p>då</p>
+        </esi:otherwise>
+      </esi:choose>`.replace(/^\s+|\n/gm, "");
+
+      const includeResponse = `<esi:assign name="some_variable" value="false" />
+          <esi:choose>
+          <esi:when test="$(some_variable)=='true'">
+            <p>hej</p>
+          </esi:when>
+          <esi:otherwise>
+            <p>då</p>
+          </esi:otherwise>
+        </esi:choose>`.replace(/^\s+|\n/gm, "");
+
+      nock("http://mystuff")
+        .get("/")
+        .reply(200, includeResponse);
+
+      const expectedMarkup = "<p>då</p><p>hej</p>";
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should add header when instructed from included source when dca=esi", (done) => {
+      const markup = "<esi:include src=\"/mystuff/\" dca=\"esi\"/><p>efter</p>";
+
+      nock("http://localhost:1234")
+        .get("/mystuff/")
+        .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars>");
+
+      const cookies = {};
+      function cookie(name, value) {
+        cookies[name] = value;
+      }
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        cookie,
+        send(body) {
+          expect(body).to.equal("<p>efter</p>");
+          expect(cookies).to.have.property("my_cookie", "val1");
+          done();
+        }
+      }, done);
+    });
+
+    it("should not add header when instructed from included source when dca=none", (done) => {
+      const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
+
+      nock("http://localhost:1234")
+        .get("/mystuff/")
+        .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars>");
+
+      const cookies = {};
+      function cookie(name, value) {
+        cookies[name] = value;
+      }
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        cookie,
+        send(body) {
+          expect(body).to.equal("<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars><p>efter</p>");
+          expect(cookies).to.not.have.property("my_cookie");
+          done();
+        }
+      }, done);
+    });
   });
 
   describe("esi:choose", () => {

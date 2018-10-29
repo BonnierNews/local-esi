@@ -102,7 +102,7 @@ function ESIListener(context) {
         if (attribs.dca !== "esi") {
           return writeToResult(fetchResult, next);
         }
-        const listener = ESIListener(ListenerContext(context.req));
+        const listener = ESIListener(ListenerContext(context.req, context.res));
         transformHtml(fetchResult, listener, (parseError, parsedResult) => {
           writeToResult(parsedResult, next);
         });
