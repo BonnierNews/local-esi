@@ -277,28 +277,6 @@ describe("local ESI", () => {
     });
   });
 
-  it("should call next with error when the trying to include a URL where the path doesn't end with /, even when in esi:try", (done) => {
-    let markup = "<esi:try>";
-    markup += "<esi:attempt>";
-    markup += "<esi:include src=\"/mystuff\" dca=\"none\"/>";
-    markup += "</esi:attempt>";
-    markup += "<esi:except>";
-    markup += "<p>Hej kom och hjälp mig!</p>";
-    markup += "</esi:except>";
-    markup += "</esi:try>";
-
-    localEsi(markup, { }, {
-      send() {
-        done(new Error("We should not be here"));
-      }
-    }, (err) => {
-      expect(err).to.not.be.undefined;
-      expect(err).to.not.be.null;
-      expect(err.message).to.contain("path");
-      done();
-    });
-  });
-
   it("should support choose with multiple when when both are true", (done) => {
     const markup = `
       <esi:choose>
@@ -603,7 +581,39 @@ describe("local ESI", () => {
       markup += "</esi:try>";
 
       nock("http://localhost:1234")
-        .get("/mystuff")
+        .get("/mystuff/")
+        .reply(500, "<p>Error</p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>Hej kom och hjälp mig!</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("should handle errors when esi:including using esi:try and dca=esi", (done) => {
+      let markup = "<esi:try>";
+      markup += "<esi:attempt>";
+      markup += "<esi:include src=\"/mystuff/\" dca=\"esi\"/>";
+      markup += "</esi:attempt>";
+      markup += "<esi:except>";
+      markup += "<p>Hej kom och hjälp mig!</p>";
+      markup += "</esi:except>";
+      markup += "</esi:try>";
+
+      nock("http://localhost:1234")
+        .get("/mystuff/")
         .reply(500, "<p>Error</p>");
 
       localEsi(markup, {
@@ -662,7 +672,7 @@ describe("local ESI", () => {
       const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/>";
 
       nock("http://localhost:1234")
-        .get("/mystuff")
+        .get("/mystuff/")
         .reply(500, "<p>Error</p>");
 
       localEsi(markup, {
@@ -688,7 +698,7 @@ describe("local ESI", () => {
 
     it("should handle re-assign variable value from esi:eval", (done) => {
       const markup = `<esi:assign name="some_variable" value="true" />
-      <esi:eval src="http://mystuff" dca="none"/>
+      <esi:eval src="http://mystuff/" dca="none"/>
       <esi:choose>
         <esi:when test="$(some_variable)=='true'">
           <p>hej</p>
@@ -716,7 +726,7 @@ describe("local ESI", () => {
 
     it("should not execute esi:assign from esi:include in the original scope", (done) => {
       const markup = `<esi:assign name="some_variable" value="true" />
-      <esi:include src="http://mystuff" dca="esi"/>
+      <esi:include src="http://mystuff/" dca="esi"/>
       <esi:choose>
         <esi:when test="$(some_variable)=='true'">
           <p>hej</p>
@@ -811,6 +821,28 @@ describe("local ESI", () => {
           done();
         }
       }, done);
+    });
+
+    it("should call next with error when the trying to include a URL where the path doesn't end with /, even when in esi:try", (done) => {
+      let markup = "<esi:try>";
+      markup += "<esi:attempt>";
+      markup += "<esi:include src=\"/mystuff\" dca=\"none\"/>";
+      markup += "</esi:attempt>";
+      markup += "<esi:except>";
+      markup += "<p>Hej kom och hjälp mig!</p>";
+      markup += "</esi:except>";
+      markup += "</esi:try>";
+
+      localEsi(markup, { }, {
+        send() {
+          done(new Error("We should not be here"));
+        }
+      }, (err) => {
+        expect(err).to.not.be.undefined;
+        expect(err).to.not.be.null;
+        expect(err.message).to.contain("path");
+        done();
+      });
     });
   });
 

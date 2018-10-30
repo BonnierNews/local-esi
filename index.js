@@ -198,6 +198,9 @@ function ESIListener(context) {
       includeUrl = url.resolve(`http://localhost:${context.req.socket.server.address().port}`, source);
     }
     request.get(includeUrl, options, (err, res, body) => {
+      if (!err && res.statusCode > 399) {
+        err = new Error(`Response code: ${res.statusCode}`);
+      }
       if (err) {
         if (context.inAttempt) {
           context.lastAttemptWasError = true;
