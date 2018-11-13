@@ -270,13 +270,19 @@ function ESIListener(context) {
       return "";
     });
 
+    text = text.replace(/\$set_redirect\(\s*'(.+?)'\s*\)/ig, (_, location) => {
+      if (shouldWrite()) {
+        context.res.redirect(location);
+      }
+      return "";
+    });
+
     text = text.replace(/\$set_response_code\(\s*(\d{3})\s*\)/ig, (_, responseCode) => {
       if (shouldWrite()) {
         context.res.status(parseInt(responseCode));
       }
       return "";
     });
-
 
     text = text.replace(/\$set_response_code\(\s*(\d{3})\s*,\s*(')((.*?)\2\s*\))?/ig, (_, responseCode, _2, _3, content) => {
       if (!shouldWrite()) return "";

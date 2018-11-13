@@ -1,6 +1,6 @@
 {
   "name": "@bonniernews/local-esi",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Local Edge Side Includes parser",
   "main": "index.js",
   "scripts": {

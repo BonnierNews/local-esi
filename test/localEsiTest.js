@@ -1175,4 +1175,80 @@ describe("local ESI", () => {
       }, done);
     });
   });
+
+  describe("$set_redirect", () => {
+    it("supports $set_redirect", (done) => {
+      const markup = `
+        <esi:vars>
+          $set_redirect('https://blahonga.com')
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      let redirectUrl;
+      localEsi(markup, { }, {
+        redirect(url) {
+          redirectUrl = url;
+        },
+        send(body) {
+          expect(body).to.equal("");
+          expect(redirectUrl).to.not.be.undefined;
+          expect(redirectUrl).to.equal("https://blahonga.com");
+          done();
+        }
+      }, done);
+    });
+
+    it("supports $set_response_code in esi:choose", (done) => {
+      const markup = `
+        <esi:assign name="authorized" value="false"/>
+        <esi:choose>
+          <esi:when test="$(authorized)=='true'">
+            <p>Content for you</p>
+          </esi:when>
+          <esi:otherwise>
+            $set_redirect('https://blahonga.com')
+          </esi:otherwise>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      let redirectUrl;
+      localEsi(markup, { }, {
+        redirect(url) {
+          redirectUrl = url;
+        },
+        send(body) {
+          expect(body).to.equal("");
+          expect(redirectUrl).to.not.be.undefined;
+          expect(redirectUrl).to.equal("https://blahonga.com");
+          done();
+        }
+      }, done);
+    });
+
+    it("should not set response code in esi:choose clause that doesn't match", (done) => {
+      const markup = `
+        <esi:assign name="authorized" value="true"/>
+        <esi:choose>
+          <esi:when test="$(authorized)=='true'">
+            <p>Content for you</p>
+          </esi:when>
+          <esi:otherwise>
+          $set_redirect('https://blahonga.com')
+          </esi:otherwise>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      let redirectUrl;
+      localEsi(markup, { }, {
+        redirect(url) {
+          redirectUrl = url;
+        },
+        send(body) {
+          expect(body).to.equal("<p>Content for you</p>");
+          expect(redirectUrl).to.be.undefined;
+          done();
+        }
+      }, done);
+    });
+  });
 });
