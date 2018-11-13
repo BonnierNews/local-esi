@@ -1188,17 +1188,14 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         redirect(url) {
           redirectUrl = url;
-        },
-        send(body) {
-          expect(body).to.equal("");
-          expect(redirectUrl).to.not.be.undefined;
           expect(redirectUrl).to.equal("https://blahonga.com");
           done();
-        }
-      }, done);
+        },
+        send: done
+      });
     });
 
-    it("supports $set_response_code in esi:choose", (done) => {
+    it("supports $set_redirect in esi:choose", (done) => {
       const markup = `
         <esi:assign name="authorized" value="false"/>
         <esi:choose>
@@ -1215,17 +1212,13 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         redirect(url) {
           redirectUrl = url;
-        },
-        send(body) {
-          expect(body).to.equal("");
-          expect(redirectUrl).to.not.be.undefined;
           expect(redirectUrl).to.equal("https://blahonga.com");
           done();
         }
-      }, done);
+      });
     });
 
-    it("should not set response code in esi:choose clause that doesn't match", (done) => {
+    it("should not set redirect in esi:choose clause that doesn't match", (done) => {
       const markup = `
         <esi:assign name="authorized" value="true"/>
         <esi:choose>

@@ -11,6 +11,9 @@ function localEsi(html, req, res, next) {
   const listener = ESIListener(context);
   transformHtml(html, listener, (err, parsed) => {
     if (err) return next(err);
+    if (context.redirected) {
+      return;
+    }
     if (context.replacement) {
       return res.send(context.replacement);
     }
@@ -273,6 +276,7 @@ function ESIListener(context) {
     text = text.replace(/\$set_redirect\(\s*'(.+?)'\s*\)/ig, (_, location) => {
       if (shouldWrite()) {
         context.res.redirect(location);
+        context.redirected = true;
       }
       return "";
     });
