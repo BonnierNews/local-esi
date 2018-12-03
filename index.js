@@ -134,6 +134,12 @@ function ESIListener(context) {
     }
   };
 
+  esiTags["esi:text"] = {
+    open(attribs, next) {
+      next();
+    }
+  };
+
   esiTags["esi:attempt"] = {
     open(attribs, next) {
       context.inAttempt = true;
