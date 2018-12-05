@@ -38,7 +38,8 @@ function ListenerContext(req, res) {
     inExcept: false,
     includeError: false,
     ignoreUntilNextEndChoose: false,
-    replacement: ""
+    replacement: "",
+    chooses: [],
   };
 }
 
@@ -58,19 +59,12 @@ function ESIListener(context) {
 
   esiTags["esi:choose"] = {
     open(attribs, next) {
-      if (!shouldWrite()) {
-        context.ignoreUntilNextEndChoose = true;
-        return next();
-      }
-      context.esiChooseTags.push({tagname: "esi:choose", attribs, isChoosing: true });
+      context.chooses.push({ hasEvaluatedToTrue: false, isCurrentlyEvaluatedTo: false });
+
       return next();
     },
     close(next) {
-      if (context.ignoreUntilNextEndChoose) {
-        context.ignoreUntilNextEndChoose = false;
-      } else {
-        context.esiChooseTags.pop();
-      }
+      context.chooses.pop();
 
       return next();
     }
@@ -149,15 +143,11 @@ function ESIListener(context) {
 
   esiTags["esi:when"] = {
     open(attribs, next) {
-      const lastChooseTag = getLastChooseTag();
-      if (lastChooseTag.foundMatchingTestAttribute) {
-        lastChooseTag.shouldWrite = false;
-        return next();
-      }
+      const lastChoose = context.chooses[context.chooses.length - 1];
       const result = evaluateExpression(attribs.test, context);
 
-      lastChooseTag.foundMatchingTestAttribute = result;
-      lastChooseTag.shouldWrite = result;
+      lastChoose.isCurrentlyEvaluatedTo = !lastChoose.isCurrentlyEvaluatedTo && result;
+      lastChoose.hasEvaluatedToTrue = lastChoose.hasEvaluatedToTrue || result;
       context.inEsiStatementProcessingContext = true;
 
       return next();
@@ -170,7 +160,9 @@ function ESIListener(context) {
 
   esiTags["esi:otherwise"] = {
     open(attribs, next) {
-      getLastChooseTag().shouldWrite = !getLastChooseTag().foundMatchingTestAttribute;
+      const lastChoose = context.chooses[context.chooses.length - 1];
+      lastChoose.isCurrentlyEvaluatedTo = !lastChoose.hasEvaluatedToTrue;
+
       context.inEsiStatementProcessingContext = true;
       return next();
     },
@@ -227,21 +219,13 @@ function ESIListener(context) {
     onclosetag,
   };
 
-  function getLastChooseTag() {
-    return context.esiChooseTags[context.esiChooseTags.length - 1];
-  }
-
   function shouldWrite() {
-    if (context.ignoreUntilNextEndChoose) {
-      return false;
-    }
     if (context.inExcept && !context.lastAttemptWasError) {
       return false;
     }
 
-    const lastChooseTag = getLastChooseTag();
-    if (lastChooseTag) {
-      return lastChooseTag.shouldWrite;
+    if (context.chooses.length) {
+      return context.chooses.every((choose) => choose.isCurrentlyEvaluatedTo);
     }
 
     return true;
@@ -253,7 +237,8 @@ function ESIListener(context) {
       if (!esiFunc) {
         throw new Error(`ESI tag ${tagname} not implemented.`);
       }
-      return esiFunc.open(attribs, next);
+      const res = esiFunc.open(attribs, next);
+      return res;
     }
 
     if (tagname === "!--") {
