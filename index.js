@@ -23,7 +23,6 @@ function localEsi(html, req, res, next) {
 
 function ListenerContext(req, res) {
   return {
-    esiChooseTags: [],
     assigns: {
       "HTTP_COOKIE": req.cookies || {},
       "HTTP_USER_AGENT": {},
@@ -37,7 +36,6 @@ function ListenerContext(req, res) {
     lastAttemptWasError: false,
     inExcept: false,
     includeError: false,
-    ignoreUntilNextEndChoose: false,
     replacement: "",
     chooses: [],
   };
