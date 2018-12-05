@@ -869,6 +869,91 @@ describe("local ESI", () => {
       }, done);
     });
 
+    it("should not render anything if outer choose is false", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$(QUERY_STRING{'q'})=='0'">
+            <esi:choose>
+              <esi:when test="$(QUERY_STRING{'p'})=='0'">
+                <p>1</p>
+              </esi:when>
+              <esi:otherwise>
+                <p>2</p>
+              </esi:otherwise>
+            </esi:choose>
+
+            <esi:choose>
+              <esi:when test="$(QUERY_STRING{'p'})=='1'">
+                <p>3</p>
+              </esi:when>
+              <esi:otherwise>
+                <p>4</p>
+              </esi:otherwise>
+            </esi:choose>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "";
+      localEsi(markup, { query: { q: "1", p: "1"} }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+
+    it("should not render anything if outer choose is false (very nested chooses)", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$(QUERY_STRING{'q'})=='0'">
+            <esi:choose>
+              <esi:when test="$(QUERY_STRING{'p'})=='0'">
+                <esi:choose>
+                  <esi:when test="$(QUERY_STRING{'p'})=='1'">
+                    <p>3</p>
+                  </esi:when>
+                  <esi:otherwise>
+                    <p>4</p>
+                  </esi:otherwise>
+                </esi:choose>
+                <esi:choose>
+                  <esi:when test="$(QUERY_STRING{'p'})=='1'">
+                    <p>3</p>
+                  </esi:when>
+                  <esi:otherwise>
+                    <p>4</p>
+                  </esi:otherwise>
+                </esi:choose>
+              </esi:when>
+              <esi:otherwise>
+                <p>2</p>
+              </esi:otherwise>
+            </esi:choose>
+
+            <esi:choose>
+              <esi:when test="$(QUERY_STRING{'p'})=='1'">
+                <p>3</p>
+              </esi:when>
+              <esi:otherwise>
+                <p>4</p>
+              </esi:otherwise>
+            </esi:choose>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "";
+      localEsi(markup, { query: { q: "1", p: "1"} }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+
     it("hides nested esi:choose outcome if first level evaluates to false", (done) => {
       const markup = `
         <esi:choose>
@@ -1243,6 +1328,41 @@ describe("local ESI", () => {
         }
       });
     });
+
+    it("should evaluate nested multiple chooses when first test evaluates to true", (done) => {
+      const markup = `<esi:assign name="blahonga" value="true" />
+        <esi:choose>
+          <esi:when test="$(blahonga)=='true'">
+            <esi:choose>
+              <esi:when test="$exists($(HTTP_COOKIE{'cookie1'})) | $exists($(HTTP_COOKIE{'cookie2'}))">
+                <p>hej 1</p>
+              </esi:when>
+              <esi:otherwise>
+                <p>då 1</p>
+              </esi:otherwise>
+            </esi:choose>
+            <esi:choose>
+              <esi:when test="$exists($(HTTP_COOKIE{'cookie3'})) | $exists($(HTTP_COOKIE{'cookie4'}))">
+                <p>hej 2</p>
+              </esi:when>
+              <esi:otherwise>
+                <p>då 2</p>
+              </esi:otherwise>
+            </esi:choose>
+          </esi:when>
+          <esi:otherwise>
+            <p>hej igen</p>
+          </esi:otherwise>
+        </esi:choose>`.replace(/^\s+|\n/gm, "");
+      const expectedMarkup = "<p>hej 1</p><p>då 2</p>";
+      localEsi(markup, { cookies: { cookie1: "jklöjl" } }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
 
     it("should not set redirect in esi:choose clause that doesn't match", (done) => {
       const markup = `
