@@ -38,6 +38,7 @@ function ListenerContext(req, res) {
     includeError: false,
     replacement: "",
     chooses: [],
+    tags: [],
   };
 }
 
@@ -127,7 +128,11 @@ function ESIListener(context) {
   };
 
   esiTags["esi:text"] = {
+    plainText: true,
     open(attribs, next) {
+      next();
+    },
+    close(next) {
       next();
     }
   };
@@ -230,8 +235,12 @@ function ESIListener(context) {
   }
 
   function onopentag(tagname, attribs, next) {
-    if (tagname.startsWith("esi:")) {
+    const [current = {}] = context.tags.slice(-1);
+
+    if (!current.plainText && tagname.startsWith("esi:")) {
       const esiFunc = esiTags[tagname];
+      context.tags.push(esiFunc);
+
       if (!esiFunc) {
         throw new Error(`ESI tag ${tagname} not implemented.`);
       }
@@ -293,11 +302,15 @@ function ESIListener(context) {
       text = "";
     }
 
+    text = text.replace(/\\["]/g, "\"");
+
     return text;
   }
 
   function onclosetag(tagname, next) {
-    if (tagname.startsWith("esi:")) {
+    const [current = {}] = context.tags.slice(-1);
+
+    if (!current.plainText && tagname.startsWith("esi:")) {
       const esiFunc = esiTags[tagname];
       if (!esiFunc) {
         throw new Error(`ESI tag ${tagname} not implemented.`);
@@ -307,6 +320,12 @@ function ESIListener(context) {
         return esiFunc.close(next);
       }
 
+      return next();
+    } else if (current.plainText && esiTags[tagname] === current) {
+      context.tags.pop();
+      if (current.close) {
+        return current.close(next);
+      }
       return next();
     }
 
