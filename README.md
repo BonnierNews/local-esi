@@ -1,7 +1,7 @@
 Local-ESI
 =========
 
-[![Build Status](https://travis-ci.org/ExpressenAB/local-esi.svg?branch=master)](https://travis-ci.org/ExpressenAB/local-esi)[![dependencies Status](https://david-dm.org/ExpressenAB/local-esi/status.svg)](https://david-dm.org/ExpressenAB/local-esi)
+[![Build Status](https://travis-ci.org/BonnierNews/local-esi.svg?branch=master)](https://travis-ci.org/BonnierNews/local-esi)[![dependencies Status](https://david-dm.org/BonnierNews/local-esi/status.svg)](https://david-dm.org/BonnierNews/local-esi)
 
 Make your Express app work like it had Akamai Edge Side Includes parsing.
 
