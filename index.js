@@ -2,9 +2,11 @@
 
 const url = require("url");
 const request = require("request");
-const voidElements = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"];
 const transformHtml = require("./lib/transformHtml");
 const esiExpressionParser = require("./lib/esiExpressionParser");
+
+const voidElements = ["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"];
+const selfClosingElements = ["esi:include", "esi:eval", "esi:assign", "esi:debug"];
 
 function localEsi(html, req, res, next) {
   const context = ListenerContext(req, res);
@@ -237,15 +239,21 @@ function ESIListener(context) {
   function onopentag(tagname, attribs, next) {
     const [current = {}] = context.tags.slice(-1);
 
-    if (!current.plainText && tagname.startsWith("esi:")) {
-      const esiFunc = esiTags[tagname];
-      context.tags.push(esiFunc);
+    if (tagname.startsWith("esi:")) {
+      if (!current.plainText) {
+        const esiFunc = esiTags[tagname];
+        context.tags.push(esiFunc);
 
-      if (!esiFunc) {
-        throw new Error(`ESI tag ${tagname} not implemented.`);
+        if (!esiFunc) {
+          throw new Error(`ESI tag ${tagname} not implemented.`);
+        }
+        const res = esiFunc.open(attribs, next);
+        return res;
       }
-      const res = esiFunc.open(attribs, next);
-      return res;
+
+      if (selfClosingElements.includes(tagname)) {
+        return writeToResult(`<${tagname}${attributesToString(attribs)}/>`, next);
+      }
     }
 
     if (tagname === "!--") {
@@ -310,23 +318,29 @@ function ESIListener(context) {
   function onclosetag(tagname, next) {
     const [current = {}] = context.tags.slice(-1);
 
-    if (!current.plainText && tagname.startsWith("esi:")) {
-      const esiFunc = esiTags[tagname];
-      if (!esiFunc) {
-        throw new Error(`ESI tag ${tagname} not implemented.`);
+    if (tagname.startsWith("esi:")) {
+      if (!current.plainText) {
+        const esiFunc = esiTags[tagname];
+        if (!esiFunc) {
+          throw new Error(`ESI tag ${tagname} not implemented.`);
+        }
+
+        if (esiFunc.close) {
+          return esiFunc.close(next);
+        }
+
+        return next();
+      } else if (current.plainText && esiTags[tagname] === current) {
+        context.tags.pop();
+        if (current.close) {
+          return current.close(next);
+        }
+        return next();
       }
 
-      if (esiFunc.close) {
-        return esiFunc.close(next);
+      if (selfClosingElements.includes(tagname)) {
+        return next();
       }
-
-      return next();
-    } else if (current.plainText && esiTags[tagname] === current) {
-      context.tags.pop();
-      if (current.close) {
-        return current.close(next);
-      }
-      return next();
     }
 
     if (voidElements.includes(tagname)) return;
@@ -334,6 +348,7 @@ function ESIListener(context) {
     if (tagname === "!--") {
       return writeToResult("-->", next);
     }
+
     writeToResult(`</${tagname}>`, next);
   }
 

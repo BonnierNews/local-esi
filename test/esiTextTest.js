@@ -48,7 +48,7 @@ describe("esi:text", () => {
     }, done);
   });
 
-  it("escaped chars outside in esi context but outside esi:text removes escape escape char", (done) => {
+  it("remove escaped quotes inside esi context unless esi:text", (done) => {
     const markup = `
       <p>\\"quote 0\\"</p>
       <esi:vars><p>\\"quote 1\\"</p></esi:vars>
@@ -58,6 +58,25 @@ describe("esi:text", () => {
     localEsi(markup, { }, {
       send(body) {
         expect(body).to.equal("<p>\\\"quote 0\\\"</p><p>\"quote 1\"</p><p>\\\"quote 2\\\"</p>");
+        done();
+      }
+    }, done);
+  });
+
+  it("keeps esi markup in esi:text", (done) => {
+    const markup = `
+      <esi:text>
+        <esi:include src="/p"/>
+        <esi:debug/>
+        <esi:eval src="/p"/>
+        <esi:assign name="user_email" value="No1"/>
+        <esi:vars>No2</esi:vars>
+      </esi:text>
+      `.replace(/^\s+|\n/gm, "");
+
+    localEsi(markup, { }, {
+      send(body) {
+        expect(body).to.equal("<esi:include src=\"/p\"/><esi:debug/><esi:eval src=\"/p\"/><esi:assign name=\"user_email\" value=\"No1\"/><esi:vars>No2</esi:vars>");
         done();
       }
     }, done);
