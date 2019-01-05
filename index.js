@@ -404,6 +404,7 @@ function evaluateExpression(test, context) {
       const right = getFunc(node.right.type)(node.right);
 
       if (node.operator === "==") return left === right;
+      if (node.operator === "!=") return left !== right;
       if (node.operator === ">=") return left >= right;
       if (node.operator === "<=") return left <= right;
 
