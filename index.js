@@ -320,19 +320,29 @@ function ESIListener(context) {
   }
 
   function replaceVariablesWithValues(text) {
-    //Replace strings such as `$(myVariable)` with a value
+    //Replace strings such as `$(myVariable)` or `HTTP_COOKIE{'foo'}` with the assigned value of the variable
+    //If a variable lacks a value it's replaced by an empty string
 
     const esiVariableRegex = /\$\(([^)]+)\)/g;
 
     let match;
     let returnText = text;
-    while ((match = esiVariableRegex.exec(text)) != null) {
-      const variableName = match[1];
-      const variableValue = context.assigns[variableName] || "";
+    while ((match = esiVariableRegex.exec(text)) !== null) {
+      let variableName = match[1];
+      let propertyName;
+      const propertyNameRegex = /\{'([^}]+)'}/; //Example: If the variable is  HTTP_COOKIE{'foo'}  the propertyName is "foo"
+      const propertyMatch = propertyNameRegex.exec(variableName);
+      if (propertyMatch !== null) {
+        propertyName = propertyMatch[1];
+        const subTextToRemove = propertyMatch[0];
+        variableName = variableName.replace(subTextToRemove, "");
+      }
+
+      let variableValue = context.assigns[variableName] || "";
       const textToReplace = match[0];
-      if (!variableValue) {
-        /*eslint-disable no-console*/
-        console.warn("Warning. Your ESI code tries to output the variable", variableName, "but it lacks a defined value");
+
+      if (propertyName) {
+        variableValue = variableValue[propertyName];
       }
       returnText = returnText.replace(textToReplace, variableValue);
     }

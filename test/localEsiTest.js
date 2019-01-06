@@ -1425,10 +1425,26 @@ describe("local ESI", () => {
       }, done);
     });
 
-    it("should replace $(myVariable) with an empty string, inside <esi:vars>", (done) => {
+    it("should replace undefined variables with empty strings (inside <esi:vars>)", (done) => {
       const markup = "<esi:vars>This is what an undefined variable looks like: $(myVariable)</esi:vars>";
       const expectedMarkup = "This is what an undefined variable looks like: ";
       localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should be able to replace $(HTTP_COOKIE{'cookie1'}) with the cookie's value inside <esi:var>", (done) => {
+      const markup = `
+        <esi:vars>
+        $(HTTP_COOKIE{'cookie1'})
+        </esi:vars>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "Kaka nummer ett";
+      localEsi(markup, { cookies: { cookie1: "Kaka nummer ett" } }, {
         send(body) {
           expect(body).to.equal(expectedMarkup);
           done();
