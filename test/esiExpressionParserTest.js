@@ -438,4 +438,20 @@ describe("esiExpressionParser", () => {
       }
     });
   });
+
+  it("should handle arithmetic between two numbers", () => {
+    const input = "4 + 2 == 0";
+    const result = esiExpressionParser(input);
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "ArithmeticExpression",
+      operator: "+",
+      left: { type: "Literal", value: 4 },
+      right: { type: "Literal", value: 2 }
+    });
+    expect(result).to.have.property("operator").that.eql("==");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal", value: 0
+    });
+  });
 });
