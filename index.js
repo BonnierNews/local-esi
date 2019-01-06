@@ -396,8 +396,9 @@ function evaluateExpression(test, context) {
 
       if (node.operator === "*") return left * right;
       if (node.operator === "/") return left / right;
-      if (node.operator === "+") return left + right;
       if (node.operator === "%") return left % right;
+      if (node.operator === "+") return left + right;
+      if (node.operator === "-") return left - right;
 
       throw new Error(`Uknown ArithmeticExpression operator: ${node.operator}`);
     },
@@ -407,7 +408,6 @@ function evaluateExpression(test, context) {
 
       if (node.operator === "&" || node.operator === "&&") return left && right;
       if (node.operator === "|" || node.operator === "||") return left || right;
-      if (node.operator === "%") return left % right;
 
       throw new Error(`Uknown BinaryExpression operator ${node.operator}`);
     },
