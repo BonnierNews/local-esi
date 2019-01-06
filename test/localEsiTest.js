@@ -1390,4 +1390,50 @@ describe("local ESI", () => {
       }, done);
     });
   });
+
+  describe("esi:vars", () => {
+    it("should be able to replace a variable with it's value when inside <esi:vars>", (done) => {
+      const markup = "<esi:assign name=\"myVariable\" value=\"Hello\"/><esi:vars>$(myVariable)</esi:vars>";
+      const expectedMarkup = "Hello";
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should be able to output the value of multiple variables when inside <esi:vars>", (done) => {
+      const markup = "<esi:assign name=\"myVariable\" value=\"Hello\"/><esi:assign name=\"anotherVariable\" value=\"Goodbye\"/><esi:vars>$(myVariable) $(anotherVariable)</esi:vars>";
+      const expectedMarkup = "Hello Goodbye";
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should not touch a piece of text like `$(string)` when it's outside of <esi:vars>", (done) => {
+      const markup = "<p>$(string)</p>";
+      const expectedMarkup = "<p>$(string)</p>";
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should replace $(myVariable) with an empty string, inside <esi:vars>", (done) => {
+      const markup = "<esi:vars>This is what an undefined variable looks like: $(myVariable)</esi:vars>";
+      const expectedMarkup = "This is what an undefined variable looks like: ";
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+  });
 });

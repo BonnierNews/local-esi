@@ -312,7 +312,31 @@ function ESIListener(context) {
 
     text = text.replace(/\\["]/g, "\"");
 
+    if (context.inEsiStatementProcessingContext) {
+      text = replaceVariablesWithValues(text);
+    }
+
     return text;
+  }
+
+  function replaceVariablesWithValues(text) {
+    //Replace strings such as `$(myVariable)` with a value
+
+    const esiVariableRegex = /\$\(([^)]+)\)/g;
+
+    let match;
+    let returnText = text;
+    while ((match = esiVariableRegex.exec(text)) != null) {
+      const variableName = match[1];
+      const variableValue = context.assigns[variableName] || "";
+      const textToReplace = match[0];
+      if (!variableValue) {
+        /*eslint-disable no-console*/
+        console.warn("Warning. Your ESI code tries to output the variable", variableName, "but it lacks a defined value");
+      }
+      returnText = returnText.replace(textToReplace, variableValue);
+    }
+    return returnText;
   }
 
   function onclosetag(tagname, next) {
