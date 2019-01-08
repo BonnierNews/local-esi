@@ -570,6 +570,36 @@ describe("local ESI", () => {
       }, done);
     });
 
+    it("should be able to parse variables in the src attribute of esi:include", (done) => {
+      /*eslint-disable quotes */
+      const markup = `<esi:assign name="siteName" value="some-server" /><esi:include src="https://$(siteName)/bazinga/"></esi:include>`;
+
+      nock("https://some-server")
+        .get("/bazinga/")
+        .reply(200, "respons från https://some-server/bazinga/");
+
+      nock("http://localhost:4567")
+        .get("/mystuff/")
+        .reply(200, "Hejsan");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 4567
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("respons från https://some-server/bazinga/");
+          done();
+        }
+      }, done);
+    });
+
     it("should handle errors when esi:including using esi:try", (done) => {
       let markup = "<esi:try>";
       markup += "<esi:attempt>";

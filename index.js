@@ -93,6 +93,12 @@ function ESIListener(context) {
     open(attribs, next) {
       if (!shouldWrite()) return next();
 
+      if (attribs && attribs.src) {
+        context.inEsiStatementProcessingContext = true;
+        attribs.src = handleProcessingInstructions(attribs.src);
+        context.inEsiStatementProcessingContext = false;
+      }
+
       fetchIncluded(attribs, (fetchError, fetchResult) => {
         if (fetchError) {
           return next(fetchError);
@@ -325,21 +331,24 @@ function ESIListener(context) {
 
     const esiVariableRegex = /\$\(([^)]+)\)/g;
 
-    let match;
+    let variableMatch;
     let returnText = text;
-    while ((match = esiVariableRegex.exec(text)) !== null) {
-      let variableName = match[1];
+    while ((variableMatch = esiVariableRegex.exec(text)) !== null) {
+      const variableExpression = variableMatch[1];
+      let variableName;
       let propertyName;
       const propertyNameRegex = /\{'([^}]+)'}/; //Example: If the variable is  HTTP_COOKIE{'foo'}  the propertyName is "foo"
-      const propertyMatch = propertyNameRegex.exec(variableName);
-      if (propertyMatch !== null) {
+      const propertyMatch = propertyNameRegex.exec(variableExpression);
+      if (!propertyMatch) {
+        variableName = variableExpression;
+      } else {
         propertyName = propertyMatch[1];
-        const subTextToRemove = propertyMatch[0];
-        variableName = variableName.replace(subTextToRemove, "");
+        const propertyTextToReplace = propertyMatch[0];
+        variableName = variableExpression.replace(propertyTextToReplace, "");
       }
 
       let variableValue = context.assigns[variableName] || "";
-      const textToReplace = match[0];
+      const textToReplace = variableMatch[0];
 
       if (variableValue && propertyName) {
         variableValue = variableValue[propertyName] || "";
