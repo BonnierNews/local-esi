@@ -342,7 +342,7 @@ function ESIListener(context) {
       const textToReplace = match[0];
 
       if (propertyName) {
-        variableValue = variableValue[propertyName];
+        variableValue = variableValue[propertyName] || "";
       }
       returnText = returnText.replace(textToReplace, variableValue);
     }
