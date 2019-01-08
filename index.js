@@ -341,7 +341,7 @@ function ESIListener(context) {
       let variableValue = context.assigns[variableName] || "";
       const textToReplace = match[0];
 
-      if (propertyName) {
+      if (variableValue && propertyName) {
         variableValue = variableValue[propertyName] || "";
       }
       returnText = returnText.replace(textToReplace, variableValue);
