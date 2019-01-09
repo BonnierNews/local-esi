@@ -387,6 +387,17 @@ function evaluateExpression(test, context) {
     int([arg]) {
       return parseInt(getFunc(arg.type)(arg));
     },
+    index([arg1, arg2]) {
+      return getFunc(arg1.type)(arg1).indexOf(getFunc(arg2.type)(arg2));
+    },
+    // eslint-disable-next-line camelcase
+    base64_decode([arg]) {
+      return Buffer.from(getFunc(arg.type)(arg), "base64").toString("utf8");
+    },
+    // eslint-disable-next-line camelcase
+    base64_encode([arg]) {
+      return Buffer.from(getFunc(arg.type)(arg), "utf8").toString("base64");
+    },
     CallExpression(node) {
       return getFunc(node.callee.name)(node.arguments);
     },
@@ -406,6 +417,10 @@ function evaluateExpression(test, context) {
       if (node.operator === "==") return left === right;
       if (node.operator === ">=") return left >= right;
       if (node.operator === "<=") return left <= right;
+      if (node.operator === "<") return left < right;
+      if (node.operator === ">") return left > right;
+      if (node.operator === "has") return left.indexOf(right) > -1;
+      if (node.operator === "has_i") return left.toLowerCase().indexOf(right.toLowerCase()) > -1;
 
       throw new Error(`Uknown BinaryExpression operator ${node.operator}`);
     },
@@ -429,6 +444,7 @@ function evaluateExpression(test, context) {
   };
 
   const parsedTree = esiExpressionParser(test);
+
   return getFunc(parsedTree.type)(parsedTree);
 
   function getFunc(name) {

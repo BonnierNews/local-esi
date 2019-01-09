@@ -1390,4 +1390,115 @@ describe("local ESI", () => {
       }, done);
     });
   });
+
+  describe("$base64", () => {
+    it("supports $base64_encode", (done) => {
+      const markup = `
+        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:choose>
+          <esi:when test="$base64_encode($(str)) == 'U2VhbkBCYW5hbiE='"/>
+            <p>true</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>true</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("supports $base64_decode", (done) => {
+      const markup = `
+        <esi:assign name="str" value="U2VhbkBCYW5hbiE="/>
+        <esi:choose>
+          <esi:when test="$base64_decode($(str)) == 'Sean@Banan!'"/>
+            <p>true</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>true</p>");
+          done();
+        }
+      }, done);
+    });
+  });
+
+  describe("$index", () => {
+    it("supports $index", (done) => {
+      const markup = `
+        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:choose>
+          <esi:when test="$index($(str), 'Banan') > -1"/>
+            <p>true</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="$index($(str), 'Apple') < 0"/>
+            <p>true again</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>true</p><p>true again</p>");
+          done();
+        }
+      }, done);
+    });
+  });
+
+  describe("has and has_i operator", () => {
+    it("supports has operator", (done) => {
+      const markup = `
+        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:choose>
+          <esi:when test="$(str) has 'Banan'"/>
+            <p>true</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="$(str) has 'banan'"/>
+            <p>true again</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>true</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("supports has_i operator", (done) => {
+      const markup = `
+        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:choose>
+          <esi:when test="$(str) has_i 'banan'"/>
+            <p>true</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="$(str) has_i 'Apple'"/>
+            <p>true again</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>true</p>");
+          done();
+        }
+      }, done);
+    });
+  });
 });

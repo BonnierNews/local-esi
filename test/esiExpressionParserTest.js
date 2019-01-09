@@ -375,6 +375,38 @@ describe("esiExpressionParser", () => {
     });
   });
 
+  it("handles binary expression with < operator", () => {
+    const input = "$(someVar) < 590";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Identifier",
+      name: "someVar"
+    });
+    expect(result).to.have.property("operator").that.eql("<");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 590
+    });
+  });
+
+  it("handles binary expression with > operator", () => {
+    const input = "$(someVar) > 590";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Identifier",
+      name: "someVar"
+    });
+    expect(result).to.have.property("operator").that.eql(">");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 590
+    });
+  });
+
   it("handles binary expression enclosed in unnecessary parentheses", () => {
     const input = "($(someVar) <= 590)";
     const result = esiExpressionParser(input);
@@ -407,7 +439,7 @@ describe("esiExpressionParser", () => {
     });
   });
 
-  it("1handles binary expression where each expression is enclosed in unnecessary parentheses", () => {
+  it("handles binary expression where each expression is enclosed in unnecessary parentheses", () => {
     const input = "($(someVar) == 1) && ($(someVar) == 2)";
     const result = esiExpressionParser(input);
 
