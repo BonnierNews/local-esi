@@ -392,11 +392,19 @@ function evaluateExpression(test, context) {
     },
     // eslint-disable-next-line camelcase
     base64_decode([arg]) {
-      return Buffer.from(getFunc(arg.type)(arg), "base64").toString("utf8");
+      const string = getFunc(arg.type)(arg);
+      if (!string) {
+        return "";
+      }
+      return Buffer.from(string, "base64").toString("utf8");
     },
     // eslint-disable-next-line camelcase
     base64_encode([arg]) {
-      return Buffer.from(getFunc(arg.type)(arg), "utf8").toString("base64");
+      const string = getFunc(arg.type)(arg);
+      if (!string) {
+        return "";
+      }
+      return Buffer.from(string, "utf8").toString("base64");
     },
     CallExpression(node) {
       return getFunc(node.callee.name)(node.arguments);

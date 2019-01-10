@@ -1427,6 +1427,46 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("handles base64_decode with undefined value", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$base64_decode($(str)) == 'Sean@Banan!'"/>
+            <p>true</p>
+          </esi:when>
+          <esi:otherwise>
+            <p>false</p>
+          </esi:otherwise>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>false</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("handles base64_encode with undefined value", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$base64_encode($(str)) == 'Sean@Banan!'"/>
+            <p>true</p>
+          </esi:when>
+          <esi:otherwise>
+            <p>false</p>
+          </esi:otherwise>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>false</p>");
+          done();
+        }
+      }, done);
+    });
   });
 
   describe("$index", () => {
