@@ -410,11 +410,11 @@ function evaluateExpression(test, context) {
       return getFunc(node.callee.name)(node.arguments);
     },
     LogicalExpression(node) {
-      const left = getFunc(node.left.type)(node.left);
-      const right = getFunc(node.right.type)(node.right);
+      const left = getFunc(node.left.type);
+      const right = getFunc(node.right.type);
 
-      if (node.operator === "&" || node.operator === "&&") return left && right;
-      if (node.operator === "|" || node.operator === "||") return left || right;
+      if (node.operator === "&" || node.operator === "&&") return left(node.left) && right(node.right);
+      if (node.operator === "|" || node.operator === "||") return left(node.left) || right(node.right);
 
       throw new Error(`Uknown BinaryExpression operator ${node.operator}`);
     },
