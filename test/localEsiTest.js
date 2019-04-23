@@ -1036,6 +1036,27 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("supports esi:text with JSON containg escaped citation inside esi:choose", (done) => {
+      const json = {"test": "[\"BI_News\"]" };
+      const markup = `<esi:choose>
+      <esi:when test="1==1">
+      <esi:text>${JSON.stringify(json)}</esi:text>
+      </esi:when>
+      </esi:choose>`;
+
+      localEsi(markup, {}, {
+        send(body) {
+          try {
+            const object = JSON.parse(body);
+            expect(object).to.eql(json);
+            done();
+          } catch (error) {
+            done(error);
+          }
+        }
+      });
+    });
   });
 
   describe("$add_header", () => {
