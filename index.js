@@ -37,7 +37,6 @@ function ListenerContext(req, res) {
   return {
     assigns: Object.assign(buildHeaderVariables(req && req.headers), {
       "HTTP_COOKIE": req.cookies || {},
-      "HTTP_USER_AGENT": {},
       "QUERY_STRING": req.query || {}
     }),
     cookies: req.cookies,
