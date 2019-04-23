@@ -457,7 +457,7 @@ describe("local ESI", () => {
     }, done);
   });
 
-  it("should handle HTTP HEADER exists", (done) => {
+  it("should handle HTTP HEADER", (done) => {
     const markup = `
       <esi:choose>
         <esi:when test="$(HTTP_HOST)=='http://www.example.com'">
@@ -475,7 +475,7 @@ describe("local ESI", () => {
     }, done);
   });
 
-  it("should handle existens of custom HTTP HEADER", (done) => {
+  it("should handle custom HTTP HEADER", (done) => {
     const markup = `
       <esi:choose>
         <esi:when test="$(HTTP_X_CUSTOM_HEADER)'">
