@@ -272,7 +272,8 @@ function ESIListener(context) {
   }
 
   function ontext(text, next) {
-    if (context.inEsiStatementProcessingContext) {
+    const [current = {}] = context.tags.slice(-1);
+    if (context.inEsiStatementProcessingContext && !current.plainText) {
       return writeToResult(handleProcessingInstructions(text), next);
     }
 
