@@ -457,6 +457,42 @@ describe("local ESI", () => {
     }, done);
   });
 
+  it("should handle HTTP HEADER", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="$(HTTP_HOST)=='http://www.example.com'">
+          <p>Welcome to example.com</p>
+        </esi:when>
+      </esi:choose>
+    `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>Welcome to example.com</p>";
+    localEsi(markup, { headers: { "host": "http://www.example.com" } }, {
+      send(body) {
+        expect(body).to.equal(expectedMarkup);
+        done();
+      }
+    }, done);
+  });
+
+  it("should handle custom HTTP HEADER", (done) => {
+    const markup = `
+      <esi:choose>
+        <esi:when test="$(HTTP_X_CUSTOM_HEADER)'">
+          <p>Custom header identified</p>
+        </esi:when>
+      </esi:choose>
+    `.replace(/^\s+|\n/gm, "");
+
+    const expectedMarkup = "<p>Custom header identified</p>";
+    localEsi(markup, { headers: { "x-custom-header": "My header value" } }, {
+      send(body) {
+        expect(body).to.equal(expectedMarkup);
+        done();
+      }
+    }, done);
+  });
+
   describe("esi:include", () => {
     it("should fetch and insert esi:include with relative url when dca=none", (done) => {
       const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
