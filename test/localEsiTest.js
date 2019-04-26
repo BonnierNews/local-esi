@@ -1600,7 +1600,7 @@ describe("local ESI", () => {
   });
 
   describe("matches and matches_i operator", () => {
-    it("supports has operator", (done) => {
+    it("supports matches operator", (done) => {
       const markup = `
         <esi:assign name="str" value="Sean@Banan!"/>
         <esi:choose>
