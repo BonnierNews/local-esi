@@ -439,6 +439,8 @@ function evaluateExpression(test, context) {
       if (node.operator === ">") return left > right;
       if (node.operator === "has") return left.indexOf(right) > -1;
       if (node.operator === "has_i") return left.toLowerCase().indexOf(right.toLowerCase()) > -1;
+      if (node.operator === "matches") return left.match(right);
+      if (node.operator === "matches_i") return left.match(new RegExp(right, "i"));
 
       throw new Error(`Uknown BinaryExpression operator ${node.operator}`);
     },
