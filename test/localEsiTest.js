@@ -1598,4 +1598,52 @@ describe("local ESI", () => {
       }, done);
     });
   });
+
+  describe("matches and matches_i operator", () => {
+    it("supports matches operator", (done) => {
+      const markup = `
+        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:choose>
+          <esi:when test="$(str) matches 'B.nan'"/>
+            <p>true</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="$(str) matches 'b.Nan'"/>
+            <p>true again</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>true</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("supports matches_i operator", (done) => {
+      const markup = `
+        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:choose>
+          <esi:when test="$(str) matches_i 'b.Nan'"/>
+            <p>true</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="$(str) matches_i 'Apple'"/>
+            <p>true again</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>true</p>");
+          done();
+        }
+      }, done);
+    });
+  });
 });
