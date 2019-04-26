@@ -880,6 +880,65 @@ describe("local ESI", () => {
         done();
       });
     });
+
+    it("should fetch without content-type header when using esi:include", (done) => {
+      const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
+
+      nock("http://localhost:1234", {
+        badheaders: ["content-type", "application/x-www-form-urlencoded"]
+      })
+        .get("/mystuff/")
+        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        },
+        headers: {
+          "content-type": "application/x-www-form-urlencoded"
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p><esi:vars>hej</esi:vars></p><p>efter</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("should fetch without content-type header when using esi:eval", (done) => {
+      const markup = "<esi:eval src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
+
+      nock("http://localhost:1234", {
+        badheaders: ["content-type", "application/x-www-form-urlencoded"]
+      })
+        .get("/mystuff/")
+        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        },
+        headers: {
+          "content-type": "application/x-www-form-urlencoded"
+        }
+      }, {
+        send() {
+          done();
+        }
+      }, done);
+    });
   });
 
   describe("esi:choose", () => {

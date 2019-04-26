@@ -192,6 +192,7 @@ function ESIListener(context) {
     };
 
     options.headers.host = undefined;
+    delete options.headers["content-type"];
 
     let source = attribs.src;
 
