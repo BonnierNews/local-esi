@@ -165,6 +165,9 @@ function ESIListener(context) {
     open(attribs, next) {
       const lastChoose = context.chooses[context.chooses.length - 1];
       const result = evaluateExpression(attribs.test, context);
+      if (attribs.matchname) {
+        context.assigns[attribs.matchname] = result;
+      }
 
       lastChoose.isCurrentlyEvaluatedTo = !lastChoose.isCurrentlyEvaluatedTo && result;
       lastChoose.hasEvaluatedToTrue = lastChoose.hasEvaluatedToTrue || result;
@@ -333,7 +336,11 @@ function ESIListener(context) {
 
     text = removeReservedCharacters(text);
 
-    text = text.replace(/(\$\()(\w*)(\))/ig, (_, _2, group2) => { //Variable access
+    text = text.replace(/(\$\()(\w*({\d+})?)(\))/ig, (_, _2, group2) => { //Variable access
+      const arrayMatch = group2.match(/(\w+){(\d)}$/);
+      if (arrayMatch) {
+        return context.assigns[arrayMatch[1]][arrayMatch[2]];
+      }
       return context.assigns[group2];
     });
 

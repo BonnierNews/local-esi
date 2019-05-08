@@ -1732,6 +1732,23 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("supports matches operator with matchname property", (done) => {
+      const markup = `
+          <esi:choose>
+          <esi:when test="'blahonga25blahingi' matches '''(blahonga)(\\d*)(5bla)'''" matchname="number">
+            <p>$(number{0}) $(number{2})</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>blahonga25bla 2</p>");
+          done();
+        }
+      }, done);
+    });
   });
 
   describe("outputting variables", () => {
