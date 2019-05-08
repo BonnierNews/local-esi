@@ -1705,4 +1705,23 @@ describe("local ESI", () => {
       }, done);
     });
   });
+
+  describe("outputting variables", () => {
+    it("outputs the value of variables in context of esi:vars", (done) => {
+      const markup = `
+        <esi:assign name="game1" value="Sim city"/>
+        <p>$(game1)</p>
+        <esi:vars>
+          <p>Some $(game1) text</p>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>$(game1)</p><p>Some Sim city text</p>");
+          done();
+        }
+      }, done);
+    });
+  });
 });

@@ -321,6 +321,10 @@ function ESIListener(context) {
       text = "";
     }
 
+    text = text.replace(/(\$\()(\w*)(\))/ig, (_, _2, group2) => { //Variable access
+      return context.assigns[group2];
+    });
+
     text = text.replace(/\\["]/g, "\"");
 
     return text;
