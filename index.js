@@ -82,7 +82,13 @@ function ESIListener(context) {
 
   esiTags["esi:assign"] = {
     open(attribs, next) {
-      context.assigns[attribs.name] = attribs.value;
+      const value = attribs.value;
+      if (value.startsWith("'''") && value.endsWith("'''")) {
+        context.assigns[attribs.name] = value.replace(/'''/ig, "");
+      } else {
+        context.assigns[attribs.name] = removeReservedCharacters(attribs.value);
+      }
+
       next();
     }
   };
@@ -159,6 +165,9 @@ function ESIListener(context) {
     open(attribs, next) {
       const lastChoose = context.chooses[context.chooses.length - 1];
       const result = evaluateExpression(attribs.test, context);
+      if (attribs.matchname) {
+        context.assigns[attribs.matchname] = result;
+      }
 
       lastChoose.isCurrentlyEvaluatedTo = !lastChoose.isCurrentlyEvaluatedTo && result;
       lastChoose.hasEvaluatedToTrue = lastChoose.hasEvaluatedToTrue || result;
@@ -196,7 +205,11 @@ function ESIListener(context) {
 
     let source = attribs.src;
 
-    if (!url.parse(attribs.src).pathname.endsWith("/")) {
+    if (source.startsWith("$(") && source.endsWith(")")) { //src is a variable
+      source = context.assigns[source.substring(2, source.length - 1)];
+    }
+
+    if (!url.parse(source).pathname.endsWith("/")) {
       return fetchCallback(new Error("Included URL's path name must end with /"));
     }
     for (const key in context.assigns) {
@@ -321,11 +334,32 @@ function ESIListener(context) {
       text = "";
     }
 
-    text = text.replace(/\\["]/g, "\"");
+    text = removeReservedCharacters(text);
+
+    text = text.replace(/(\$\()(\w*({\d+})?)(\))/ig, (_, _2, group2) => { //Variable access
+      const arrayMatch = group2.match(/(\w+){(\d)}$/);
+      if (arrayMatch) {
+        return context.assigns[arrayMatch[1]][arrayMatch[2]];
+      }
+      return context.assigns[group2];
+    });
+
+    text = text.replace(/\\\\/g, "\\"); //Escaped backslashes, remove the escaping backslash
 
     return text;
   }
 
+  function removeReservedCharacters(original) {
+    let text = original.replace(/\\["]/g, "\"");
+
+    text = text.replace(/(^|[^\\])(\\)($|[^\\])/ig, (_, group1, _2, group3) => { //Remove backslashes, but not escaped ones
+      return `${group1}${group3}`;
+    });
+
+    text = text.replace(/\\\\/g, "\\"); //Escaped backslashes, remove the escaping backslash
+
+    return text;
+  }
   function onclosetag(tagname, next) {
     const [current = {}] = context.tags.slice(-1);
 

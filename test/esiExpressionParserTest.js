@@ -470,4 +470,13 @@ describe("esiExpressionParser", () => {
       }
     });
   });
+
+  it("handles triple quoute enclosed string", () => {
+    const input = "$(someVar) == '''my\\value''')";
+    const result = esiExpressionParser(input);
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: "my\\value"
+    });
+  });
 });

@@ -939,6 +939,34 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("should support esi:include when url is from variable", (done) => {
+      let markup = "<esi:assign name=\"daurl\" value=\"http://mystuff.com/\"/>";
+      markup += "<esi:include src=\"$(daurl)\" dca=\"esi\"/><p>efter</p>";
+
+      nock("http://mystuff.com", {
+        reqheaders: { host: "mystuff.com"}
+      })
+        .get("/")
+        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>hej</p><p>efter</p>");
+          done();
+        }
+      }, done);
+    });
   });
 
   describe("esi:choose", () => {
@@ -1700,6 +1728,195 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         send(body) {
           expect(body).to.equal("<p>true</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("supports matches operator with matchname property", (done) => {
+      const markup = `
+          <esi:choose>
+          <esi:when test="'blahonga25blahingi' matches '''(blahonga)(\\d*)(5bla)'''" matchname="number">
+            <p>$(number{0}) $(number{2})</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>blahonga25bla 2</p>");
+          done();
+        }
+      }, done);
+    });
+  });
+
+  describe("outputting variables", () => {
+    it("outputs the value of variables in context of esi:vars", (done) => {
+      const markup = `
+        <esi:assign name="game1" value="Sim city"/>
+        <p>$(game1)</p>
+        <esi:vars>
+          <p>Some $(game1) text</p>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>$(game1)</p><p>Some Sim city text</p>");
+          done();
+        }
+      }, done);
+    });
+  });
+
+  describe("reserved characters and escaping", () => {
+    it("does not removes backslashes outside processing context", (done) => {
+      const markup = `
+        <p>\\Program Files\\Game\\Fun.exe.</p>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>\\Program Files\\Game\\Fun.exe.</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("removes backslashes in processing context", (done) => {
+      const markup = `
+        <esi:vars>
+          <p>\\Program Files\\Game\\Fun.exe.</p>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>Program FilesGameFun.exe.</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("supports escaping backslashes with backslash in processing context", (done) => {
+      const markup = `
+        <esi:vars>
+          <p>\\\\Program Files\\\\Game\\\\Fun.exe.</p>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>\\Program Files\\Game\\Fun.exe.</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("does not support espacing backslashes in processing context with tripple quotes", (done) => {
+      const markup = `
+        <esi:vars>
+          <p>'''\\Program Files\\Game\\Fun.exe.'''</p>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>'''Program FilesGameFun.exe.'''</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("removes backslashes when assigning variables", (done) => {
+      // We test this using esi:include and nock as we want to ensure that it isn't simply as output time that the variables value is without backslashes
+      const markup = `
+        <esi:assign name="daurl" value="\\/my\\stuff/" />
+        <esi:include src="$(daurl)" dca="none"/>
+        <esi:vars>
+          <p>$(daurl)</p>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      nock("http://localhost:1234")
+        .get("/mystuff/")
+        .reply(200, "<p>hej</p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>hej</p><p>/mystuff/</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("supports escaping using backslash when assigning variables", (done) => {
+      // We test this using esi:include and nock as we want to ensure that it isn't simply as output time that the variables value is without backslashes
+      const markup = `
+        <esi:assign name="daurl" value="\\\\/my\\\\stuff/" />
+        <esi:include src="$(daurl)" dca="none"/>
+        <esi:vars>
+          <p>$(daurl)</p>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      nock("http://my:80")
+        .get("/stuff/")
+        .reply(200, "<p>hej</p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>hej</p><p>\\/my\\stuff/</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("supports escaping using tripple quotes when assigning variables", (done) => {
+      // We test this using esi:include and nock as we want to ensure that it isn't simply as output time that the variables value is without backslashes
+      const markup = `
+        <esi:assign name="daurl" value="'''\\/my\\stuff/'''" />
+        <esi:include src="$(daurl)" dca="none"/><p>efter</p>
+      `.replace(/^\s+|\n/gm, "");
+
+      nock("http://my:80")
+        .get("/stuff/")
+        .reply(200, "<p>hej</p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>hej</p><p>efter</p>");
           done();
         }
       }, done);
