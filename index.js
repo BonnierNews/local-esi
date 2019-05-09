@@ -338,7 +338,7 @@ function ESIListener(context) {
 
     text = text.replace(/\$\(\w*({\d+})?\)/ig, (variableAccess) => { //Variable access
       const expressionResult = evaluateExpression(variableAccess, context);
-      if (expressionResult === null) {
+      if (expressionResult === undefined) {
         return "";
       }
       return evaluateExpression(variableAccess, context);
@@ -350,6 +350,10 @@ function ESIListener(context) {
   }
 
   function removeReservedCharacters(original) {
+    if (!original) {
+      return original;
+    }
+
     let text = original.replace(/\\["]/g, "\"");
 
     text = text.replace(/(^|[^\\])(\\)($|[^\\])/ig, (_, group1, _2, group3) => { //Remove backslashes, but not escaped ones
@@ -476,13 +480,13 @@ function evaluateExpression(test, context) {
       if (node.operator === "has_i") return left.toLowerCase().indexOf(right.toLowerCase()) > -1;
       if (node.operator === "matches") {
         if (!left) {
-          return null;
+          return;
         }
         return left.match(right);
       }
       if (node.operator === "matches_i") {
         if (!left) {
-          return null;
+          return;
         }
         return left.match(new RegExp(right, "i"));
       }
@@ -492,7 +496,7 @@ function evaluateExpression(test, context) {
     MemberExpression(node) {
       const object = getFunc(node.object.type)(node.object);
 
-      if (!object) return null;
+      if (!object) return;
 
       return getFunc(node.property.type)(node.property, object);
     },

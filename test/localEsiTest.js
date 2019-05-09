@@ -2003,5 +2003,22 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("should not crash when assigning from non-existing value expression", (done) => {
+      const markup = `
+        <esi:assign name="cookie_val" value="$(HTTP_COOKIE{'cookie1'})" />
+        <esi:vars>
+          $(cookie_val)
+        </esi:vars>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "";
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
   });
 });
