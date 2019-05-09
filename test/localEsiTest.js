@@ -1964,4 +1964,23 @@ describe("local ESI", () => {
       }, done);
     });
   });
+
+  describe("esi:assign", () => {
+    it("should evaluate value expression", (done) => {
+      const markup = `
+        <esi:assign name="cookie_val" value="$(HTTP_COOKIE{'cookie1'})" />
+        <esi:vars>
+          $(cookie_val)
+        </esi:vars>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "jklöjl";
+      localEsi(markup, { cookies: { cookie1: "jklöjl" } }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+  });
 });

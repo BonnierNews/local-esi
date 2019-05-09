@@ -479,4 +479,20 @@ describe("esiExpressionParser", () => {
       value: "my\\value"
     });
   });
+
+  it("handles number literal expression", () => {
+    const input = "59";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "Literal");
+    expect(result).to.have.property("value").that.eql(59);
+  });
+
+  it("handles string literal expression2", () => {
+    const input = "jan.bananberg@test.com";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "Literal");
+    expect(result).to.have.property("value").that.eql("jan.bananberg@test.com");
+  });
 });

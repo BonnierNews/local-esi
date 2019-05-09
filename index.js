@@ -86,7 +86,7 @@ function ESIListener(context) {
       if (value.startsWith("'''") && value.endsWith("'''")) {
         context.assigns[attribs.name] = value.replace(/'''/ig, "");
       } else {
-        context.assigns[attribs.name] = removeReservedCharacters(attribs.value);
+        context.assigns[attribs.name] = removeReservedCharacters(evaluateExpression(value, context));
       }
 
       next();
