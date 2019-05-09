@@ -1749,6 +1749,46 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("does not crash when matches is invoked on non-existing value", (done) => {
+      const markup = `
+          <esi:choose>
+            <esi:when test="$(neh) matches '''(blahonga)(\\d*)(5bla)'''" matchname="damatch">
+              <p>$(damatch{0}) $(number{2})</p>
+            </esi:when>
+          </esi:choose>
+          <esi:vars>
+          <p>$(damatch{0})$(number{2})</p>
+          </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p></p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("does not crash when matches_i is invoked on non-existing value", (done) => {
+      const markup = `
+          <esi:choose>
+            <esi:when test="$(neh) matches_i '''(blahonga)(\\d*)(5bla)'''" matchname="damatch">
+              <p>$(damatch{0}) $(number{2})</p>
+            </esi:when>
+          </esi:choose>
+          <esi:vars>
+          <p>$(damatch{0})$(number{2})</p>
+          </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p></p>");
+          done();
+        }
+      }, done);
+    });
   });
 
   describe("outputting variables", () => {

@@ -339,6 +339,9 @@ function ESIListener(context) {
     text = text.replace(/(\$\()(\w*({\d+})?)(\))/ig, (_, _2, group2) => { //Variable access
       const arrayMatch = group2.match(/(\w+){(\d)}$/);
       if (arrayMatch) {
+        if (!context.assigns[arrayMatch[1]]) {
+          return "";
+        }
         return context.assigns[arrayMatch[1]][arrayMatch[2]];
       }
       return context.assigns[group2];
@@ -474,8 +477,18 @@ function evaluateExpression(test, context) {
       if (node.operator === ">") return left > right;
       if (node.operator === "has") return left.indexOf(right) > -1;
       if (node.operator === "has_i") return left.toLowerCase().indexOf(right.toLowerCase()) > -1;
-      if (node.operator === "matches") return left.match(right);
-      if (node.operator === "matches_i") return left.match(new RegExp(right, "i"));
+      if (node.operator === "matches") {
+        if (!left) {
+          return null;
+        }
+        return left.match(right);
+      }
+      if (node.operator === "matches_i") {
+        if (!left) {
+          return null;
+        }
+        return left.match(new RegExp(right, "i"));
+      }
 
       throw new Error(`Uknown BinaryExpression operator ${node.operator}`);
     },
