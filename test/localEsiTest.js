@@ -1982,5 +1982,26 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("should support assignment from regex result", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="'blahonga25blahingi' matches '''(blahonga)(\\d*)(5bla)'''" matchname="number_match">
+            <esi:assign name="number" value="$(number_match{2})" />
+          </esi:when>
+        </esi:choose>
+        <esi:vars>
+          $(number)
+        </esi:vars>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "2";
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
   });
 });

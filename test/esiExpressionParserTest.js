@@ -75,6 +75,22 @@ describe("esiExpressionParser", () => {
     });
   });
 
+  it("should handle member expression with array access", () => {
+    const input = "$(someVar{1})";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "MemberExpression");
+    expect(result).to.have.property("object").that.eql({
+      type: "Identifier",
+      name: "someVar"
+    });
+
+    expect(result).to.have.property("property").that.eql({
+      type: "Identifier",
+      name: "1"
+    });
+  });
+
   it("handle logical expression with & operator ", () => {
     const input = "$(HTTP_USER_AGENT{'os'})=='WIN' & $(HTTP_USER_AGENT{'browser'})=='MSIE')";
     const result = esiExpressionParser(input);

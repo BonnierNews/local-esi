@@ -336,15 +336,12 @@ function ESIListener(context) {
 
     text = removeReservedCharacters(text);
 
-    text = text.replace(/(\$\()(\w*({\d+})?)(\))/ig, (_, _2, group2) => { //Variable access
-      const arrayMatch = group2.match(/(\w+){(\d)}$/);
-      if (arrayMatch) {
-        if (!context.assigns[arrayMatch[1]]) {
-          return "";
-        }
-        return context.assigns[arrayMatch[1]][arrayMatch[2]];
+    text = text.replace(/\$\(\w*({\d+})?\)/ig, (variableAccess) => { //Variable access
+      const expressionResult = evaluateExpression(variableAccess, context);
+      if (expressionResult === null) {
+        return "";
       }
-      return context.assigns[group2];
+      return evaluateExpression(variableAccess, context);
     });
 
     text = text.replace(/\\\\/g, "\\"); //Escaped backslashes, remove the escaping backslash
@@ -495,7 +492,7 @@ function evaluateExpression(test, context) {
     MemberExpression(node) {
       const object = getFunc(node.object.type)(node.object);
 
-      if (!object) throw new Error(`Cannot read member from ${JSON.stringify(node.object)}`);
+      if (!object) return null;
 
       return getFunc(node.property.type)(node.property, object);
     },
@@ -512,7 +509,6 @@ function evaluateExpression(test, context) {
   };
 
   const parsedTree = esiExpressionParser(test);
-
   return getFunc(parsedTree.type)(parsedTree);
 
   function getFunc(name) {
