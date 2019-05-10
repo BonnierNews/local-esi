@@ -971,6 +971,34 @@ describe("local ESI", () => {
     });
   });
 
+  it("should support esi:include when url is from variable", (done) => {
+    let markup = "<esi:assign name=\"host\" value=\"mystuff.com\"/>";
+    markup += "<esi:include src=\"http://$(host)/path/\" dca=\"esi\"/><p>efter</p>";
+
+    nock("http://mystuff.com", {
+      reqheaders: { host: "mystuff.com"}
+    })
+      .get("/path/")
+      .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+
+    localEsi(markup, {
+      socket: {
+        server: {
+          address() {
+            return {
+              port: 1234
+            };
+          }
+        }
+      }
+    }, {
+      send(body) {
+        expect(body).to.equal("<p>hej</p><p>efter</p>");
+        done();
+      }
+    }, done);
+  });
+
   describe("esi:choose", () => {
     it("supports nested esi:choose when all match", (done) => {
       const markup = `
@@ -1801,12 +1829,13 @@ describe("local ESI", () => {
         <esi:vars>
           <p>Some $(game1) text</p>
           <p>$(HTTP_COOKIE{'cookie1'})</p>
+          <p>$(non_existings)</p>
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
       localEsi(markup, { cookies: { cookie1: "Kaka nummer ett" } }, {
         send(body) {
-          expect(body).to.equal("<p>$(game1)</p><p>Some Sim city text</p><p>Kaka nummer ett</p>");
+          expect(body).to.equal("<p>$(game1)</p><p>Some Sim city text</p><p>Kaka nummer ett</p><p></p>");
           done();
         }
       }, done);
