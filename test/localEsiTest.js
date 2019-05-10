@@ -127,6 +127,24 @@ describe("local ESI", () => {
       }, done);
     });
 
+    it("should not evaluate crashing code in when if criteria evaluates to false", (done) => {
+      const markup = `<esi:assign name="blahonga" value="false" />
+      <esi:choose>
+        <esi:when test="$(blahonga)=='true'">
+          $substr($(nonexisting), 0)
+        </esi:when>
+      </esi:choose>`.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "";
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
     it("should handle nested choose in when when test evaluates to true", (done) => {
       const markup = `<esi:assign name="var_a" value="true" />
       <esi:choose>
@@ -1705,8 +1723,22 @@ describe("local ESI", () => {
         expect(nextErr).to.not.equal(undefined);
         done();
       });
+    });
 
+    it("throws when $substr is invoked without valid params", (done) => {
+      const markup = `
+        <esi:vars>
+          <p>$substr($(str))</p>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
 
+      localEsi(markup, { }, {
+        send() {
+        }
+      }, (nextErr) => {
+        expect(nextErr).to.not.equal(undefined);
+        done();
+      });
     });
   });
 
