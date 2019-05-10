@@ -1668,6 +1668,49 @@ describe("local ESI", () => {
     });
   });
 
+  describe("$substr", () => {
+    it("supports $substr", (done) => {
+      const markup = `
+        <esi:assign name="str" value="abcdef" />
+        <esi:vars>
+          <p>$substr('12345678', 2, 4)</p>
+          <p>$substr('12345678', 0)</p>
+          <p>$substr('12345678', 1)</p>
+          <p>$substr('12345678', -2)</p>
+          <p>$substr('12345678', 2, 40)</p>
+          <p>$substr('12345678', 2, -4)</p>
+          <p>$substr($(str), 2, 2)</p>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>3456</p><p>12345678</p><p>2345678</p><p>78</p><p>345678</p><p>34</p><p>cd</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("throws when $substr is invoked with non-existing variable", (done) => {
+      const markup = `
+        <esi:vars>
+          <p>$substr($(str), 2, 2)</p>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send() {
+        }
+      }, (nextErr) => {
+        expect(nextErr).to.not.equal(undefined);
+        done();
+      });
+
+
+    });
+  });
+
+
   describe("has and has_i operator", () => {
     it("supports has operator", (done) => {
       const markup = `
