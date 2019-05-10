@@ -336,7 +336,7 @@ function ESIListener(context) {
 
     text = removeReservedCharacters(text);
 
-    text = text.replace(/\$\(\w*({\d+})?\)/ig, (variableAccess) => { //Variable access
+    text = text.replace(/\$\(\w*(({\d+})|({'\w+'}))?\)/ig, (variableAccess) => { //Variable access
       const expressionResult = evaluateExpression(variableAccess, context);
       if (expressionResult === undefined) {
         return "";

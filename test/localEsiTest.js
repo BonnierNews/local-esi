@@ -1800,12 +1800,13 @@ describe("local ESI", () => {
         <p>$(game1)</p>
         <esi:vars>
           <p>Some $(game1) text</p>
+          <p>$(HTTP_COOKIE{'cookie1'})</p>
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      localEsi(markup, { }, {
+      localEsi(markup, { cookies: { cookie1: "Kaka nummer ett" } }, {
         send(body) {
-          expect(body).to.equal("<p>$(game1)</p><p>Some Sim city text</p>");
+          expect(body).to.equal("<p>$(game1)</p><p>Some Sim city text</p><p>Kaka nummer ett</p>");
           done();
         }
       }, done);
