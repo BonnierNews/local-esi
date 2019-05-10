@@ -402,6 +402,24 @@ describe("local ESI", () => {
       }, done);
     });
 
+    it("should support test with operator !=", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$int($(HTTP_COOKIE{'int_cookie'})) != 1">
+            <p>Inte 1</p>
+          </esi:when>
+      </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "<p>Inte 1</p>";
+      localEsi(markup, { cookies: { "int_cookie": 2 } }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
     it("should handle QUERY_STRING", (done) => {
       const markup = `
         <esi:choose>
@@ -451,6 +469,90 @@ describe("local ESI", () => {
       localEsi(markup, { headers: { "x-custom-header": "My header value" } }, {
         send(body) {
           expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should handle modulus divisions in test expressions", (done) => {
+      const markup = `
+        <esi:choose>
+        <esi:when test="4 % 2 == 0">
+          Ja
+        </esi:when>
+        <esi:otherwise>
+          Nej
+        </esi:otherwise>
+      </esi:choose>
+      `;
+      const expectedMarkup = "Ja";
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body.trim()).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should handle plus in test expressions", (done) => {
+      const markup = `
+        <esi:choose>
+        <esi:when test="4 + 2 == 6">
+          Ja
+        </esi:when>
+        <esi:otherwise>
+          Nej
+        </esi:otherwise>
+      </esi:choose>
+      `;
+      const expectedMarkup = "Ja";
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body.trim()).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should handle subtraction in test expressions", (done) => {
+      const markup = `
+        <esi:choose>
+        <esi:when test="4 - 2 == 2">
+          Ja
+        </esi:when>
+        <esi:otherwise>
+          Nej
+        </esi:otherwise>
+      </esi:choose>
+      `;
+      const expectedMarkup = "Ja";
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body.trim()).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should handle division in test-expressions", (done) => {
+      const markup = `
+        <esi:choose>
+        <esi:when test="100 / 10 == 10">
+          Ja
+        </esi:when>
+        <esi:otherwise>
+          Nej
+        </esi:otherwise>
+      </esi:choose>
+      `;
+      const expectedMarkup = "Ja";
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body.trim()).to.equal(expectedMarkup);
           done();
         }
       }, done);

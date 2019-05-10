@@ -423,6 +423,102 @@ describe("esiExpressionParser", () => {
     });
   });
 
+  it("handles binary expression with + operator", () => {
+    const input = "$(someVar) + 590";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Identifier",
+      name: "someVar"
+    });
+    expect(result).to.have.property("operator").that.eql("+");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 590
+    });
+  });
+
+  it("handles binary expression with - operator", () => {
+    const input = "2 - 1";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Literal",
+      value: 2
+    });
+    expect(result).to.have.property("operator").that.eql("-");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 1
+    });
+  });
+
+  it("handles binary expression with % operator", () => {
+    const input = "2 % 1";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Literal",
+      value: 2
+    });
+    expect(result).to.have.property("operator").that.eql("%");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 1
+    });
+  });
+
+  it("handles binary expression with / operator", () => {
+    const input = "2 / 1";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Literal",
+      value: 2
+    });
+    expect(result).to.have.property("operator").that.eql("/");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 1
+    });
+  });
+
+  it("handles binary expression with left side that looks like operators but is not", () => {
+    const input = "$(HTTP_HOST)=='+-*/'";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Identifier",
+      name: "HTTP_HOST"
+    });
+    expect(result).to.have.property("operator").that.eql("==");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: "+-*/"
+    });
+  });
+
+  it("handles binary expression with % operator", () => {
+    const input = "2 % 1";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Literal",
+      value: 2
+    });
+    expect(result).to.have.property("operator").that.eql("%");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 1
+    });
+  });
+
   it("handles binary expression enclosed in unnecessary parentheses", () => {
     const input = "($(someVar) <= 590)";
     const result = esiExpressionParser(input);
