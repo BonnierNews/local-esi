@@ -511,4 +511,20 @@ describe("esiExpressionParser", () => {
     expect(result).to.have.property("type", "Literal");
     expect(result).to.have.property("value").that.eql("jan.bananberg@test.com");
   });
+
+  it("handles binary expression where one expression is a regular expression", () => {
+    const input = "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$'''";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Identifier",
+      name: "HTTP_REFERER"
+    });
+    expect(result).to.have.property("operator").that.eql("matches");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: "(google|yahoo|bing|yandex)\\.\\d+$"
+    });
+  });
 });
