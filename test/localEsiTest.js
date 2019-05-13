@@ -1124,7 +1124,6 @@ describe("local ESI", () => {
       }, done);
     });
 
-
     it("hides nested esi:choose outcome if first level evaluates to false", (done) => {
       const markup = `
         <esi:choose>
@@ -1141,6 +1140,48 @@ describe("local ESI", () => {
       localEsi(markup, { query: { q: "2", p: "1"} }, {
         send(body) {
           expect(body).to.equal("");
+          done();
+        }
+      }, done);
+    });
+
+    it("does assign variable in when if test evaluates to true", (done) => {
+      const markup = `
+        <esi:assign name="myVar" value="false" />
+        <esi:choose>
+          <esi:when test="$(QUERY_STRING{'q'})=='2'">
+            <esi:assign name="myVar" value="true" />
+          </esi:when>
+        </esi:choose>
+        <esi:vars>
+          $(myVar)
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { query: { q: "2", p: "1"} }, {
+        send(body) {
+          expect(body).to.equal("true");
+          done();
+        }
+      }, done);
+    });
+
+    it("does NOT assign variable in when if test evaluates to false", (done) => {
+      const markup = `
+        <esi:assign name="myVar" value="false" />
+        <esi:choose>
+          <esi:when test="$(QUERY_STRING{'q'})=='1'">
+            <esi:assign name="myVar" value="true" />
+          </esi:when>
+        </esi:choose>
+        <esi:vars>
+          $(myVar)
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { query: { q: "2", p: "1"} }, {
+        send(body) {
+          expect(body).to.equal("false");
           done();
         }
       }, done);
