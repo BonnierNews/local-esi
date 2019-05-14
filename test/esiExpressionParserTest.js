@@ -550,7 +550,7 @@ describe("esiExpressionParser", () => {
       type: "BinaryExpression",
       left: {
         type: "Literal",
-        name: "newyork"
+        value: "newyork"
       },
       operator: "matches",
       right: {
