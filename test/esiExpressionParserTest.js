@@ -527,4 +527,36 @@ describe("esiExpressionParser", () => {
       value: "(google|yahoo|bing|yandex)\\.\\d+$"
     });
   });
+
+  it("handles multiple evaluations with two regular expressions", () => {
+    const input = "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$''' && 'newyork' matches 'newyorknewyork'";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "LogicalExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "BinaryExpression",
+      left: {
+        type: "Identifier",
+        name: "HTTP_REFERER"
+      },
+      operator: "matches",
+      right: {
+        type: "Literal",
+        value: "(google|yahoo|bing|yandex)\\.\\d+$"
+      }
+    });
+    expect(result).to.have.property("operator").that.eql("&&");
+    expect(result).to.have.property("right").that.eql({
+      type: "BinaryExpression",
+      left: {
+        type: "Literal",
+        name: "newyork"
+      },
+      operator: "matches",
+      right: {
+        type: "Literal",
+        value: "newyorknewyork"
+      }
+    });
+  });
 });
