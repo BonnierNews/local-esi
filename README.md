@@ -10,7 +10,7 @@ Make your Express app work like it had Akamai Edge Side Includes parsing.
 ```javascript
 "use strict";
 
-const localEsi = require("@expressen/local-esi");
+const localEsi = require("@bonniernews/local-esi");
 
 module.exports = (req, res, next) => {
   res.render("index", { data: "a" }, (err, html) => {
