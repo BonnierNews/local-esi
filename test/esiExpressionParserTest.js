@@ -456,7 +456,7 @@ describe("esiExpressionParser", () => {
   });
 
   it("handles binary expression where each expression is enclosed in unnecessary parentheses", () => {
-    const input = "($(someVar) == 1) && ($(someVar) == 2)";
+    const input = "($(someVar) == 1) && (2 == $(someVar))";
     const result = esiExpressionParser(input);
 
     expect(result).to.have.property("type", "LogicalExpression");
@@ -476,13 +476,13 @@ describe("esiExpressionParser", () => {
     expect(result).to.have.property("right").that.eql({
       type: "BinaryExpression",
       left: {
-        type: "Identifier",
-        name: "someVar"
+        type: "Literal",
+        value: 2
       },
       operator: "==",
       right: {
-        type: "Literal",
-        value: 2
+        type: "Identifier",
+        name: "someVar"
       }
     });
   });
@@ -557,6 +557,38 @@ describe("esiExpressionParser", () => {
         type: "Literal",
         value: "newyorknewyork"
       }
+    });
+  });
+
+  it("handles variables named 'has' (although it's used in binary expressions)", () => {
+    const input = "$(has) == 'true'";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Identifier",
+      name: "has"
+    });
+    expect(result).to.have.property("operator").that.eql("==");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: "true"
+    });
+  });
+
+  it("handles variables named 'has' and 'has_i' (although they are used in binary expressions)", () => {
+    const input = "$(has_i) == $(has)";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Identifier",
+      name: "has_i"
+    });
+    expect(result).to.have.property("operator").that.eql("==");
+    expect(result).to.have.property("right").that.eql({
+      type: "Identifier",
+      name: "has"
     });
   });
 });
