@@ -3,6 +3,7 @@
 const {expect} = require("chai");
 const localEsi = require("../index");
 const nock = require("nock");
+const ck = require("chronokinesis");
 
 describe("local ESI", () => {
 
@@ -1780,6 +1781,31 @@ describe("local ESI", () => {
         expect(nextErr).to.not.equal(undefined);
         done();
       });
+    });
+  });
+
+  describe("$time", () => {
+    before(() => {
+      ck.freeze("2019-06-30");
+    });
+
+    after(ck.reset);
+
+    it("supports $time", (done) => {
+      const markup = `
+        <esi:assign name="now" value="$time()" />
+        <esi:vars>
+          <p>$(now)</p>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      const now = Date.now();
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal(`<p>${now}</p>`);
+          done();
+        }
+      }, done);
     });
   });
 

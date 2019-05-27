@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "atlas-html-stream": "^1.2.0",
+    "chronokinesis": "^2.0.1",
     "request": "^2.88.0"
   },
   "engines": {

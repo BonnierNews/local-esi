@@ -17,7 +17,7 @@ describe("esiExpressionParser", () => {
     expect(result.right).to.have.property("value", "true");
   });
 
-  it("handle call expression", () => {
+  it("handles call expression with argument", () => {
     const input = "$exists($(user_email))";
     const result = esiExpressionParser(input);
 
@@ -30,6 +30,18 @@ describe("esiExpressionParser", () => {
       type: "Identifier",
       name: "user_email"
     }]);
+  });
+
+  it("handles call expression without argument", () => {
+    const input = "$time()";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "CallExpression");
+    expect(result).to.have.property("callee").that.eql({
+      type: "Identifier",
+      name: "time"
+    });
+    expect(result).to.have.property("arguments").to.eql([]);
   });
 
   it("should handle unary expression with ! operator", () => {
