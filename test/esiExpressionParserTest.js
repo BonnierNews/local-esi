@@ -603,4 +603,209 @@ describe("esiExpressionParser", () => {
       name: "has"
     });
   });
+
+  it("handles arithmetic binary expression with +", () => {
+    const input = "1 + 2";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Literal",
+      value: 1
+    });
+    expect(result).to.have.property("operator").that.eql("+");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 2
+    });
+  });
+
+  it("handles arithmetic binary expression with -", () => {
+    const input = "1 - 2";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Literal",
+      value: 1
+    });
+    expect(result).to.have.property("operator").that.eql("-");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 2
+    });
+  });
+
+  it("handles arithmetic binary expression with *", () => {
+    const input = "1 * 2";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Literal",
+      value: 1
+    });
+    expect(result).to.have.property("operator").that.eql("*");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 2
+    });
+  });
+
+  it("handles arithmetic binary expression with /", () => {
+    const input = "1 / 2";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Literal",
+      value: 1
+    });
+    expect(result).to.have.property("operator").that.eql("/");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 2
+    });
+  });
+
+  it("handles arithmetic binary expression with %", () => {
+    const input = "1 % 2";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Literal",
+      value: 1
+    });
+    expect(result).to.have.property("operator").that.eql("%");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 2
+    });
+  });
+
+  it("gives higher precedence to + expressions than ==", () => {
+    const input = "1 + 2 == 3";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("operator").that.eql("==");
+    expect(result).to.have.property("left").that.eql({
+      type: "BinaryExpression",
+      left: {
+        type: "Literal",
+        value: 1
+      },
+      operator: "+",
+      right: {
+        type: "Literal",
+        value: 2
+      }
+    });
+
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 3
+    });
+  });
+
+  it("gives higher precedence to - expressions than ==", () => {
+    const input = "1 - 2 == 3";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("operator").that.eql("==");
+    expect(result).to.have.property("left").that.eql({
+      type: "BinaryExpression",
+      left: {
+        type: "Literal",
+        value: 1
+      },
+      operator: "-",
+      right: {
+        type: "Literal",
+        value: 2
+      }
+    });
+
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 3
+    });
+  });
+
+  it("gives higher precedence to * expressions than ==", () => {
+    const input = "1 * 2 == 3";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("operator").that.eql("==");
+    expect(result).to.have.property("left").that.eql({
+      type: "BinaryExpression",
+      left: {
+        type: "Literal",
+        value: 1
+      },
+      operator: "*",
+      right: {
+        type: "Literal",
+        value: 2
+      }
+    });
+
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 3
+    });
+  });
+
+  it("gives higher precedence to / expressions than ==", () => {
+    const input = "1 / 2 == 3";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("operator").that.eql("==");
+    expect(result).to.have.property("left").that.eql({
+      type: "BinaryExpression",
+      left: {
+        type: "Literal",
+        value: 1
+      },
+      operator: "/",
+      right: {
+        type: "Literal",
+        value: 2
+      }
+    });
+
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 3
+    });
+  });
+
+  it("gives higher precedence to % expressions than ==", () => {
+    const input = "1 % 2 == 3";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("operator").that.eql("==");
+    expect(result).to.have.property("left").that.eql({
+      type: "BinaryExpression",
+      left: {
+        type: "Literal",
+        value: 1
+      },
+      operator: "%",
+      right: {
+        type: "Literal",
+        value: 2
+      }
+    });
+
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: 3
+    });
+  });
 });
