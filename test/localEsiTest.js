@@ -1799,7 +1799,7 @@ describe("local ESI", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const now = Date.now();
+      const now = Math.round(Date.now() / 1000);
       localEsi(markup, { }, {
         send(body) {
           expect(body).to.equal(`<p>${now}</p>`);
