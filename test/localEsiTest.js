@@ -821,7 +821,7 @@ describe("local ESI", () => {
 
       nock("http://localhost:1234")
         .get("/mystuff/")
-        .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars>");
+        .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')</esi:vars>");
 
 
       const headers = [];
@@ -845,7 +845,7 @@ describe("local ESI", () => {
           expect(body).to.equal("<p>efter</p>");
           expect(headers).to.have.length(1);
           expect(headers[0]).to.have.property("name", "Set-Cookie");
-          expect(headers[0]).to.have.property("value", "my_cookie=val1; path=/; HttpOnly");
+          expect(headers[0]).to.have.property("value", "my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT");
           done();
         }
       }, done);
