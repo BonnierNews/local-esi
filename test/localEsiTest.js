@@ -823,9 +823,10 @@ describe("local ESI", () => {
         .get("/mystuff/")
         .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars>");
 
-      const cookies = {};
-      function cookie(name, value) {
-        cookies[name] = value;
+
+      const headers = [];
+      function set(name, value) {
+        headers.push({name, value});
       }
 
       localEsi(markup, {
@@ -839,10 +840,12 @@ describe("local ESI", () => {
           }
         }
       }, {
-        cookie,
+        set,
         send(body) {
           expect(body).to.equal("<p>efter</p>");
-          expect(cookies).to.have.property("my_cookie", "val1");
+          expect(headers).to.have.length(1);
+          expect(headers[0]).to.have.property("name", "Set-Cookie");
+          expect(headers[0]).to.have.property("value", "my_cookie=val1; path=/; HttpOnly");
           done();
         }
       }, done);
@@ -855,9 +858,9 @@ describe("local ESI", () => {
         .get("/mystuff/")
         .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars>");
 
-      const cookies = {};
-      function cookie(name, value) {
-        cookies[name] = value;
+      const headers = [];
+      function set(name, value) {
+        headers.push({name, value});
       }
 
       localEsi(markup, {
@@ -871,10 +874,10 @@ describe("local ESI", () => {
           }
         }
       }, {
-        cookie,
+        set,
         send(body) {
           expect(body).to.equal("<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars><p>efter</p>");
-          expect(cookies).to.not.have.property("my_cookie");
+          expect(headers).to.have.length(0);
           done();
         }
       }, done);
@@ -1237,67 +1240,72 @@ describe("local ESI", () => {
   });
 
   describe("$add_header", () => {
-    it("should set cookies when instructed", (done) => {
+    it("should set headers when instructed", (done) => {
       let markup = "<esi:vars>";
-      markup += "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
+      markup += "$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')";
       markup += "</esi:vars>";
 
-      const cookies = {};
-      function cookie(name, value) {
-        cookies[name] = value;
+      const headers = [];
+      function set(name, value) {
+        headers.push({name, value});
       }
 
       localEsi(markup, { }, {
-        cookie,
+        set,
         send(body) {
           expect(body).to.equal("");
-          expect(cookies).to.have.property("MyCookie1", "SomeValue");
+          expect(headers).to.have.length(1);
+          expect(headers[0]).to.have.property("name", "Set-Cookie");
+          expect(headers[0]).to.have.property("value", "MyCookie1=SomeValue; HttpOnly");
           done();
         }
       }, done);
     });
 
-    it("should set multiple cookies when instructed", (done) => {
+    it("should set multiple headers when instructed", (done) => {
       let markup = "<esi:vars>";
       markup += "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
-      markup += "$add_header('Set-Cookie', 'MyCookie2=SomeValue2; Htt')";
+      markup += "$add_header('Set-Cookie', 'MyCookie2=SomeValue2; Path=/;Secure;SameSite=Lax')";
       markup += "</esi:vars>";
 
-      const cookies = {};
-      function cookie(name, value) {
-        cookies[name] = value;
+      const headers = [];
+      function set(name, value) {
+        headers.push({name, value});
       }
 
       localEsi(markup, { }, {
-        cookie,
+        set,
         send(body) {
           expect(body).to.equal("");
-          expect(cookies).to.have.property("MyCookie1", "SomeValue");
-          expect(cookies).to.have.property("MyCookie2", "SomeValue2");
+          expect(headers).to.have.length(2);
+          expect(headers[0]).to.have.property("name", "Set-Cookie");
+          expect(headers[0]).to.have.property("value", "MyCookie1=SomeValue;");
+          expect(headers[1]).to.have.property("name", "Set-Cookie");
+          expect(headers[1]).to.have.property("value", "MyCookie2=SomeValue2; Path=/;Secure;SameSite=Lax");
           done();
         }
       }, done);
     });
 
-    it("should NOT set cookies when instructed outside an ESI tag", (done) => {
+    it("should NOT set headers when instructed outside an ESI tag", (done) => {
       const markup = "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
 
-      const cookies = {};
-      function cookie(name, value) {
-        cookies[name] = value;
+      const headers = [];
+      function set(name, value) {
+        headers.push({name, value});
       }
 
       localEsi(markup, { }, {
-        cookie,
+        set,
         send(body) {
           expect(body).to.equal(markup);
-          expect(cookies).to.not.have.property("MyCookie1");
+          expect(headers).to.have.length(0);
           done();
         }
       }, done);
     });
 
-    it("should set cookies when instructed in esi:choose", (done) => {
+    it("should set headers when instructed in esi:choose", (done) => {
       const markup = `
         <esi:assign name="authorized" value="true"/>
         <esi:choose>
@@ -1314,23 +1322,26 @@ describe("local ESI", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const cookies = {};
-      function cookie(name, value) {
-        cookies[name] = value;
+      const headers = [];
+      function set(name, value) {
+        headers.push({name, value});
       }
 
       localEsi(markup, { }, {
-        cookie,
+        set,
         send(body) {
           expect(body).to.equal("");
-          expect(cookies).to.have.property("MyCookie1", "SomeValue");
-          expect(cookies).to.have.property("MyCookie2", "SomeValue2");
+          expect(headers).to.have.length(2);
+          expect(headers[0]).to.have.property("name", "Set-Cookie");
+          expect(headers[0]).to.have.property("value", "MyCookie1=SomeValue;");
+          expect(headers[1]).to.have.property("name", "Set-Cookie");
+          expect(headers[1]).to.have.property("value", "MyCookie2=SomeValue2;");
           done();
         }
       }, done);
     });
 
-    it("should not set cookies when in esi:choose clause that doesn't match", (done) => {
+    it("should not set headers when in esi:choose clause that doesn't match", (done) => {
       const markup = `
         <esi:assign name="authorized" value="false"/>
         <esi:choose>
@@ -1340,16 +1351,16 @@ describe("local ESI", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const cookies = {};
-      function cookie(name, value) {
-        cookies[name] = value;
+      const headers = [];
+      function set(name, value) {
+        headers.push({name, value});
       }
 
       localEsi(markup, { }, {
-        cookie,
+        set,
         send(body) {
           expect(body).to.equal("");
-          expect(cookies).to.not.have.property("MyCookie1", "SomeValue");
+          expect(headers).to.have.length(0);
           done();
         }
       }, done);
