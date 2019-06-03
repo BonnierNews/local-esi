@@ -476,27 +476,109 @@ describe("local ESI", () => {
     });
   });
 
-  it("should fetch and evaluate esi:eval", (done) => {
-    const markup = "<div><esi:eval src=\"http://mystuff/\" dca=\"none\"/></div>";
-    const evalResponse = `<esi:choose>
-      <esi:when test="$exists($(HTTP_COOKIE{'cookie_1'})) | $exists($(HTTP_COOKIE{'cookie_2'}))">
-      </esi:when>
-      <esi:otherwise>
-        <p>hej</p>
-      </esi:otherwise>
-    </esi:choose>`.replace(/^\s+|\n/gm, "");
+  describe("esi:eval", () => {
+    it("should fetch and evaluate esi:eval", (done) => {
+      const markup = "<div><esi:eval src=\"http://mystuff/\" dca=\"none\"/></div>";
+      const evalResponse = `<esi:choose>
+        <esi:when test="$exists($(HTTP_COOKIE{'cookie_1'})) | $exists($(HTTP_COOKIE{'cookie_2'}))">
+        </esi:when>
+        <esi:otherwise>
+          <p>hej</p>
+        </esi:otherwise>
+      </esi:choose>`.replace(/^\s+|\n/gm, "");
 
-    nock("http://mystuff")
-      .get("/")
-      .reply(200, evalResponse);
-    const expectedMarkup = "<div><p>hej</p></div>";
+      nock("http://mystuff")
+        .get("/")
+        .reply(200, evalResponse);
+      const expectedMarkup = "<div><p>hej</p></div>";
 
-    localEsi(markup, { }, {
-      send(body) {
-        expect(body).to.equal(expectedMarkup);
-        done();
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should not included instructions as if in processing context (functions inside and ESI-tag) by default", (done) => {
+      let markup = "<esi:choose>";
+      markup += `<esi:when test="'a' == 'a'">`; //eslint-disable-line quotes
+      markup += "$add_header('Set-Cookie', 'before_cookie=val1')";
+      markup += "<esi:eval src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
+      markup += "$add_header('Set-Cookie', 'after_cookie=val1')";
+      markup += "</esi:when>";
+      markup += "</esi:choose>";
+
+      nock("http://localhost:1234")
+        .get("/mystuff/")
+        .reply(200, "$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')");
+
+
+      const headers = [];
+      function set(name, value) {
+        headers.push({name, value});
       }
-    }, done);
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        set,
+        send(body) {
+          expect(body).to.equal("$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')<p>efter</p>");
+          expect(headers).to.have.length(2);
+          expect(headers[0]).to.have.property("value", "before_cookie=val1");
+          expect(headers[1]).to.have.property("value", "after_cookie=val1");
+          done();
+        }
+      }, done);
+    });
+
+    it("but it should support a new processing context from the included instructions", (done) => {
+      let markup = "<esi:choose>";
+      markup += `<esi:when test="'a' == 'a'">`; //eslint-disable-line quotes
+      markup += "<esi:eval src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
+      markup += "</esi:when>";
+      markup += "</esi:choose>";
+
+      nock("http://localhost:1234")
+        .get("/mystuff/")
+        .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')</esi:vars>");
+
+
+      const headers = [];
+      function set(name, value) {
+        headers.push({name, value});
+      }
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        set,
+        send(body) {
+          expect(body).to.equal("<p>efter</p>");
+          expect(headers).to.have.length(1);
+          expect(headers[0]).to.have.property("name", "Set-Cookie");
+          expect(headers[0]).to.have.property("value", "my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT");
+          done();
+        }
+      }, done);
+    });
   });
 
   it("should call next with error when the trying to include a URL where the path doesn't end with /", (done) => {
