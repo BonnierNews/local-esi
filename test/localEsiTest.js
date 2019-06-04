@@ -2074,6 +2074,24 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("outputs the value of variables in attributes when in context of esi:vars", (done) => {
+      const markup = `
+      <esi:assign name="namn" value="'Roger!'"/>
+      <esi:vars>
+        <input name="blahonga" value="$(namn)">
+        <esi:text><input name="blahonga2" value="$(namn)"></esi:text>
+      </esi:vars>
+      <input name="blahonga3" value="$(namn)">
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal("<input name=\"blahonga\" value=\"Roger!\"><input name=\"blahonga2\" value=\"$(namn)\"><input name=\"blahonga3\" value=\"$(namn)\">");
+          done();
+        }
+      }, done);
+    });
   });
 
   describe("reserved characters and escaping", () => {
