@@ -17,6 +17,42 @@ describe("local ESI", () => {
     }, done);
   });
 
+  it("should not touch JS in script-tag inside <esi:choose>", (done) => {
+    const scriptTag = `<script>!function(){"use strict";window.foobar=function(e){var n=document.getElementsByClassName(e)[0];}();</script>`; //eslint-disable-line quotes
+
+    const markup = `<!DOCTYPE html><html><head><title>This is a title</title></head><body>Test: <b>Testsson</b>
+    <esi:choose>
+      <esi:when test="1 == 1">
+        ${scriptTag}
+      </esi:when>
+    </esi:choose>
+    </body></html>`;
+
+    localEsi(markup, {}, {
+      send(body) {
+        expect(body).to.contain(scriptTag);
+        done();
+      }
+    }, done);
+  });
+
+  it("should not touch JS in script-tag inside <esi:vars>", (done) => {
+    const scriptTag = `<script>!function(){"use strict";window.foobar=function(e){var n=document.getElementsByClassName(e)[0];}();</script>`; //eslint-disable-line quotes
+
+    const markup = `<!DOCTYPE html><html><head><title>This is a title</title></head><body>Test: <b>Testsson</b>
+    <esi:vars>
+      ${scriptTag}
+    </esi:vars>
+    </body></html>`;
+
+    localEsi(markup, {}, {
+      send(body) {
+        expect(body).to.contain(scriptTag);
+        done();
+      }
+    }, done);
+  });
+
   describe("esi:choose", () => {
     it("should render the otherwise statement of an esi:choose when not matching our specific test", (done) => {
       let markup = "<esi:choose>";
