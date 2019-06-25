@@ -617,19 +617,35 @@ describe("local ESI", () => {
     });
   });
 
-  it("should call next with error when the trying to include a URL where the path doesn't end with /", (done) => {
-    const markup = "<esi:include src=\"/mystuff\" dca=\"none\"/>";
+  it("should be able to include path without trailing slash", (done) => {
+    const markup = "<esi:eval src=\"/mystuff\" dca=\"none\"/><p>efter</p>";
 
-    localEsi(markup, { }, {
-      send() {
-        done(new Error("We should not be here"));
+    nock("http://localhost:1234")
+      .get("/mystuff")
+      .reply(200, "Tjabo");
+
+    const headers = [];
+    function set(name, value) {
+      headers.push({name, value});
+    }
+
+    localEsi(markup, {
+      socket: {
+        server: {
+          address() {
+            return {
+              port: 1234
+            };
+          }
+        }
       }
-    }, (err) => {
-      expect(err).to.not.be.undefined;
-      expect(err).to.not.be.null;
-      expect(err.message).to.contain("path");
-      done();
-    });
+    }, {
+      set,
+      send(body) {
+        expect(body).to.equal("Tjabo<p>efter</p>");
+        done();
+      }
+    }, done);
   });
 
   describe("esi:include", () => {
@@ -1001,7 +1017,13 @@ describe("local ESI", () => {
       }, done);
     });
 
-    it("should call next with error when the trying to include a URL where the path doesn't end with /, even when in esi:try", (done) => {
+    it("should handle path without trailing slash, even when in esi:try", (done) => {
+
+      nock("http://localhost:1234")
+        .get("/mystuff")
+        .reply(200, "Alles gut");
+
+
       let markup = "<esi:try>";
       markup += "<esi:attempt>";
       markup += "<esi:include src=\"/mystuff\" dca=\"none\"/>";
@@ -1011,16 +1033,22 @@ describe("local ESI", () => {
       markup += "</esi:except>";
       markup += "</esi:try>";
 
-      localEsi(markup, { }, {
-        send() {
-          done(new Error("We should not be here"));
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
         }
-      }, (err) => {
-        expect(err).to.not.be.undefined;
-        expect(err).to.not.be.null;
-        expect(err.message).to.contain("path");
-        done();
-      });
+      }, {
+        send(body) {
+          expect(body).to.equal("Alles gut");
+          done();
+        }
+      }, done);
     });
 
     it("should fetch without content-type header when using esi:include", (done) => {
