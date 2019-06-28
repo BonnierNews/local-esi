@@ -17,6 +17,16 @@ describe("local ESI", () => {
     }, done);
   });
 
+  it("should not touch multi-byte characters", (done) => {
+    const markup = `<!DOCTYPE html><html><head><title>This is a title</title></head><body>${Array(1000).fill("Töst: <b>Töst</b>").join("")}</body></html>`;
+    localEsi(markup, {}, {
+      send(body) {
+        expect(body).to.equal(markup);
+        done();
+      }
+    }, done);
+  });
+
   it("should not touch JS in script-tag inside <esi:choose>", (done) => {
     const scriptTag = `<script>!function(){"use strict";window.foobar=function(e){var n=document.getElementsByClassName(e)[0];}();</script>`; //eslint-disable-line quotes
 
