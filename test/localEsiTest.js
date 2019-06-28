@@ -18,7 +18,10 @@ describe("local ESI", () => {
   });
 
   it("should not touch multi-byte characters", (done) => {
-    const markup = `<!DOCTYPE html><html><head><title>This is a title</title></head><body>${Array(1000).fill("Töst: <b>Töst</b>").join("")}</body></html>`;
+    const prefix = "<!DOCTYPE html><html><head><title>This is a title</title></head><body>";
+    const suffix = "</body></html>";
+    const characters = Array(9817).fill("Töst").join("");
+    const markup = prefix + characters + suffix;
     localEsi(markup, {}, {
       send(body) {
         expect(body).to.equal(markup);
