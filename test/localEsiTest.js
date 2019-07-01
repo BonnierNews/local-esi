@@ -452,6 +452,24 @@ describe("local ESI", () => {
       }, done);
     });
 
+    it("should support when test with comparison to unexisting cookie parsed as int", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$int($(HTTP_COOKIE{'non-existing-cookie'})) == 0">
+            <p>Hej</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "<p>Hej</p>";
+      localEsi(markup, { cookies: {} }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
     it("should handle multiple unneeded parentheses", (done) => {
       const markup = `
         <esi:choose>
