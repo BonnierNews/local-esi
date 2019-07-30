@@ -1416,6 +1416,71 @@ describe("local ESI", () => {
     });
   });
 
+  describe("illegal characters", () => {
+    [
+      "$",
+      "“",
+      "”",
+    ].forEach((character) => {
+      it(`crashes on unexpected illegal "${character}" character`, (done) => {
+        const html = `<p>This text contains unexpected ${character} character</p>`;
+
+        localEsi(html, {}, {send: unexpectedCallback.bind(null, done, null)}, (err) => {
+          expect(err, "no error").to.exist;
+          expect(err.message, "wrong error").to.include("Illegal character");
+          done();
+        });
+      });
+
+      it(`crashes on unexpected illegal "${character}" character inside <esi:choose></esi:choose>`, (done) => {
+        const html = `<p>This text contains unexpected ${character} character</p>`;
+        const markup = `
+          <esi:choose>
+            <esi:when test="$(some_variable)=='true'">
+              When ${html}
+            </esi:when>
+            <esi:otherwise>
+              Otherwise ${html}
+            </esi:otherwise>
+          </esi:choose>`.replace(/^\s+|\n/gm, "");
+
+        localEsi(markup, {}, {send: unexpectedCallback.bind(null, done, null)}, (err) => {
+          expect(err, "no error").to.exist;
+          expect(err.message, "wrong error").to.include("Illegal character");
+          done();
+        });
+      });
+
+      it(`doesn't crash on illegal "${character}" character inside <esi:text></esi:text>`, (done) => {
+        const html = `<p>This text contains expected ${character} character</p>`;
+        const markup = `<esi:text>${html}</esi:text>`;
+
+        localEsi(markup, {}, {
+          send(body) {
+            expect(body).to.equal(html);
+            done();
+          }
+        }, unexpectedCallback.bind(null, done));
+      });
+
+      it(`doesn't crash on escaped illegal "${character}" character`, (done) => {
+        const html = `<p>This text contains expected \\${character} character</p>`;
+
+        localEsi(html, {}, {
+          send(body) {
+            expect(body).to.equal(html);
+            done();
+          }
+        }, unexpectedCallback.bind(null, done));
+      });
+    });
+
+    function unexpectedCallback(done, err, result) {
+      if (err) return done(err);
+      done(new Error(`Unexpected result: ${result}`));
+    }
+  });
+
   describe("$add_header", () => {
     it("should set headers when instructed", (done) => {
       let markup = "<esi:vars>";
