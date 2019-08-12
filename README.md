@@ -20,3 +20,28 @@ module.exports = (req, res, next) => {
   });
 };
 ```
+
+# Another example Express route:
+
+Apply local-esi to all HTML output
+
+```javascript
+"use strict";
+
+app.use((req, res, next) => {
+  const _send = res.send;
+
+  res.send = function Send(body) {
+    const resHeaders = res.getHeaders();
+    const resContentType = resHeaders && resHeaders["content-type"];
+    if (resContentType && resContentType.includes("text/html")) {
+      _send.call(this, body);
+    } else {
+      const options = { send: _send, sendContext: this };
+      localEsi(body, req, res, next, options);
+    }
+  };
+
+  next();
+})
+```
