@@ -1141,7 +1141,7 @@ describe("local ESI", () => {
       }, done);
     });
 
-    it("should support esi:include when url is from variable", (done) => {
+    it("should support esi:include when entire URL is a variable", (done) => {
       let markup = "<esi:assign name=\"daurl\" value=\"http://mystuff.com/\"/>";
       markup += "<esi:include src=\"$(daurl)\" dca=\"esi\"/><p>efter</p>";
 
@@ -1168,34 +1168,61 @@ describe("local ESI", () => {
         }
       }, done);
     });
-  });
 
-  it("should support esi:include when url is from variable", (done) => {
-    let markup = "<esi:assign name=\"host\" value=\"mystuff.com\"/>";
-    markup += "<esi:include src=\"http://$(host)/path/\" dca=\"esi\"/><p>efter</p>";
+    it("should support esi:include when URL contains a variable", (done) => {
+      let markup = "<esi:assign name=\"host\" value=\"mystuff.com\"/>";
+      markup += "<esi:include src=\"http://$(host)/path/\" dca=\"esi\"/><p>efter</p>";
 
-    nock("http://mystuff.com", {
-      reqheaders: { host: "mystuff.com"}
-    })
-      .get("/path/")
-      .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+      nock("http://mystuff.com", {
+        reqheaders: { host: "mystuff.com"}
+      })
+        .get("/path/")
+        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
 
-    localEsi(markup, {
-      socket: {
-        server: {
-          address() {
-            return {
-              port: 1234
-            };
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
           }
         }
-      }
-    }, {
-      send(body) {
-        expect(body).to.equal("<p>hej</p><p>efter</p>");
-        done();
-      }
-    }, done);
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>hej</p><p>efter</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("should support esi:include when URL contains a HTTP_COOKIE", (done) => {
+      const markup = "<esi:include src=\"/foo$(HTTP_COOKIE{'MyCookie'})/\" dca=\"esi\"/><p>efter</p>";
+
+      nock("http://localhost:1234")
+        .get("/foobar/")
+        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+
+      localEsi(markup, {
+        cookies: { MyCookie: "bar" },
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>hej</p><p>efter</p>");
+          done();
+        }
+      }, done);
+    });
+
   });
 
   describe("esi:choose", () => {
