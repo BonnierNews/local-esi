@@ -1449,14 +1449,15 @@ describe("local ESI", () => {
       "“",
       "”",
     ].forEach((character) => {
-      it(`crashes on unexpected illegal "${character}" character`, (done) => {
-        const html = `<p>This text contains unexpected ${character} character</p>`;
+      it(`doesn't crash on illegal "${character}" character outside of esi context`, (done) => {
+        const html = `<p>This text contains expected ${character} character</p>`;
 
-        localEsi(html, {}, {send: unexpectedCallback.bind(null, done, null)}, (err) => {
-          expect(err, "no error").to.exist;
-          expect(err.message, "wrong error").to.include("Illegal character");
-          done();
-        });
+        localEsi(html, {}, {
+          send(body) {
+            expect(body).to.equal(html);
+            done();
+          }
+        }, unexpectedCallback.bind(null, done));
       });
 
       it(`crashes on unexpected illegal "${character}" character inside <esi:choose></esi:choose>`, (done) => {
