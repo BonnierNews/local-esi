@@ -17,6 +17,19 @@ describe("esiExpressionParser", () => {
     expect(result.right).to.have.property("value", "true");
   });
 
+  it("handle binary negative expression with identifier on left side and literal on right", () => {
+    const input = "$(access_granted)!='true'";
+    const result = esiExpressionParser(input);
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("operator", "!=");
+    expect(result).to.have.property("left");
+    expect(result.left).to.have.property("type", "Identifier");
+    expect(result.left).to.have.property("name", "access_granted");
+    expect(result).to.have.property("right");
+    expect(result.right).to.have.property("type", "Literal");
+    expect(result.right).to.have.property("value", "true");
+  });
+
   it("handles call expression with argument", () => {
     const input = "$exists($(user_email))";
     const result = esiExpressionParser(input);
