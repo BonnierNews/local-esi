@@ -434,6 +434,24 @@ describe("local ESI", () => {
       }, done);
     });
 
+    it("should support when test with !=", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$int($(HTTP_COOKIE{'int_cookie'})) != 1">
+            <p>Hej</p>
+          </esi:when>
+      </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "<p>Hej</p>";
+      localEsi(markup, { cookies: { "int_cookie": 2 } }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
     it("should support when test with >= and <=", (done) => {
       const markup = `
         <esi:choose>
