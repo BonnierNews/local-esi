@@ -2108,6 +2108,24 @@ describe("local ESI", () => {
     });
   });
 
+  describe("$http_time", () => {
+    it("supports $http_time", (done) => {
+      const markup = `
+        <esi:assign name="now" value="$http_time(995319416)" />
+        <esi:vars>
+          <p>$(now)</p>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal("<p>Mon, 16 Jul 2001 21:36:56 GMT</p>");
+          done();
+        }
+      }, done);
+    });
+  });
+
   describe("has and has_i operator", () => {
     it("supports has operator", (done) => {
       const markup = `
