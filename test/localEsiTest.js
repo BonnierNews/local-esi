@@ -1461,12 +1461,25 @@ describe("local ESI", () => {
     });
   });
 
+  it("supports weird quotes like “ and ” inside esi:choose", (done) => {
+    const innerText = "Here's a quote by Wayne Gretzky: “You miss 100% of the shots you don't take“. <br> Here's a quote by Homer Simpson: ”do'h”. This text should be valid in any ESI context.";
+    const markup = `<esi:choose><esi:when test="1==1">${innerText}</esi:when></esi:choose>`;
+
+    localEsi(markup, { }, {
+      send(body) {
+        expect(body).to.equal(innerText);
+        done();
+      }
+    }, done);
+  });
+
+
   describe("illegal characters", () => {
-    [
-      "$",
-      "“",
-      "”",
-    ].forEach((character) => {
+    const illegalCharacters = [
+      "$"
+    ];
+
+    illegalCharacters.forEach((character) => {
       it(`doesn't crash on illegal "${character}" character outside of esi context`, (done) => {
         const html = `<p>This text contains expected ${character} character</p>`;
 
@@ -1491,7 +1504,7 @@ describe("local ESI", () => {
           </esi:choose>`.replace(/^\s+|\n/gm, "");
 
         localEsi(markup, {}, {send: unexpectedCallback.bind(null, done, null)}, (err) => {
-          expect(err, "no error").to.exist;
+          expect(err).to.exist;
           expect(err.message, "wrong error").to.include("Illegal character");
           done();
         });
