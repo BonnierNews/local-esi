@@ -670,6 +670,7 @@ describe("local ESI", () => {
     const markup = "<esi:eval src=\"/mystuff\" dca=\"none\"/><p>efter</p>";
 
     nock("http://localhost:1234")
+      .log(console.log)
       .get("/mystuff")
       .reply(200, "Tjabo");
 

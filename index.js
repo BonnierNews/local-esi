@@ -26,6 +26,7 @@ function localEsi(html, req, res, next) {
       return;
     }
     if (context.replacement) {
+      console.log("RÄTT!");
       return res.send(context.replacement);
     }
     res.send(parsed);
