@@ -670,7 +670,6 @@ describe("local ESI", () => {
     const markup = "<esi:eval src=\"/mystuff\" dca=\"none\"/><p>efter</p>";
 
     nock("http://localhost:1234")
-      .log(console.log)
       .get("/mystuff")
       .reply(200, "Tjabo");
 
@@ -1702,6 +1701,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("<p>hej</p>");
@@ -1723,6 +1723,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("<p>')</p>");
@@ -1744,6 +1745,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("OK");
@@ -1771,6 +1773,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("<p>Unauthorized</p>");

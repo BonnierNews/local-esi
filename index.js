@@ -1,16 +1,21 @@
 "use strict";
 
 
-const {asStream, transform} = require("./lib/transformHtml");
 const ESIListener = require("./lib/ESIListener");
 const ESIEvaluator = require("./lib/ESIEvaluator");
 const ListenerContext = require("./lib/ListenerContext");
+const {asStream, transform} = require("./lib/transformHtml");
 
 function localEsi(html, req, res, next) {
   const context = ListenerContext(req, res);
+  let completed = false;
 
   context.on("status", (statusCode) => {
     res.status(statusCode);
+  });
+  context.on("send", (statusCode, body) => {
+    completed = true;
+    res.status(statusCode).send(body);
   });
   context.on("set", (name, value) => {
     res.set(name, value);
@@ -26,10 +31,9 @@ function localEsi(html, req, res, next) {
       return;
     }
     if (context.replacement) {
-      console.log("RÄTT!");
       return res.send(context.replacement);
     }
-    res.send(parsed);
+    if (!completed) res.send(parsed);
   });
 }
 
