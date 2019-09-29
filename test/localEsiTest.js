@@ -6,7 +6,6 @@ const nock = require("nock");
 const ck = require("chronokinesis");
 
 describe("local ESI", () => {
-
   it("should not touch regular markup", (done) => {
     const markup = "<!DOCTYPE html><html><head><title>This is a title</title></head><body>Test: <b>Testsson</b></body></html>";
     localEsi(markup, {}, {

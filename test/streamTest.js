@@ -1,157 +1,85 @@
 "use strict";
 
 const fs = require("fs");
-const ESIListener = require("../lib/ESIListener");
-const path = require("path");
-const {asStream} = require("../lib/transformHtml");
-const {expect} = require("chai");
-const HtmlParser = require("atlas-html-stream");
-const {Transform, Duplex} = require("stream");
-const ListenerContext = require("../lib/ListenerContext");
 const localEsi = require("..");
-const ESIParser = require("../lib/ESIParser");
+const path = require("path");
+const {convert} = require("../lib/transformHtml");
 
-class HtmlTransformer extends Transform {
-  constructor(filter, options) {
-    options = Object.assign({}, options, {writableObjectMode: true});
-    super(options);
-    this.filter = filter;
-  }
+describe("stream", () => {
+  it("can be piped", (done) => {
+    const stream = fs.createReadStream(path.join(__dirname, "/esi.html"));
+    const chunks = [];
 
-  _transform(obj, encoding, next) {
-    const self = this;
-
-    this.filter(obj, (err, chunk) => {
-      if (err) return next(err);
-      if (chunk) self.push(chunk);
-      next();
-    });
-  }
-}
-
-class MTransformer extends Transform {
-  constructor(req, res) {
-    super({writableObjectMode: true});
-
-    this.context = ListenerContext(req, res);
-    this.listener = ESIListener(context);
-  }
-
-  transform(obj, encoding, next) {
-    _super(obj, encoding, (...args) => {
-
-      console.log(args)
-      next();
-    });
-
-    // const self = this;
-
-    // console.log("TRANS", obj)
-
-    // this.filter(obj, (err, chunk) => {
-    //   if (err) return next(err);
-    //   if (chunk) self.push(chunk);
-    //   next();
-    // });
-  }
-}
-
-describe("pipe filter", () => {
-  const scriptTag = `<script>!function(){"use strict";window.foobar=function(e){var n=document.getElementsByClassName(e)[0];}();</script>`; //eslint-disable-line quotes
-
-  it("pipe", (done) => {
-    const context = ListenerContext({}, {});
-    const listener = ESIListener(context);
-
-    let markup = "";
-    const stream = fs.createReadStream(path.join(__dirname, "/esi.html"))
-      .on("error", (err) => done(err));
-
-    stream.pipe(new HtmlParser())
-      .pipe(new ESIParser(filter))
+    stream.pipe(localEsi.createStream({}, {}))
       .on("data", (chunk) => {
-        markup += chunk;
+        chunks.push(chunk);
       })
       .on("finish", () => {
-        expect(markup).to.not.contain("<esi:");
-        expect(markup).to.contain(scriptTag);
+        expect(chunks).to.have.length(29);
         done();
       });
-
-    function filter({name, data, text}, next) {
-      if (text) {
-        listener.ontext(text, next);
-      } else if (name && data) {
-        return listener.onopentag(name, data, next);
-      } else {
-        return listener.onclosetag(name, next);
-      }
-    }
   });
 
-  it("should not touch JS in script-tag inside <esi:choose>", (done) => {
-    let markup = "";
+  it("closes stream if redirect instruction is emitted", (done) => {
+    const markup = [(`
+      <html><body>
+      <esi:vars>
+        $set_redirect('https://blahonga.com')
+      </esi:vars>
+    `)]
+      .concat(Array(1000).fill().map((_, idx) => `<div><p>${idx}</p><div>`), "</body></html>")
+      .join("")
+      .replace(/^\s+|\n/gm, "");
 
-    const stream = fs.createReadStream(path.join(__dirname, "/esi.html"))
-      .on("error", (err) => done(err))
-      .on("end", () => {
-        expect(markup).to.not.contain("<esi:");
-        expect(markup).to.contain(scriptTag);
-        done();
-      });
+    const stream = convert(markup);
+    const chunks = [];
 
-    const listener = ESIListener(ListenerContext({}, {}));
+    const transform = localEsi.createStream({});
+    let redirect;
+    transform.on("redirect", (statusCode, location) => {
+      redirect = {statusCode, location};
+    });
+    transform.on("data", (chunk) => {
+      chunks.push(chunk);
+    });
 
-    stream.pipe(setupStream(listener))
-      .on("data", (chunk) => {
-        markup += chunk;
-      })
-      .on("finish", () => console.log("FIN"));
+    stream.pipe(transform).on("end", () => {
+      expect(redirect.statusCode).to.equal(302);
+      expect(redirect.location).to.equal("https://blahonga.com");
+      expect(chunks).to.deep.equal([{name: "html", data: {}}, {name: "body", data: {}}]);
+      done();
+    });
   });
 
-  function setupStream({onopentag, ontext, onclosetag}) {
-    const htmlParser = new HtmlParser({ preserveWS: true });
-    const transformer = new HtmlTransformer(filter);
+  it("closes stream if send body instruction is emitted", (done) => {
+    const markup = [(`
+      <html><body>
+      <esi:vars>
+        $set_response_code(400, '<p>Bad</p>')
+      </esi:vars>
+    `)]
+      .concat(Array(1000).fill().map((_, idx) => `<div><p>${idx}</p><div>`), "</body></html>")
+      .join("")
+      .replace(/^\s+|\n/gm, "");
 
-    return {
-      pipe: htmlParser.pipe(transformer),
-      on(name, h) {
-        console.log(name)
-      },
-      once(name, h) {
-        console.log('once', name)
-      },
-      emit() {},
-    };
+    const stream = convert(markup);
+    const chunks = [];
 
-    function filter({name, data, text}, next) {
-      if (text) {
-        return ontext(text, next);
-      } else if (name && data) {
-        return onopentag(name, data, next);
-      } else {
-        return onclosetag(name, next);
-      }
-    }
-  }
+    const transform = localEsi.createStream({});
+    let send;
+    transform.on("send-body", (statusCode, body) => {
+      send = {statusCode, body};
+    });
+    transform.on("data", (chunk) => {
+      chunks.push(chunk);
+    });
 
-  it("should not touch JS in script-tag inside <esi:choose>", (done) => {
-    let markup = "";
-
-    const stream = fs.createReadStream(path.join(__dirname, "/esi.html"))
-      .on("error", (err) => done(err))
-      .on("end", () => {
-        expect(markup).to.not.contain("<esi:");
-        expect(markup).to.contain(scriptTag);
-        done();
-      });
-
-    stream.pipe(new MTransformer({}, {}))
-      .on("data", (chunk) => {
-        markup += chunk;
-      })
-      .on("finish", () => console.log("FIN"));
+    stream.pipe(transform).on("end", () => {
+      expect(send.statusCode).to.equal(400);
+      expect(send.body).to.equal("<p>Bad</p>");
+      expect(chunks).to.deep.equal([{name: "html", data: {}}, {name: "body", data: {}}]);
+      done();
+    });
   });
-
 });
 
