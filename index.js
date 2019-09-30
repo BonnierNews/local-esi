@@ -3,34 +3,27 @@
 const ESIEvaluator = require("./lib/ESIEvaluator");
 const ListenerContext = require("./lib/ListenerContext");
 const {asStream, transform} = require("./lib/transformHtml");
+const redirectCodes = [301, 302, 303, 307, 308];
 
 function localEsi(html, req, res, next) {
-  const context = ListenerContext(req, res);
+  const context = ListenerContext(req);
   let completed = false;
 
-  context.on("status", (statusCode) => {
-    res.status(statusCode);
-  });
-  context.on("send-body", (statusCode, body) => {
+  context.on("set_response_code", (statusCode, body) => {
     completed = true;
-    res.status(statusCode).send(body);
+    res.status(statusCode).send(body === undefined ? "" : body);
   });
-  context.on("set-header", (name, value) => {
+  context.on("add_header", (name, value) => {
     res.set(name, value);
   });
-  context.once("redirect", (statusCode, location) => {
+  context.once("set_redirect", (statusCode, location) => {
+    completed = true;
     res.redirect(location);
   });
 
   const listener = ESIEvaluator(context);
   return transform(html, listener, (err, parsed) => {
     if (err) return next(err);
-    if (context.redirected) {
-      return;
-    }
-    if (context.replacement) {
-      return res.send(context.replacement);
-    }
     if (!completed) res.send(parsed);
   });
 }
@@ -41,14 +34,31 @@ function streaming(req) {
   const pipeline = asStream(listener);
   context.emitter = pipeline;
 
-  pipeline.once("send-body", close);
-  pipeline.once("redirect", close);
+  let responseCode;
+  const headers = {};
+
+  pipeline.once("set_response_code", onResponseCode);
+  pipeline.once("add_header", onAddHeader);
+  pipeline.once("set_redirect", close);
 
   return pipeline;
 
+  function onResponseCode(int, body) {
+    responseCode = int;
+    if (int > 399 || body) return close();
+    if (headers.location && redirectCodes.includes(int)) pipeline.emit("set_redirect", responseCode, headers.location);
+  }
+
+  function onAddHeader(name, value) {
+    const headerName = name.toLowerCase();
+    headers[headerName] = value;
+    if (headerName === "location" && redirectCodes.includes(responseCode)) pipeline.emit("set_redirect", responseCode, value);
+  }
+
   function close() {
-    pipeline.removeListener("send-body", close);
-    pipeline.removeListener("redirect", close);
+    pipeline.removeListener("set_response_code", onResponseCode);
+    pipeline.removeListener("add_header", onAddHeader);
+    pipeline.removeListener("set_redirect", close);
     pipeline.destroy();
   }
 }

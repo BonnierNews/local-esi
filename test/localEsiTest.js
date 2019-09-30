@@ -1679,6 +1679,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("");

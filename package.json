@@ -13,13 +13,13 @@
   "license": "MIT",
   "devDependencies": {
     "chai": "^4.2.0",
-    "eslint": "^6.4.0",
-    "mocha": "^6.2.0",
+    "chronokinesis": "^2.0.1",
+    "eslint": "^6.5.0",
+    "mocha": "^6.2.1",
     "nock": "^11.3.5"
   },
   "dependencies": {
     "atlas-html-stream": "^1.2.0",
-    "chronokinesis": "^2.0.1",
     "pump": "^3.0.0",
     "pumpify": "^2.0.0",
     "request": "^2.88.0"
