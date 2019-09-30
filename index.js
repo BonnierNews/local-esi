@@ -2,8 +2,13 @@
 
 const ESIEvaluator = require("./lib/ESIEvaluator");
 const ListenerContext = require("./lib/ListenerContext");
-const {asStream, transform} = require("./lib/transformHtml");
+const {asStream, transform, createESIParser} = require("./lib/transformHtml");
 const redirectCodes = [301, 302, 303, 307, 308];
+
+module.exports = localEsi;
+module.exports.createStream = streaming;
+module.exports.createParser = createParser;
+module.exports.htmlWriter = require("./lib/htmlWriter");
 
 function localEsi(html, req, res, next) {
   const context = ListenerContext(req);
@@ -25,6 +30,7 @@ function localEsi(html, req, res, next) {
   return transform(html, listener, (err, parsed) => {
     if (err) return next(err);
     if (!completed) res.send(parsed);
+    // return next && next(null, parsed);
   });
 }
 
@@ -63,5 +69,8 @@ function streaming(req) {
   }
 }
 
-module.exports = localEsi;
-module.exports.createStream = streaming;
+function createParser(req) {
+  const context = ListenerContext(req);
+  const listener = ESIEvaluator(context);
+  return createESIParser(listener);
+}
