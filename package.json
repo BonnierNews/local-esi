@@ -1,6 +1,6 @@
 {
   "name": "@bonniernews/local-esi",
-  "version": "0.14.0",
+  "version": "1.0.0",
   "description": "Local Edge Side Includes parser",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,7 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "chronokinesis": "^2.0.1",
-    "eslint": "^6.5.0",
+    "eslint": "^6.5.1",
     "mocha": "^6.2.1",
     "nock": "^11.3.5"
   },
