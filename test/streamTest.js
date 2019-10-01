@@ -32,21 +32,16 @@ describe("stream", () => {
       .replace(/^\s+|\n/gm, "");
 
     const stream = convert(markup);
-    const chunks = [];
 
     const transform = localEsi.createStream({});
     let redirect;
     transform.on("set_redirect", (statusCode, location) => {
       redirect = {statusCode, location};
     });
-    transform.on("data", (chunk) => {
-      chunks.push(chunk);
-    });
 
-    stream.pipe(transform).on("end", () => {
+    stream.pipe(transform).on("close", () => {
       expect(redirect.statusCode).to.equal(302);
       expect(redirect.location).to.equal("https://blahonga.com");
-      expect(chunks).to.deep.equal([{name: "html", data: {}}, {name: "body", data: {}}]);
       done();
     });
   });
@@ -95,21 +90,16 @@ describe("stream", () => {
         .replace(/^\s+|\n/gm, "");
 
       const stream = convert(markup);
-      const chunks = [];
 
       const transform = localEsi.createStream({});
       let send;
       transform.on("set_response_code", (statusCode, body) => {
         send = {statusCode, body};
       });
-      transform.on("data", (chunk) => {
-        chunks.push(chunk);
-      });
 
-      stream.pipe(transform).on("end", () => {
+      stream.pipe(transform).on("close", () => {
         expect(send.statusCode).to.equal(responseCode);
         expect(send.body).to.equal("Great success");
-        expect(chunks).to.deep.equal([{name: "html", data: {}}, {name: "body", data: {}}]);
         done();
       });
     });
@@ -129,21 +119,16 @@ describe("stream", () => {
         .replace(/^\s+|\n/gm, "");
 
       const stream = convert(markup);
-      const chunks = [];
 
       const transform = localEsi.createStream({});
       let send;
       transform.on("set_response_code", (statusCode, body) => {
         send = {statusCode, body};
       });
-      transform.on("data", (chunk) => {
-        chunks.push(chunk);
-      });
 
-      stream.pipe(transform).on("end", () => {
+      stream.pipe(transform).on("close", () => {
         expect(send.statusCode).to.equal(responseCode);
         expect(send.body).to.undefined;
-        expect(chunks).to.deep.equal([{name: "html", data: {}}, {name: "body", data: {}}]);
         done();
       });
     });
@@ -161,21 +146,16 @@ describe("stream", () => {
         .replace(/^\s+|\n/gm, "");
 
       const stream = convert(markup);
-      const chunks = [];
 
       const transform = localEsi.createStream({});
       let send;
       transform.on("set_response_code", (statusCode, body) => {
         send = {statusCode, body};
       });
-      transform.on("data", (chunk) => {
-        chunks.push(chunk);
-      });
 
-      stream.pipe(transform).on("end", () => {
+      stream.pipe(transform).on("close", () => {
         expect(send.statusCode).to.equal(responseCode);
         expect(send.body).to.undefined;
-        expect(chunks).to.deep.equal([{name: "html", data: {}}, {name: "body", data: {}}]);
         done();
       });
     });
@@ -194,21 +174,16 @@ describe("stream", () => {
         .replace(/^\s+|\n/gm, "");
 
       const stream = convert(markup);
-      const chunks = [];
 
       const transform = localEsi.createStream({});
       let send;
       transform.on("set_response_code", (statusCode, body) => {
         send = {statusCode, body};
       });
-      transform.on("data", (chunk) => {
-        chunks.push(chunk);
-      });
 
-      stream.pipe(transform).on("end", () => {
+      stream.pipe(transform).on("close", () => {
         expect(send.statusCode).to.equal(responseCode);
         expect(send.body).to.undefined;
-        expect(chunks).to.deep.equal([{name: "html", data: {}}, {name: "body", data: {}}]);
         done();
       });
     });
@@ -229,18 +204,14 @@ describe("stream", () => {
 
     const transform = localEsi.createStream({});
 
-    const chunks = [];
     let error;
 
-    transform.on("data", (chunk) => {
-      chunks.push(chunk);
-    }).on("error", (err) => {
+    transform.on("error", (err) => {
       error = err;
     });
 
     stream.on("end", () => {
       expect(error).to.be.ok.and.match(/is not implemented/i);
-      expect(chunks).to.deep.equal([{name: "html", data: {}}, {name: "body", data: {}}]);
       done();
     }).pipe(transform);
   });
