@@ -1,13 +1,14 @@
 {
   "name": "@bonniernews/local-esi",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Local Edge Side Includes parser",
   "main": "index.js",
   "scripts": {
     "test": "mocha && eslint . --cache"
   },
   "keywords": [
-    "esi"
+    "esi",
+    "stream"
   ],
   "author": "Bonnier News",
   "license": "MIT",
@@ -21,7 +22,7 @@
   "dependencies": {
     "atlas-html-stream": "^1.2.0",
     "pump": "^3.0.0",
-    "pumpify": "^2.0.0",
+    "pumpify": "^2.0.1",
     "request": "^2.88.0"
   },
   "engines": {
@@ -33,8 +34,7 @@
   },
   "files": [
     "lib/",
-    "index.js",
-    "LICENSE"
+    "index.js"
   ],
   "bugs": {
     "url": "https://github.com/BonnierNews/local-esi/issues"

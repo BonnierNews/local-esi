@@ -30,7 +30,6 @@ function localEsi(html, req, res, next) {
   return transform(html, listener, (err, parsed) => {
     if (err) return next(err);
     if (!completed) res.send(parsed);
-    // return next && next(null, parsed);
   });
 }
 
