@@ -71,5 +71,7 @@ function streaming(req) {
 function createParser(req) {
   const context = ListenerContext(req);
   const listener = ESIEvaluator(context);
-  return createESIParser(listener);
+  const optimusPrime = createESIParser(listener);
+  context.emitter = optimusPrime;
+  return optimusPrime;
 }
