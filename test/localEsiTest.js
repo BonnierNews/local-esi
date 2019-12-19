@@ -561,6 +561,24 @@ describe("local ESI", () => {
     });
   });
 
+  describe("esi:foreach", () => {
+    it("should handle foreach operator", (done) => {
+      const markup = 
+      `<esi:foreach collection="{'foo': 'bar', 'foo2': 'bar2'}">
+        <p>$(item{0})</p>
+      </esi:foreach>`.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "<p>foo</p><p>foo2</p>";
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+  });
+
   describe("esi:eval", () => {
     it("should fetch and evaluate esi:eval", (done) => {
       const markup = "<div><esi:eval src=\"http://mystuff/\" dca=\"none\"/></div>";
