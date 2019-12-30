@@ -88,7 +88,7 @@ describe("local ESI", () => {
     });
 
     it("should render the when statement of an esi:choose when testing existance of assigned esi variable", (done) => {
-      let markup = "<esi:assign name=\"user_email\" value=\"jan.bananberg@test.com\"/>";
+      let markup = "<esi:assign name=\"user_email\" value=\"'jan.bananberg@test.com'\"/>";
       markup += "<esi:choose>";
       markup += `<esi:when test="$exists($(user_email))">`; //eslint-disable-line quotes
       markup += "<pre>When</pre>";
@@ -129,7 +129,7 @@ describe("local ESI", () => {
     });
 
     it("should handle test of assigned variable value", (done) => {
-      const markup = `<esi:assign name="someVar" value="true" />
+      const markup = `<esi:assign name="someVar" value="'true'" />
       <esi:choose>
         <esi:when test="$(someVar)=='true'">
           <p>hej</p>
@@ -150,7 +150,7 @@ describe("local ESI", () => {
     });
 
     it("should not evaluate nested choose when in otherwise if first test evaluates to true", (done) => {
-      const markup = `<esi:assign name="blahonga" value="true" />
+      const markup = `<esi:assign name="blahonga" value="'true'" />
       <esi:choose>
         <esi:when test="$(blahonga)=='true'">
           <p>hej</p>
@@ -178,7 +178,7 @@ describe("local ESI", () => {
     });
 
     it("should not evaluate crashing code in when if criteria evaluates to false", (done) => {
-      const markup = `<esi:assign name="blahonga" value="false" />
+      const markup = `<esi:assign name="blahonga" value="'false'" />
       <esi:choose>
         <esi:when test="$(blahonga)=='true'">
           $substr($(nonexisting), 0)
@@ -196,7 +196,7 @@ describe("local ESI", () => {
     });
 
     it("should handle nested choose in when when test evaluates to true", (done) => {
-      const markup = `<esi:assign name="var_a" value="true" />
+      const markup = `<esi:assign name="var_a" value="'true'" />
       <esi:choose>
         <esi:when test="$(var_a)=='true'">
           <esi:choose>
@@ -545,7 +545,7 @@ describe("local ESI", () => {
     it("should handle custom HTTP HEADER", (done) => {
       const markup = `
         <esi:choose>
-          <esi:when test="$(HTTP_X_CUSTOM_HEADER)'">
+          <esi:when test="$(HTTP_X_CUSTOM_HEADER)">
             <p>Custom header identified</p>
           </esi:when>
         </esi:choose>
@@ -781,7 +781,7 @@ describe("local ESI", () => {
     });
 
     it("should handle include source query parameters", (done) => {
-      let markup = "<esi:assign name=\"user_email\" value=\"sammy_g@test.com\"/>";
+      let markup = "<esi:assign name=\"user_email\" value=\"'sammy_g@test.com'\"/>";
       markup += "<esi:include src=\"/mystuff/?a=b&user=$url_encode($(user_email))\" dca=\"esi\"/>";
 
       nock("http://localhost:1234")
@@ -937,7 +937,7 @@ describe("local ESI", () => {
     });
 
     it("should handle re-assign variable value from esi:eval", (done) => {
-      const markup = `<esi:assign name="some_variable" value="true" />
+      const markup = `<esi:assign name="some_variable" value="'true'" />
       <esi:eval src="http://mystuff/" dca="none"/>
       <esi:choose>
         <esi:when test="$(some_variable)=='true'">
@@ -948,7 +948,7 @@ describe("local ESI", () => {
         </esi:otherwise>
       </esi:choose>`.replace(/^\s+|\n/gm, "");
 
-      const evalResponse = "<esi:assign name=\"some_variable\" value=\"false\" />".replace(/^\s+|\n/gm, "");
+      const evalResponse = "<esi:assign name=\"some_variable\" value=\"'false'\" />".replace(/^\s+|\n/gm, "");
 
       nock("http://mystuff")
         .get("/")
@@ -965,7 +965,7 @@ describe("local ESI", () => {
     });
 
     it("should not execute esi:assign from esi:include in the original scope", (done) => {
-      const markup = `<esi:assign name="some_variable" value="true" />
+      const markup = `<esi:assign name="some_variable" value="'true'" />
       <esi:include src="http://mystuff/" dca="esi"/>
       <esi:choose>
         <esi:when test="$(some_variable)=='true'">
@@ -976,7 +976,7 @@ describe("local ESI", () => {
         </esi:otherwise>
       </esi:choose>`.replace(/^\s+|\n/gm, "");
 
-      const includeResponse = `<esi:assign name="some_variable" value="false" />
+      const includeResponse = `<esi:assign name="some_variable" value="'false'" />
           <esi:choose>
           <esi:when test="$(some_variable)=='true'">
             <p>hej</p>
@@ -1160,7 +1160,7 @@ describe("local ESI", () => {
     });
 
     it("should support esi:include when entire URL is a variable", (done) => {
-      let markup = "<esi:assign name=\"daurl\" value=\"http://mystuff.com/\"/>";
+      let markup = "<esi:assign name=\"daurl\" value=\"'http://mystuff.com/'\"/>";
       markup += "<esi:include src=\"$(daurl)\" dca=\"esi\"/><p>efter</p>";
 
       nock("http://mystuff.com", {
@@ -1188,7 +1188,7 @@ describe("local ESI", () => {
     });
 
     it("should support esi:include when URL contains a variable", (done) => {
-      let markup = "<esi:assign name=\"host\" value=\"mystuff.com\"/>";
+      let markup = "<esi:assign name=\"host\" value=\"'mystuff.com'\"/>";
       markup += "<esi:include src=\"http://$(host)/path/\" dca=\"esi\"/><p>efter</p>";
 
       nock("http://mystuff.com", {
@@ -1373,10 +1373,10 @@ describe("local ESI", () => {
 
     it("does assign variable in when if test evaluates to true", (done) => {
       const markup = `
-        <esi:assign name="myVar" value="false" />
+        <esi:assign name="myVar" value="'false'" />
         <esi:choose>
           <esi:when test="$(QUERY_STRING{'q'})=='2'">
-            <esi:assign name="myVar" value="true" />
+            <esi:assign name="myVar" value="'true'" />
           </esi:when>
         </esi:choose>
         <esi:vars>
@@ -1394,10 +1394,10 @@ describe("local ESI", () => {
 
     it("does NOT assign variable in when if test evaluates to false", (done) => {
       const markup = `
-        <esi:assign name="myVar" value="false" />
+        <esi:assign name="myVar" value="'false'" />
         <esi:choose>
           <esi:when test="$(QUERY_STRING{'q'})=='1'">
-            <esi:assign name="myVar" value="true" />
+            <esi:assign name="myVar" value="'true'" />
           </esi:when>
         </esi:choose>
         <esi:vars>
@@ -2142,7 +2142,7 @@ describe("local ESI", () => {
   describe("has and has_i operator", () => {
     it("supports has operator", (done) => {
       const markup = `
-        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:assign name="str" value="'Sean@Banan!'"/>
         <esi:choose>
           <esi:when test="$(str) has 'Banan'"/>
             <p>true</p>
@@ -2165,7 +2165,7 @@ describe("local ESI", () => {
 
     it("supports has_i operator", (done) => {
       const markup = `
-        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:assign name="str" value="'Sean@Banan!'"/>
         <esi:choose>
           <esi:when test="$(str) has_i 'banan'"/>
             <p>true</p>
@@ -2190,7 +2190,7 @@ describe("local ESI", () => {
   describe("matches and matches_i operator", () => {
     it("supports matches operator", (done) => {
       const markup = `
-        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:assign name="str" value="'Sean@Banan!'"/>
         <esi:choose>
           <esi:when test="$(str) matches 'B.nan'"/>
             <p>true</p>
@@ -2213,7 +2213,7 @@ describe("local ESI", () => {
 
     it("supports matches_i operator", (done) => {
       const markup = `
-        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:assign name="str" value="'Sean@Banan!'"/>
         <esi:choose>
           <esi:when test="$(str) matches_i 'b.Nan'"/>
             <p>true</p>
@@ -2295,7 +2295,7 @@ describe("local ESI", () => {
   describe("outputting variables", () => {
     it("outputs the value of variables in context of esi:vars", (done) => {
       const markup = `
-        <esi:assign name="game1" value="Sim city"/>
+        <esi:assign name="game1" value="'Sim city'"/>
         <p>$(game1)</p>
         <esi:vars>
           <p>Some $(game1) text</p>
@@ -2393,7 +2393,7 @@ describe("local ESI", () => {
     it("removes backslashes when assigning variables", (done) => {
       // We test this using esi:include and nock as we want to ensure that it isn't simply as output time that the variables value is without backslashes
       const markup = `
-        <esi:assign name="daurl" value="\\/my\\stuff/" />
+        <esi:assign name="daurl" value="'\\/my\\stuff/'" />
         <esi:include src="$(daurl)" dca="none"/>
         <esi:vars>
           <p>$(daurl)</p>
@@ -2425,7 +2425,7 @@ describe("local ESI", () => {
     it("supports escaping using backslash when assigning variables", (done) => {
       // We test this using esi:include and nock as we want to ensure that it isn't simply as output time that the variables value is without backslashes
       const markup = `
-        <esi:assign name="daurl" value="\\\\/my\\\\stuff/" />
+        <esi:assign name="daurl" value="'\\\\/my\\\\stuff/'" />
         <esi:include src="$(daurl)" dca="none"/>
         <esi:vars>
           <p>$(daurl)</p>

@@ -1,9 +1,8 @@
 "use strict";
 
-const esiExpressionParser = require("../lib/esiExpressionParser");
+const esiExpressionParser = require("../lib/esiExpressionParser2");
 
 describe("esiExpressionParser", () => {
-
   it("handle binary expression with identifier on left side and literal on right", () => {
     const input = "$(access_granted)=='true'";
     const result = esiExpressionParser(input);
@@ -77,8 +76,8 @@ describe("esiExpressionParser", () => {
           name: "HTTP_COOKIE"
         },
         property: {
-          type: "Identifier",
-          name: "remember_me"
+          type: "Literal",
+          value: "remember_me"
         }
       }]
     });
@@ -95,8 +94,8 @@ describe("esiExpressionParser", () => {
     });
 
     expect(result).to.have.property("property").that.eql({
-      type: "Identifier",
-      name: "remember_me"
+      type: "Literal",
+      value: "remember_me"
     });
   });
 
@@ -111,13 +110,13 @@ describe("esiExpressionParser", () => {
     });
 
     expect(result).to.have.property("property").that.eql({
-      type: "Identifier",
-      name: "1"
+      type: "Literal",
+      value: 1
     });
   });
 
   it("handle logical expression with & operator ", () => {
-    const input = "$(HTTP_USER_AGENT{'os'})=='WIN' & $(HTTP_USER_AGENT{'browser'})=='MSIE')";
+    const input = "$(HTTP_USER_AGENT{'os'})=='WIN' & $(HTTP_USER_AGENT{'browser'})=='MSIE'";
     const result = esiExpressionParser(input);
 
     expect(result).to.have.property("type", "LogicalExpression");
@@ -132,8 +131,8 @@ describe("esiExpressionParser", () => {
           name: "HTTP_USER_AGENT"
         },
         property: {
-          type: "Identifier",
-          name: "os"
+          type: "Literal",
+          value: "os"
         }
       },
       right: {
@@ -151,8 +150,8 @@ describe("esiExpressionParser", () => {
           name: "HTTP_USER_AGENT"
         },
         property: {
-          type: "Identifier",
-          name: "browser"
+          type: "Literal",
+          value: "browser"
         }
       },
       right: {
@@ -181,8 +180,8 @@ describe("esiExpressionParser", () => {
           name: "HTTP_COOKIE"
         },
         property: {
-          type: "Identifier",
-          name: "remember_me"
+          type: "Literal",
+          value: "remember_me"
         }
       }]
     });
@@ -199,8 +198,8 @@ describe("esiExpressionParser", () => {
           name: "HTTP_COOKIE"
         },
         property: {
-          type: "Identifier",
-          name: "accessToken"
+          type: "Literal",
+          value: "accessToken"
         }
       }]
     });
@@ -228,8 +227,8 @@ describe("esiExpressionParser", () => {
             name: "HTTP_COOKIE"
           },
           property: {
-            type: "Identifier",
-            name: "remember_me"
+            type: "Literal",
+            value: "remember_me"
           }
         }]
       }
@@ -247,8 +246,8 @@ describe("esiExpressionParser", () => {
           name: "HTTP_COOKIE"
         },
         property: {
-          type: "Identifier",
-          name: "accessToken"
+          type: "Literal",
+          value: "accessToken"
         }
       }]
     });
@@ -273,8 +272,8 @@ describe("esiExpressionParser", () => {
           name: "HTTP_COOKIE"
         },
         property: {
-          type: "Identifier",
-          name: "remember_me"
+          type: "Literal",
+          value: "remember_me"
         }
       }]
     });
@@ -294,8 +293,8 @@ describe("esiExpressionParser", () => {
             name: "HTTP_COOKIE"
           },
           property: {
-            type: "Identifier",
-            name: "accessToken"
+            type: "Literal",
+            value: "accessToken"
           }
         }]
       },
@@ -312,8 +311,8 @@ describe("esiExpressionParser", () => {
             name: "HTTP_COOKIE"
           },
           property: {
-            type: "Identifier",
-            name: "sessionKey"
+            type: "Literal",
+            value: "sessionKey"
           }
         }]
       }
@@ -513,8 +512,13 @@ describe("esiExpressionParser", () => {
   });
 
   it("handles triple quoute enclosed string", () => {
-    const input = "$(someVar) == '''my\\value''')";
+    const input = "$(someVar) == '''my\\value'''";
     const result = esiExpressionParser(input);
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Identifier",
+      name: "someVar"
+    });
     expect(result).to.have.property("right").that.eql({
       type: "Literal",
       value: "my\\value"
@@ -530,7 +534,7 @@ describe("esiExpressionParser", () => {
   });
 
   it("handles string literal expression2", () => {
-    const input = "jan.bananberg@test.com";
+    const input = "'jan.bananberg@test.com'";
     const result = esiExpressionParser(input);
 
     expect(result).to.have.property("type", "Literal");
@@ -614,6 +618,22 @@ describe("esiExpressionParser", () => {
     expect(result).to.have.property("right").that.eql({
       type: "Identifier",
       name: "has"
+    });
+  });
+
+  it("handles string binary expression with +", () => {
+    const input = "'1' + '2'";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "BinaryExpression");
+    expect(result).to.have.property("left").that.eql({
+      type: "Literal",
+      value: "1"
+    });
+    expect(result).to.have.property("operator").that.eql("+");
+    expect(result).to.have.property("right").that.eql({
+      type: "Literal",
+      value: "2"
     });
   });
 
@@ -820,5 +840,72 @@ describe("esiExpressionParser", () => {
       type: "Literal",
       value: 3
     });
+  });
+
+  it("handles expression in function call", () => {
+    const input = "$digest_md5($(REMOTE_ADDR) + $(HTTP_USER_AGENT))";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "CallExpression");
+    expect(result).to.have.to.eql({
+      type: "CallExpression",
+      callee: {
+        type: "Identifier",
+        name: "digest_md5"
+      },
+      arguments: [{
+        type: "BinaryExpression",
+        left: {
+          type: "Identifier",
+          name: "REMOTE_ADDR"
+        },
+        operator: "+",
+        right: {
+          type: "Identifier",
+          name: "HTTP_USER_AGENT"
+        }
+      }]
+    });
+  });
+
+  it("handles multiple function arguments", () => {
+    const input = "$string_split($(HTTP_USER_AGENT), ';', 10)";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "CallExpression");
+    expect(result).to.have.to.eql({
+      type: "CallExpression",
+      callee: {
+        type: "Identifier",
+        name: "string_split"
+      },
+      arguments: [{
+        type: "Identifier",
+        name: "HTTP_USER_AGENT",
+      }, {
+        type: "Literal",
+        value: ";",
+      }, {
+        type: "Literal",
+        value: 10,
+      }]
+    });
+  });
+
+  it("any random string is ok", () => {
+    const input = "'string_split HTTP_USER_AGENT,10)'";
+    const result = esiExpressionParser(input);
+
+    expect(result).to.have.property("type", "Literal");
+    expect(result).to.have.to.eql({
+      type: "Literal",
+      value: "string_split HTTP_USER_AGENT,10)",
+    });
+  });
+
+  it("throws unexpected token", () => {
+    expect(() => {
+      esiExpressionParser("!");
+    }).to.throw(SyntaxError, "Unexpected token !");
   });
 });
