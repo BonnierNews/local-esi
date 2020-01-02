@@ -1473,7 +1473,6 @@ describe("local ESI", () => {
     }, done);
   });
 
-
   describe("illegal characters", () => {
     const illegalCharacters = [
       "$"
@@ -2457,7 +2456,7 @@ describe("local ESI", () => {
     it("supports escaping using tripple quotes when assigning variables", (done) => {
       // We test this using esi:include and nock as we want to ensure that it isn't simply as output time that the variables value is without backslashes
       const markup = `
-        <esi:assign name="daurl" value="'''\\/my\\stuff/'''" />
+        // <esi:assign name="daurl" value="'''\\/my\\stuff/'''" />
         <esi:include src="$(daurl)" dca="none"/><p>efter</p>
       `.replace(/^\s+|\n/gm, "");
 
@@ -2641,6 +2640,50 @@ describe("local ESI", () => {
       localEsi(markup, {}, {
         send(body) {
           expect(body.trim()).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+  });
+
+  describe("collection", () => {
+    it("should handle collection", (done) => {
+      const markup = `
+        <esi:assign name="myColl" value="[1, 2]" />
+        <esi:choose>
+          <esi:when test="$(myColl{0}) == 1">
+            Ja
+          </esi:when>
+          <esi:otherwise>
+            Nej
+          </esi:otherwise>
+        </esi:choose>`;
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body.trim()).to.equal("Ja");
+          done();
+        }
+      }, done);
+    });
+
+    it("handles collection with identifiers", (done) => {
+      const markup = `
+        <esi:assign name="myVar1" value="1" />
+        <esi:assign name="myVar2" value="2" />
+        <esi:assign name="myColl" value="[$(myVar1), $(myVar2)]" />
+        <esi:choose>
+          <esi:when test="$(myColl{0}) == 1">
+            Ja
+          </esi:when>
+          <esi:otherwise>
+            Nej
+          </esi:otherwise>
+        </esi:choose>`;
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body.trim()).to.equal("Ja");
           done();
         }
       }, done);

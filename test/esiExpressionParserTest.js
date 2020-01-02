@@ -847,7 +847,7 @@ describe("esiExpressionParser", () => {
     const result = esiExpressionParser(input);
 
     expect(result).to.have.property("type", "CallExpression");
-    expect(result).to.have.to.eql({
+    expect(result).to.to.eql({
       type: "CallExpression",
       callee: {
         type: "Identifier",
@@ -873,7 +873,7 @@ describe("esiExpressionParser", () => {
     const result = esiExpressionParser(input);
 
     expect(result).to.have.property("type", "CallExpression");
-    expect(result).to.have.to.eql({
+    expect(result).to.to.eql({
       type: "CallExpression",
       callee: {
         type: "Identifier",
@@ -892,20 +892,133 @@ describe("esiExpressionParser", () => {
     });
   });
 
-  it("any random string is ok", () => {
+  it("almost any random string is ok", () => {
     const input = "'string_split HTTP_USER_AGENT,10)'";
     const result = esiExpressionParser(input);
 
     expect(result).to.have.property("type", "Literal");
-    expect(result).to.have.to.eql({
+    expect(result).to.to.eql({
       type: "Literal",
       value: "string_split HTTP_USER_AGENT,10)",
     });
   });
 
-  it("throws unexpected token", () => {
-    expect(() => {
-      esiExpressionParser("!");
-    }).to.throw(SyntaxError, "Unexpected token !");
+  describe("collection", () => {
+    it("empty collection", () => {
+      const result = esiExpressionParser("[]");
+      expect(result).to.to.eql({
+        type: "ArrayExpression",
+        elements: [],
+      });
+    });
+
+    it("collection with number literals", () => {
+      const result = esiExpressionParser("[1, 2]");
+      expect(result).to.to.eql({
+        type: "ArrayExpression",
+        elements: [{
+          type: "Literal",
+          value: 1,
+        }, {
+          type: "Literal",
+          value: 2,
+        }],
+      });
+    });
+
+    it("collection with string literals", () => {
+      const result = esiExpressionParser("['a', 'b']");
+      expect(result).to.to.eql({
+        type: "ArrayExpression",
+        elements: [{
+          type: "Literal",
+          value: "a",
+        }, {
+          type: "Literal",
+          value: "b",
+        }],
+      });
+    });
+
+    it("collection with identifiers", () => {
+      const result = esiExpressionParser("[$(someVar1), $(someVar2)]");
+      expect(result).to.to.eql({
+        type: "ArrayExpression",
+        elements: [{
+          type: "Identifier",
+          name: "someVar1",
+        }, {
+          type: "Identifier",
+          name: "someVar2",
+        }],
+      });
+    });
+  });
+
+  describe("escape", () => {
+    it("removes backslash in string", () => {
+      const result = esiExpressionParser("'\\Program Files\\Game\\Fun.exe.'");
+      expect(result).to.have.property("type", "Literal");
+      expect(result).to.to.eql({
+        type: "Literal",
+        value: "Program FilesGameFun.exe.",
+      });
+    });
+
+    it("keeps escaped backslash in string", () => {
+      const result = esiExpressionParser("'\\\\Program Files\\\\Game\\\\Fun.exe.'");
+      expect(result).to.have.property("type", "Literal");
+      expect(result).to.to.eql({
+        type: "Literal",
+        value: "\\Program Files\\Game\\Fun.exe.",
+      });
+    });
+
+    it("keeps backslash in escaped string", () => {
+      const result = esiExpressionParser("'''\\Program Files\\Game\\Fun.exe.'''");
+      expect(result).to.have.property("type", "Literal");
+      expect(result).to.to.eql({
+        type: "Literal",
+        value: "\\Program Files\\Game\\Fun.exe.",
+      });
+    });
+  });
+
+  describe("malformated expression", () => {
+    it("throws on unexpected keyword", () => {
+      expect(() => {
+        esiExpressionParser("true");
+      }).to.throw(SyntaxError, "Unknown keyword true at 0:0");
+    });
+
+    it("throws unexpected token if just unary", () => {
+      expect(() => {
+        esiExpressionParser("!");
+      }).to.throw(SyntaxError, "Unexpected token ! at 0:0");
+    });
+
+    it("throws unexpected token if unclosed binary", () => {
+      expect(() => {
+        esiExpressionParser("$(someVar)==");
+      }).to.throw(SyntaxError, "Unexpected token == at 0:10");
+    });
+
+    it("throws unexpected token if unclosed logical", () => {
+      expect(() => {
+        esiExpressionParser("$(someVar) |   ");
+      }).to.throw(SyntaxError, "Unexpected token | at 0:11");
+    });
+
+    it("throws unexpected token if init binary", () => {
+      expect(() => {
+        esiExpressionParser("   == $(someVar)");
+      }).to.throw(SyntaxError, "Unexpected token == at 0:0");
+    });
+
+    it("throws unexpected token if init logical", () => {
+      expect(() => {
+        esiExpressionParser("| $(someVar)");
+      }).to.throw(SyntaxError, "Unexpected token | at 0:0");
+    });
   });
 });
