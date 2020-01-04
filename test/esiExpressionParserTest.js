@@ -1021,4 +1021,98 @@ describe("esiExpressionParser", () => {
       }).to.throw(SyntaxError, "Unexpected token | at 0:0");
     });
   });
+
+  describe("extract from text", () => {
+    it("extracts identifier from text", () => {
+      const text = "some text surrounding $(var) and beyond";
+      const result = esiExpressionParser(text, true);
+      expect(result).to.have.length(1);
+      expect(result[0]).to.eql({
+        index: 22,
+        source: "$(var) ",
+        expression: {
+          type: "Identifier",
+          source: "$(var) ",
+          name: "var"
+        }
+      });
+    });
+
+    it("extracts identifiers from text", () => {
+      const text = "some text surrounding $(var1) and beyond $(var2)";
+      const result = esiExpressionParser(text, true);
+      expect(result[0]).to.eql({
+        index: 22,
+        source: "$(var1) ",
+        expression: {
+          type: "Identifier",
+          name: "var1",
+          source: "$(var1) ",
+        }
+      }, {
+        index: 41,
+        source: "$(var2) ",
+        expression: {
+          type: "Identifier",
+          name: "var2",
+          source: "$(var2) ",
+        }
+      });
+    });
+
+    it("extracts call expression with one argument from text", () => {
+      const text = "\n$set_response_code( 401 )\n";
+      const result = esiExpressionParser(text, true);
+      expect(result[0]).to.eql({
+        index: 1,
+        source: "$set_response_code( 401 )",
+        expression: {
+          type: "CallExpression",
+          callee: {
+            type: "Identifier",
+            name: "set_response_code"
+          },
+          arguments: [{
+            type: "Literal",
+            value: 401,
+            source: "401 ",
+          }],
+          source: "$set_response_code( 401 )",
+        }
+      });
+    });
+
+    it("extracts call expression with two arguments from text", () => {
+      const text = "\n$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')\n";
+      const result = esiExpressionParser(text, true);
+      expect(result[0]).to.eql({
+        index: 1,
+        source: "$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')",
+        expression: {
+          type: "CallExpression",
+          callee: {
+            type: "Identifier",
+            name: "add_header"
+          },
+          arguments: [{
+            type: "Literal",
+            value: "Set-Cookie",
+            source: "'Set-Cookie'",
+          }, {
+            type: "Literal",
+            value: "MyCookie1=SomeValue; HttpOnly",
+            source: "'MyCookie1=SomeValue; HttpOnly'",
+          }],
+          source: "$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')",
+        }
+      });
+    });
+
+    it("throws if single $ is found", () => {
+      const text = "\n$ set_response_code ( 401 ) \n";
+      expect(() => {
+        esiExpressionParser(text, true);
+      }).to.throw(SyntaxError, "Unexpected $ at 0:1");
+    });
+  });
 });
