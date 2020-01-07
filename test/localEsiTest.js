@@ -2721,21 +2721,50 @@ describe("local ESI", () => {
   });
 
   describe("esi:foreach", () => {
-    it("loops through supplied collection", (done) => {
+    it("loops through supplied array collection", (done) => {
       const markup = `
-        <ol>
+        <ul>
           <esi:foreach collection="[0, 1, 2]">
             <li>$(item)</li>
           </esi:foreach>
-        </ol>
+        </ul>
         `.replace(/^\s+|\n/gm, "");
 
       const expectedMarkup = `
-        <ol>
+        <ul>
             <li>0</li>
             <li>1</li>
             <li>2</li>
-        </ol>
+        </ul>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("loops through supplied object collection", (done) => {
+      const markup = `
+        <dl>
+          <esi:foreach collection="{'a': 0, 'b': 1, 'c': 2}">
+            <dt>$(item{0})</dt>
+            <dd>$(item{1})</dd>
+          </esi:foreach>
+        </dl>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <dl>
+            <dt>a</dt>
+            <dd>0</dd>
+            <dt>b</dt>
+            <dd>1</dd>
+            <dt>c</dt>
+            <dd>2</dd>
+        </dl>
       `.replace(/^\s+|\n/gm, "");
 
       localEsi(markup, {}, {
