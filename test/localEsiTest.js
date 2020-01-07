@@ -1748,6 +1748,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("<p>')</p>");
@@ -1769,6 +1770,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("OK");
@@ -1796,6 +1798,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("<p>Unauthorized</p>");
