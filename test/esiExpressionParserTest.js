@@ -1052,10 +1052,10 @@ describe("parser", () => {
         text: "some text surrounding ",
       }, {
         index: 22,
-        source: "$(var)",
+        raw: "$(var)",
         expression: {
           type: "Identifier",
-          source: "$(var)",
+          raw: "$(var)",
           name: "var"
         }
       }, {
@@ -1072,22 +1072,22 @@ describe("parser", () => {
         text: "some text surrounding ",
       }, {
         index: 22,
-        source: "$(var1)",
+        raw: "$(var1)",
         expression: {
           type: "Identifier",
           name: "var1",
-          source: "$(var1)",
+          raw: "$(var1)",
         }
       }, {
         type: "TEXT",
         text: " and before ",
       }, {
         index: 41,
-        source: "$(var2)",
+        raw: "$(var2)",
         expression: {
           type: "Identifier",
           name: "var2",
-          source: "$(var2)",
+          raw: "$(var2)",
         }
       }]);
     });
@@ -1100,7 +1100,7 @@ describe("parser", () => {
         text: "\n"
       }, {
         index: 1,
-        source: "$set_response_code( 401 )",
+        raw: "$set_response_code( 401 )",
         expression: {
           type: "CallExpression",
           callee: {
@@ -1110,9 +1110,9 @@ describe("parser", () => {
           arguments: [{
             type: "Literal",
             value: 401,
-            source: " 401",
+            raw: " 401",
           }],
-          source: "$set_response_code( 401 )",
+          raw: "$set_response_code( 401 )",
         }
       }, {
         type: "TEXT",
@@ -1128,7 +1128,7 @@ describe("parser", () => {
         text: "/mystuff/?a=b&user="
       }, {
         index: 19,
-        source: "$url_encode($(user_email))",
+        raw: "$url_encode($(user_email))",
         expression: {
           type: "CallExpression",
           callee: {
@@ -1138,9 +1138,9 @@ describe("parser", () => {
           arguments: [{
             type: "Identifier",
             name: "user_email",
-            source: "$(user_email)",
+            raw: "$(user_email)",
           }],
-          source: "$url_encode($(user_email))",
+          raw: "$url_encode($(user_email))",
         }
       }]);
     });
@@ -1150,7 +1150,7 @@ describe("parser", () => {
       const result = split(text);
       expect(result[1]).to.eql({
         index: 1,
-        source: "$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')",
+        raw: "$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')",
         expression: {
           type: "CallExpression",
           callee: {
@@ -1160,13 +1160,13 @@ describe("parser", () => {
           arguments: [{
             type: "Literal",
             value: "Set-Cookie",
-            source: "'Set-Cookie'",
+            raw: "'Set-Cookie'",
           }, {
             type: "Literal",
             value: "MyCookie1=SomeValue; HttpOnly",
-            source: " 'MyCookie1=SomeValue; HttpOnly'",
+            raw: " 'MyCookie1=SomeValue; HttpOnly'",
           }],
-          source: "$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')",
+          raw: "$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')",
         }
       });
       expect(result.length).to.equal(3);
@@ -1177,10 +1177,10 @@ describe("parser", () => {
       const result = split(text);
       expect(result[1]).to.deep.equal({
         index: 12,
-        source: "$(QUERY_STRING{'b'})",
+        raw: "$(QUERY_STRING{'b'})",
         expression: {
           type: "MemberExpression",
-          source: "$(QUERY_STRING{'b'})",
+          raw: "$(QUERY_STRING{'b'})",
           object: {
             type: "Identifier",
             name: "QUERY_STRING",
@@ -1188,16 +1188,16 @@ describe("parser", () => {
           property: {
             type: "Literal",
             value: "b",
-            source: "'b'",
+            raw: "'b'",
           }
         }
       });
       expect(result[3]).to.deep.equal({
         index: 38,
-        source: "$(QUERY_STRING{'user'})",
+        raw: "$(QUERY_STRING{'user'})",
         expression: {
           type: "MemberExpression",
-          source: "$(QUERY_STRING{'user'})",
+          raw: "$(QUERY_STRING{'user'})",
           object: {
             type: "Identifier",
             name: "QUERY_STRING",
@@ -1205,7 +1205,7 @@ describe("parser", () => {
           property: {
             type: "Literal",
             value: "user",
-            source: "'user'",
+            raw: "'user'",
           }
         }
       });
@@ -1221,11 +1221,11 @@ describe("parser", () => {
       });
       expect(result[1]).to.deep.include({
         index: 8,
-        source: "$(QUERY_STRING{'b'})",
+        raw: "$(QUERY_STRING{'b'})",
       });
       expect(result[2]).to.deep.include({
         index: 28,
-        source: "$(QUERY_STRING{'user'})",
+        raw: "$(QUERY_STRING{'user'})",
       });
       expect(result.length).to.equal(3);
     });

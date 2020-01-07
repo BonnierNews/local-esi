@@ -58,13 +58,43 @@ describe("lexer", () => {
     });
   });
 
+  describe("ObjectExpression", () => {
+    it("consumes both start and end curly brace", () => {
+      const lexer = Lexer("{'myProp': 1}");
+      expect(lexer.get()).to.deep.include({
+        type: "ObjectExpression",
+        cargo: "{",
+      });
+      expect(lexer.get()).to.include({
+        type: "Literal",
+        cargo: "myProp",
+      });
+      expect(lexer.get()).to.include({
+        type: ":",
+        cargo: ":",
+      });
+      expect(lexer.get()).to.include({
+        type: "Space",
+        cargo: " ",
+      });
+      expect(lexer.get()).to.include({
+        type: "Number",
+        cargo: "1",
+      });
+      expect(lexer.get()).to.include({
+        type: "}",
+        cargo: "}",
+      });
+    });
+  });
+
   describe("source map", () => {
     it("token keeps start source for empty call expression", () => {
       const lexer = Lexer("$time()", true);
       expect(lexer.get()).to.deep.include({
         type: "CallExpression",
         cargo: "time",
-        source: "$time("
+        raw: "$time("
       });
     });
 
@@ -73,7 +103,7 @@ describe("lexer", () => {
       expect(lexer.get()).to.have.property("type", "CallExpression");
       expect(lexer.get()).to.deep.include({
         type: ")",
-        source: ")"
+        raw: ")"
       });
     });
 
@@ -83,17 +113,17 @@ describe("lexer", () => {
       expect(lexer.get()).to.deep.include({
         type: "Literal",
         cargo: "x-test-lexer",
-        source: "'x-test-lexer'",
+        raw: "'x-test-lexer'",
       });
       expect(lexer.get()).to.deep.include({
         type: ",",
         cargo: ",",
-        source: ",",
+        raw: ",",
       });
       expect(lexer.get()).to.deep.include({
         type: "Literal",
         cargo: "true",
-        source: " 'true'",
+        raw: " 'true'",
       });
     });
 
@@ -102,7 +132,7 @@ describe("lexer", () => {
       expect(lexer.get()).to.deep.include({
         type: "Identifier",
         cargo: "myVar",
-        source: "$(myVar)"
+        raw: "$(myVar)"
       });
     });
 
@@ -111,22 +141,22 @@ describe("lexer", () => {
       expect(lexer.get()).to.deep.include({
         type: "MemberExpression",
         cargo: "myVar",
-        source: "$(myVar{"
+        raw: "$(myVar{"
       });
       expect(lexer.get()).to.deep.include({
         type: "Literal",
         cargo: "myProp",
-        source: "'myProp'"
+        raw: "'myProp'"
       });
       expect(lexer.get()).to.deep.include({
         type: "}",
         cargo: "}",
-        source: "}"
+        raw: "}"
       });
       expect(lexer.get()).to.deep.include({
         type: ")",
         cargo: ")",
-        source: ")"
+        raw: ")"
       });
     });
 
@@ -135,7 +165,7 @@ describe("lexer", () => {
       expect(lexer.get()).to.deep.include({
         type: "Literal",
         cargo: "myValue",
-        source: "'myValue'"
+        raw: "'myValue'"
       });
     });
 
@@ -144,7 +174,7 @@ describe("lexer", () => {
       expect(lexer.get()).to.deep.include({
         type: "Literal",
         cargo: "myValue",
-        source: "'''myValue'''"
+        raw: "'''myValue'''"
       });
     });
 
@@ -153,7 +183,7 @@ describe("lexer", () => {
       expect(lexer.get()).to.deep.include({
         type: "Number",
         cargo: "99",
-        source: "99"
+        raw: "99"
       });
     });
 
@@ -162,13 +192,13 @@ describe("lexer", () => {
       expect(lexer.get()).to.deep.include({
         type: "ArrayExpression",
         cargo: "[",
-        source: "["
+        raw: "["
       });
 
       expect(lexer.get()).to.deep.include({
         type: "]",
         cargo: "]",
-        source: "]"
+        raw: "]"
       });
     });
 
@@ -177,31 +207,31 @@ describe("lexer", () => {
       expect(lexer.get()).to.deep.include({
         type: "ArrayExpression",
         cargo: "[",
-        source: "["
+        raw: "["
       });
 
       expect(lexer.get()).to.deep.include({
         type: "Number",
         cargo: "1",
-        source: "1"
+        raw: "1"
       });
 
       expect(lexer.get()).to.deep.include({
         type: ",",
         cargo: ",",
-        source: ","
+        raw: ","
       });
 
       expect(lexer.get()).to.deep.include({
         type: "Number",
         cargo: "2",
-        source: " 2"
+        raw: " 2"
       });
 
       expect(lexer.get()).to.deep.include({
         type: "]",
         cargo: "]",
-        source: "]"
+        raw: "]"
       });
     });
 
@@ -210,28 +240,28 @@ describe("lexer", () => {
       expect(lexer.get()).to.deep.include({
         type: "ArrayExpression",
         cargo: "[",
-        source: "["
+        raw: "["
       });
 
       expect(lexer.get()).to.deep.include({
         type: "Literal",
-        source: "'a'"
+        raw: "'a'"
       });
 
       expect(lexer.get()).to.deep.include({
         type: ",",
         cargo: ",",
-        source: ","
+        raw: ","
       });
 
       expect(lexer.get()).to.deep.include({
         type: "Literal",
-        source: " '''b'''"
+        raw: " '''b'''"
       });
 
       expect(lexer.get()).to.deep.include({
         type: "]",
-        source: "]"
+        raw: "]"
       });
     });
   });
