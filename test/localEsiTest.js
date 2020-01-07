@@ -2719,4 +2719,31 @@ describe("local ESI", () => {
       }, done);
     });
   });
+
+  describe("esi:foreach", () => {
+    it("loops through supplied collection", (done) => {
+      const markup = `
+        <ol>
+          <esi:foreach collection="[0, 1, 2]">
+            <li>$(item)</li>
+          </esi:foreach>
+        </ol>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <ol>
+            <li>0</li>
+            <li>1</li>
+            <li>2</li>
+        </ol>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+  });
 });
