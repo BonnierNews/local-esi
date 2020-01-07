@@ -2,7 +2,6 @@
 
 const ck = require("chronokinesis");
 const localEsi = require("..");
-const crypto = require("crypto");
 
 describe("functions", () => {
   describe("$add_header", () => {

@@ -1,11 +1,11 @@
 "use strict";
 
-const esiExpressionParser = require("../lib/esiExpressionParser2");
+const {parse, split} = require("../lib/expression/parser");
 
-describe("esiExpressionParser", () => {
+describe("parser", () => {
   it("handle binary expression with identifier on left side and literal on right", () => {
     const input = "$(access_granted)=='true'";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("operator", "==");
     expect(result).to.have.property("left");
@@ -18,7 +18,7 @@ describe("esiExpressionParser", () => {
 
   it("handle binary negative expression with identifier on left side and literal on right", () => {
     const input = "$(access_granted)!='true'";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("operator", "!=");
     expect(result).to.have.property("left");
@@ -31,7 +31,7 @@ describe("esiExpressionParser", () => {
 
   it("handles call expression with argument", () => {
     const input = "$exists($(user_email))";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "CallExpression");
     expect(result).to.have.property("callee").that.eql({
@@ -46,7 +46,7 @@ describe("esiExpressionParser", () => {
 
   it("handles call expression without argument", () => {
     const input = "$time()";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "CallExpression");
     expect(result).to.have.property("callee").that.eql({
@@ -58,7 +58,7 @@ describe("esiExpressionParser", () => {
 
   it("should handle unary expression with ! operator", () => {
     const input = "!$exists($(HTTP_COOKIE{'remember_me'}))";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "UnaryExpression");
     expect(result).to.have.property("operator", "!");
@@ -85,7 +85,7 @@ describe("esiExpressionParser", () => {
 
   it("should handle member expression", () => {
     const input = "$(HTTP_COOKIE{'remember_me'})";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "MemberExpression");
     expect(result).to.have.property("object").that.eql({
@@ -101,7 +101,7 @@ describe("esiExpressionParser", () => {
 
   it("should handle member expression with array access", () => {
     const input = "$(someVar{1})";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "MemberExpression");
     expect(result).to.have.property("object").that.eql({
@@ -117,7 +117,7 @@ describe("esiExpressionParser", () => {
 
   it("handle logical expression with & operator ", () => {
     const input = "$(HTTP_USER_AGENT{'os'})=='WIN' & $(HTTP_USER_AGENT{'browser'})=='MSIE'";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "LogicalExpression");
     expect(result).to.have.property("operator", "&");
@@ -163,7 +163,7 @@ describe("esiExpressionParser", () => {
 
   it("should logical binary expression with call expressions", () => {
     const input = "$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'}))";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "LogicalExpression");
     expect(result).to.have.property("operator", "|");
@@ -207,7 +207,7 @@ describe("esiExpressionParser", () => {
 
   it("handle logical expression where left is a unary expression", () => {
     const input = "!$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'}))";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
     expect(result).to.have.property("type", "LogicalExpression");
     expect(result).to.have.property("operator", "|");
     expect(result).to.have.property("left").that.eql({
@@ -255,7 +255,7 @@ describe("esiExpressionParser", () => {
 
   it("handle multiple ors", () => {
     const input = "$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'})) | $exists($(HTTP_COOKIE{'sessionKey'}))";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "LogicalExpression");
     expect(result).to.have.property("operator", "|");
@@ -321,7 +321,7 @@ describe("esiExpressionParser", () => {
 
   it("handles logical expression with && operator", () => {
     const input = "$(someVar) == 'a' && $(someVar2) == 'b'";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "LogicalExpression");
     expect(result).to.have.property("left").that.eql({
@@ -353,7 +353,7 @@ describe("esiExpressionParser", () => {
 
   it("handles binary expression with number literal", () => {
     const input = "$(someVar) == 59";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -369,7 +369,7 @@ describe("esiExpressionParser", () => {
 
   it("handles binary expression with negative number literal", () => {
     const input = "$(someVar) == -1";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -385,7 +385,7 @@ describe("esiExpressionParser", () => {
 
   it("handles binary expression with >= operator", () => {
     const input = "$(someVar) >= 59";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -401,7 +401,7 @@ describe("esiExpressionParser", () => {
 
   it("handles binary expression with <= operator", () => {
     const input = "$(someVar) <= 590";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -417,7 +417,7 @@ describe("esiExpressionParser", () => {
 
   it("handles binary expression with < operator", () => {
     const input = "$(someVar) < 590";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -433,7 +433,7 @@ describe("esiExpressionParser", () => {
 
   it("handles binary expression with > operator", () => {
     const input = "$(someVar) > 590";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -449,7 +449,7 @@ describe("esiExpressionParser", () => {
 
   it("handles binary expression enclosed in unnecessary parentheses", () => {
     const input = "($(someVar) <= 590)";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -465,7 +465,7 @@ describe("esiExpressionParser", () => {
 
   it("handles binary expression where each expression is enclosed in unnecessary parentheses", () => {
     const input = "($(someVar)) <= (590)";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -481,7 +481,7 @@ describe("esiExpressionParser", () => {
 
   it("handles binary expression where each expression is enclosed in unnecessary parentheses", () => {
     const input = "($(someVar) == 1) && (2 == $(someVar))";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "LogicalExpression");
     expect(result).to.have.property("left").that.eql({
@@ -513,7 +513,7 @@ describe("esiExpressionParser", () => {
 
   it("handles triple quoute enclosed string", () => {
     const input = "$(someVar) == '''my\\value'''";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
       type: "Identifier",
@@ -527,7 +527,7 @@ describe("esiExpressionParser", () => {
 
   it("handles number literal expression", () => {
     const input = "59";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "Literal");
     expect(result).to.have.property("value").that.eql(59);
@@ -535,7 +535,7 @@ describe("esiExpressionParser", () => {
 
   it("handles string literal expression2", () => {
     const input = "'jan.bananberg@test.com'";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "Literal");
     expect(result).to.have.property("value").that.eql("jan.bananberg@test.com");
@@ -543,7 +543,7 @@ describe("esiExpressionParser", () => {
 
   it("handles binary expression where one expression is a regular expression", () => {
     const input = "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$'''";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -559,7 +559,7 @@ describe("esiExpressionParser", () => {
 
   it("handles multiple evaluations with two regular expressions", () => {
     const input = "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$''' && 'newyork' matches 'newyorknewyork'";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "LogicalExpression");
     expect(result).to.have.property("left").that.eql({
@@ -591,7 +591,7 @@ describe("esiExpressionParser", () => {
 
   it("handles variables named 'has' (although it's used in binary expressions)", () => {
     const input = "$(has) == 'true'";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -607,7 +607,7 @@ describe("esiExpressionParser", () => {
 
   it("handles variables named 'has' and 'has_i' (although they are used in binary expressions)", () => {
     const input = "$(has_i) == $(has)";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -623,7 +623,7 @@ describe("esiExpressionParser", () => {
 
   it("handles string binary expression with +", () => {
     const input = "'1' + '2'";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -639,7 +639,7 @@ describe("esiExpressionParser", () => {
 
   it("handles arithmetic binary expression with +", () => {
     const input = "1 + 2";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -655,7 +655,7 @@ describe("esiExpressionParser", () => {
 
   it("handles arithmetic binary expression with -", () => {
     const input = "1 - 2";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -671,7 +671,7 @@ describe("esiExpressionParser", () => {
 
   it("handles arithmetic binary expression with *", () => {
     const input = "1 * 2";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -687,7 +687,7 @@ describe("esiExpressionParser", () => {
 
   it("handles arithmetic binary expression with /", () => {
     const input = "1 / 2";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -703,7 +703,7 @@ describe("esiExpressionParser", () => {
 
   it("handles arithmetic binary expression with %", () => {
     const input = "1 % 2";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("left").that.eql({
@@ -719,7 +719,7 @@ describe("esiExpressionParser", () => {
 
   it("gives higher precedence to + expressions than ==", () => {
     const input = "1 + 2 == 3";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("operator").that.eql("==");
@@ -744,7 +744,7 @@ describe("esiExpressionParser", () => {
 
   it("gives higher precedence to - expressions than ==", () => {
     const input = "1 - 2 == 3";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("operator").that.eql("==");
@@ -769,7 +769,7 @@ describe("esiExpressionParser", () => {
 
   it("gives higher precedence to * expressions than ==", () => {
     const input = "1 * 2 == 3";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("operator").that.eql("==");
@@ -794,7 +794,7 @@ describe("esiExpressionParser", () => {
 
   it("gives higher precedence to / expressions than ==", () => {
     const input = "1 / 2 == 3";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("operator").that.eql("==");
@@ -819,7 +819,7 @@ describe("esiExpressionParser", () => {
 
   it("gives higher precedence to % expressions than ==", () => {
     const input = "1 % 2 == 3";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
     expect(result).to.have.property("operator").that.eql("==");
@@ -844,10 +844,10 @@ describe("esiExpressionParser", () => {
 
   it("handles expression in function call", () => {
     const input = "$digest_md5($(REMOTE_ADDR) + $(HTTP_USER_AGENT))";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "CallExpression");
-    expect(result).to.to.eql({
+    expect(result).to.eql({
       type: "CallExpression",
       callee: {
         type: "Identifier",
@@ -870,10 +870,10 @@ describe("esiExpressionParser", () => {
 
   it("handles multiple function arguments", () => {
     const input = "$string_split($(HTTP_USER_AGENT), ';', 10)";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "CallExpression");
-    expect(result).to.to.eql({
+    expect(result).to.eql({
       type: "CallExpression",
       callee: {
         type: "Identifier",
@@ -894,10 +894,10 @@ describe("esiExpressionParser", () => {
 
   it("almost any random string is ok", () => {
     const input = "'string_split HTTP_USER_AGENT,10)'";
-    const result = esiExpressionParser(input);
+    const result = parse(input);
 
     expect(result).to.have.property("type", "Literal");
-    expect(result).to.to.eql({
+    expect(result).to.eql({
       type: "Literal",
       value: "string_split HTTP_USER_AGENT,10)",
     });
@@ -905,16 +905,16 @@ describe("esiExpressionParser", () => {
 
   describe("collection", () => {
     it("empty collection", () => {
-      const result = esiExpressionParser("[]");
-      expect(result).to.to.eql({
+      const result = parse("[]");
+      expect(result).to.eql({
         type: "ArrayExpression",
         elements: [],
       });
     });
 
     it("collection with number literals", () => {
-      const result = esiExpressionParser("[1, 2]");
-      expect(result).to.to.eql({
+      const result = parse("[1, 2]");
+      expect(result).to.eql({
         type: "ArrayExpression",
         elements: [{
           type: "Literal",
@@ -927,8 +927,8 @@ describe("esiExpressionParser", () => {
     });
 
     it("collection with string literals", () => {
-      const result = esiExpressionParser("['a', 'b']");
-      expect(result).to.to.eql({
+      const result = parse("['a', 'b']");
+      expect(result).to.eql({
         type: "ArrayExpression",
         elements: [{
           type: "Literal",
@@ -941,8 +941,8 @@ describe("esiExpressionParser", () => {
     });
 
     it("collection with identifiers", () => {
-      const result = esiExpressionParser("[$(someVar1), $(someVar2)]");
-      expect(result).to.to.eql({
+      const result = parse("[$(someVar1), $(someVar2)]");
+      expect(result).to.eql({
         type: "ArrayExpression",
         elements: [{
           type: "Identifier",
@@ -957,29 +957,38 @@ describe("esiExpressionParser", () => {
 
   describe("escape", () => {
     it("removes backslash in string", () => {
-      const result = esiExpressionParser("'\\Program Files\\Game\\Fun.exe.'");
-      expect(result).to.have.property("type", "Literal");
-      expect(result).to.to.eql({
+      let result = parse("'\\Program Files\\Game\\Fun.exe.'");
+      expect(result).to.deep.equal({
         type: "Literal",
         value: "Program FilesGameFun.exe.",
+      });
+
+      result = parse("'\\\\/my\\\\stuff/'");
+      expect(result).to.deep.equal({
+        type: "Literal",
+        value: "\\/my\\stuff/",
       });
     });
 
     it("keeps escaped backslash in string", () => {
-      const result = esiExpressionParser("'\\\\Program Files\\\\Game\\\\Fun.exe.'");
-      expect(result).to.have.property("type", "Literal");
-      expect(result).to.to.eql({
+      const result = parse("'\\\\Program Files\\\\Game\\\\Fun.exe.'");
+      expect(result).to.eql({
         type: "Literal",
         value: "\\Program Files\\Game\\Fun.exe.",
       });
     });
 
     it("keeps backslash in escaped string", () => {
-      const result = esiExpressionParser("'''\\Program Files\\Game\\Fun.exe.'''");
-      expect(result).to.have.property("type", "Literal");
-      expect(result).to.to.eql({
+      let result = parse("'''\\Program Files\\Game\\Fun.exe.'''");
+      expect(result).to.eql({
         type: "Literal",
         value: "\\Program Files\\Game\\Fun.exe.",
+      });
+
+      result = parse("'''\\/my\\stuff/'''");
+      expect(result).to.eql({
+        type: "Literal",
+        value: "\\/my\\stuff/",
       });
     });
   });
@@ -987,83 +996,109 @@ describe("esiExpressionParser", () => {
   describe("malformated expression", () => {
     it("throws on unexpected keyword", () => {
       expect(() => {
-        esiExpressionParser("true");
+        parse("true");
       }).to.throw(SyntaxError, "Unknown keyword true at 0:0");
     });
 
     it("throws unexpected token if just unary", () => {
       expect(() => {
-        esiExpressionParser("!");
+        parse("!");
       }).to.throw(SyntaxError, "Unexpected token ! at 0:0");
     });
 
     it("throws unexpected token if unclosed binary", () => {
       expect(() => {
-        esiExpressionParser("$(someVar)==");
+        parse("$(someVar)==");
       }).to.throw(SyntaxError, "Unexpected token == at 0:10");
     });
 
     it("throws unexpected token if unclosed logical", () => {
       expect(() => {
-        esiExpressionParser("$(someVar) |   ");
+        parse("$(someVar) |   ");
       }).to.throw(SyntaxError, "Unexpected token | at 0:11");
     });
 
     it("throws unexpected token if init binary", () => {
       expect(() => {
-        esiExpressionParser("   == $(someVar)");
+        parse("   == $(someVar)");
       }).to.throw(SyntaxError, "Unexpected token == at 0:0");
     });
 
     it("throws unexpected token if init logical", () => {
       expect(() => {
-        esiExpressionParser("| $(someVar)");
+        parse("| $(someVar)");
       }).to.throw(SyntaxError, "Unexpected token | at 0:0");
+    });
+
+    it("throws unexpected token if function arguments are not separated by comma", () => {
+      expect(() => {
+        parse("$set_response_code(400 '<h1>Err</h1>'");
+      }).to.throw(SyntaxError, "Unexpected Literal");
+    });
+
+    it("throws unexpected token if array elements are not separated by comma", () => {
+      expect(() => {
+        parse("[400 500]");
+      }).to.throw(SyntaxError, "Unexpected Literal");
     });
   });
 
-  describe("extract from text", () => {
+  describe("split into text and expressions", () => {
     it("extracts identifier from text", () => {
       const text = "some text surrounding $(var) and beyond";
-      const result = esiExpressionParser(text, true);
-      expect(result).to.have.length(1);
-      expect(result[0]).to.eql({
+      const result = split(text);
+      expect(result).to.eql([{
+        type: "TEXT",
+        text: "some text surrounding ",
+      }, {
         index: 22,
-        source: "$(var) ",
+        source: "$(var)",
         expression: {
           type: "Identifier",
-          source: "$(var) ",
+          source: "$(var)",
           name: "var"
         }
-      });
+      }, {
+        type: "TEXT",
+        text: " and beyond",
+      }]);
     });
 
     it("extracts identifiers from text", () => {
-      const text = "some text surrounding $(var1) and beyond $(var2)";
-      const result = esiExpressionParser(text, true);
-      expect(result[0]).to.eql({
+      const text = "some text surrounding $(var1) and before $(var2)";
+      const result = split(text);
+      expect(result).to.eql([{
+        type: "TEXT",
+        text: "some text surrounding ",
+      }, {
         index: 22,
-        source: "$(var1) ",
+        source: "$(var1)",
         expression: {
           type: "Identifier",
           name: "var1",
-          source: "$(var1) ",
+          source: "$(var1)",
         }
       }, {
+        type: "TEXT",
+        text: " and before ",
+      }, {
         index: 41,
-        source: "$(var2) ",
+        source: "$(var2)",
         expression: {
           type: "Identifier",
           name: "var2",
-          source: "$(var2) ",
+          source: "$(var2)",
         }
-      });
+      }]);
     });
 
     it("extracts call expression with one argument from text", () => {
-      const text = "\n$set_response_code( 401 )\n";
-      const result = esiExpressionParser(text, true);
-      expect(result[0]).to.eql({
+      const text = "\n$set_response_code( 401 ) \n";
+      const result = split(text);
+      expect(result).to.eql([{
+        type: "TEXT",
+        text: "\n"
+      }, {
         index: 1,
         source: "$set_response_code( 401 )",
         expression: {
@@ -1075,17 +1110,45 @@ describe("esiExpressionParser", () => {
           arguments: [{
             type: "Literal",
             value: 401,
-            source: "401 ",
+            source: " 401",
           }],
           source: "$set_response_code( 401 )",
         }
-      });
+      }, {
+        type: "TEXT",
+        text: " \n"
+      }]);
+    });
+
+    it("extracts call expression with one argument from text", () => {
+      const text = "/mystuff/?a=b&user=$url_encode($(user_email))";
+      const result = split(text);
+      expect(result).to.deep.equal([{
+        type: "TEXT",
+        text: "/mystuff/?a=b&user="
+      }, {
+        index: 19,
+        source: "$url_encode($(user_email))",
+        expression: {
+          type: "CallExpression",
+          callee: {
+            type: "Identifier",
+            name: "url_encode"
+          },
+          arguments: [{
+            type: "Identifier",
+            name: "user_email",
+            source: "$(user_email)",
+          }],
+          source: "$url_encode($(user_email))",
+        }
+      }]);
     });
 
     it("extracts call expression with two arguments from text", () => {
       const text = "\n$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')\n";
-      const result = esiExpressionParser(text, true);
-      expect(result[0]).to.eql({
+      const result = split(text);
+      expect(result[1]).to.eql({
         index: 1,
         source: "$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')",
         expression: {
@@ -1101,18 +1164,70 @@ describe("esiExpressionParser", () => {
           }, {
             type: "Literal",
             value: "MyCookie1=SomeValue; HttpOnly",
-            source: "'MyCookie1=SomeValue; HttpOnly'",
+            source: " 'MyCookie1=SomeValue; HttpOnly'",
           }],
           source: "$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')",
         }
       });
+      expect(result.length).to.equal(3);
     });
 
-    it("throws if single $ is found", () => {
-      const text = "\n$ set_response_code ( 401 ) \n";
-      expect(() => {
-        esiExpressionParser(text, true);
-      }).to.throw(SyntaxError, "Unexpected $ at 0:1");
+    it("extracts member expressions", () => {
+      const text = "/mystuff/?a=$(QUERY_STRING{'b'})&user=$(QUERY_STRING{'user'})";
+      const result = split(text);
+      expect(result[1]).to.deep.equal({
+        index: 12,
+        source: "$(QUERY_STRING{'b'})",
+        expression: {
+          type: "MemberExpression",
+          source: "$(QUERY_STRING{'b'})",
+          object: {
+            type: "Identifier",
+            name: "QUERY_STRING",
+          },
+          property: {
+            type: "Literal",
+            value: "b",
+            source: "'b'",
+          }
+        }
+      });
+      expect(result[3]).to.deep.equal({
+        index: 38,
+        source: "$(QUERY_STRING{'user'})",
+        expression: {
+          type: "MemberExpression",
+          source: "$(QUERY_STRING{'user'})",
+          object: {
+            type: "Identifier",
+            name: "QUERY_STRING",
+          },
+          property: {
+            type: "Literal",
+            value: "user",
+            source: "'user'",
+          }
+        }
+      });
+      expect(result.length).to.equal(4);
+    });
+
+    it("extracts concatenated expressions", () => {
+      const text = "Welcome $(QUERY_STRING{'b'})$(QUERY_STRING{'user'})";
+      const result = split(text);
+      expect(result[0]).to.deep.equal({
+        type: "TEXT",
+        text: "Welcome ",
+      });
+      expect(result[1]).to.deep.include({
+        index: 8,
+        source: "$(QUERY_STRING{'b'})",
+      });
+      expect(result[2]).to.deep.include({
+        index: 28,
+        source: "$(QUERY_STRING{'user'})",
+      });
+      expect(result.length).to.equal(3);
     });
   });
 });

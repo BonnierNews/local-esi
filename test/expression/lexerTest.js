@@ -88,12 +88,12 @@ describe("lexer", () => {
       expect(lexer.get()).to.deep.include({
         type: ",",
         cargo: ",",
-        source: ", ",
+        source: ",",
       });
       expect(lexer.get()).to.deep.include({
         type: "Literal",
         cargo: "true",
-        source: "'true'",
+        source: " 'true'",
       });
     });
 
@@ -103,6 +103,30 @@ describe("lexer", () => {
         type: "Identifier",
         cargo: "myVar",
         source: "$(myVar)"
+      });
+    });
+
+    it("returns source for member expression", () => {
+      const lexer = Lexer("$(myVar{'myProp'})", true);
+      expect(lexer.get()).to.deep.include({
+        type: "MemberExpression",
+        cargo: "myVar",
+        source: "$(myVar{"
+      });
+      expect(lexer.get()).to.deep.include({
+        type: "Literal",
+        cargo: "myProp",
+        source: "'myProp'"
+      });
+      expect(lexer.get()).to.deep.include({
+        type: "}",
+        cargo: "}",
+        source: "}"
+      });
+      expect(lexer.get()).to.deep.include({
+        type: ")",
+        cargo: ")",
+        source: ")"
       });
     });
 
@@ -165,13 +189,13 @@ describe("lexer", () => {
       expect(lexer.get()).to.deep.include({
         type: ",",
         cargo: ",",
-        source: ", "
+        source: ","
       });
 
       expect(lexer.get()).to.deep.include({
         type: "Number",
         cargo: "2",
-        source: "2"
+        source: " 2"
       });
 
       expect(lexer.get()).to.deep.include({
@@ -197,12 +221,12 @@ describe("lexer", () => {
       expect(lexer.get()).to.deep.include({
         type: ",",
         cargo: ",",
-        source: ", "
+        source: ","
       });
 
       expect(lexer.get()).to.deep.include({
         type: "Literal",
-        source: "'''b'''"
+        source: " '''b'''"
       });
 
       expect(lexer.get()).to.deep.include({

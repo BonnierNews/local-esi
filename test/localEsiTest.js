@@ -6,7 +6,6 @@ const nock = require("nock");
 const ck = require("chronokinesis");
 
 describe("local ESI", () => {
-
   it("should not touch regular markup", (done) => {
     const markup = "<!DOCTYPE html><html><head><title>This is a title</title></head><body>Test: <b>Testsson</b></body></html>";
     localEsi(markup, {}, {
@@ -1679,6 +1678,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("");
@@ -1700,6 +1700,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("<p>hej</p>");
@@ -2456,7 +2457,7 @@ describe("local ESI", () => {
     it("supports escaping using tripple quotes when assigning variables", (done) => {
       // We test this using esi:include and nock as we want to ensure that it isn't simply as output time that the variables value is without backslashes
       const markup = `
-        // <esi:assign name="daurl" value="'''\\/my\\stuff/'''" />
+        <esi:assign name="daurl" value="'''\\/my\\stuff/'''" />
         <esi:include src="$(daurl)" dca="none"/><p>efter</p>
       `.replace(/^\s+|\n/gm, "");
 
