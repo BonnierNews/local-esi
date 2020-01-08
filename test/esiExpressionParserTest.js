@@ -451,13 +451,15 @@ describe("parser", () => {
     const input = "($(someVar) <= 590)";
     const result = parse(input);
 
-    expect(result).to.have.property("type", "BinaryExpression");
-    expect(result).to.have.property("left").that.eql({
+    expect(result).to.have.property("type", "BlockStatement");
+
+    expect(result.body).to.have.property("type", "BinaryExpression");
+    expect(result.body).to.have.property("left").that.eql({
       type: "Identifier",
       name: "someVar"
     });
-    expect(result).to.have.property("operator").that.eql("<=");
-    expect(result).to.have.property("right").that.eql({
+    expect(result.body).to.have.property("operator").that.eql("<=");
+    expect(result.body).to.have.property("right").that.eql({
       type: "Literal",
       value: 590
     });
@@ -468,12 +470,14 @@ describe("parser", () => {
     const result = parse(input);
 
     expect(result).to.have.property("type", "BinaryExpression");
-    expect(result).to.have.property("left").that.eql({
+
+    expect(result.left).to.have.property("type", "BlockStatement");
+    expect(result.left).to.have.property("body").that.eql({
       type: "Identifier",
       name: "someVar"
     });
-    expect(result).to.have.property("operator").that.eql("<=");
-    expect(result).to.have.property("right").that.eql({
+    expect(result.right).to.have.property("type", "BlockStatement");
+    expect(result.right).to.have.property("body").that.eql({
       type: "Literal",
       value: 590
     });
@@ -484,7 +488,8 @@ describe("parser", () => {
     const result = parse(input);
 
     expect(result).to.have.property("type", "LogicalExpression");
-    expect(result).to.have.property("left").that.eql({
+    expect(result).to.have.property("left").with.property("type", "BlockStatement");
+    expect(result.left).to.have.property("body").that.eql({
       type: "BinaryExpression",
       left: {
         type: "Identifier",
@@ -496,8 +501,8 @@ describe("parser", () => {
         value: 1
       }
     });
-    expect(result).to.have.property("operator").that.eql("&&");
-    expect(result).to.have.property("right").that.eql({
+    expect(result).to.have.property("right").with.property("type", "BlockStatement");
+    expect(result.right).to.have.property("body").that.eql({
       type: "BinaryExpression",
       left: {
         type: "Literal",

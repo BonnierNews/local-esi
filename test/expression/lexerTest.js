@@ -264,5 +264,45 @@ describe("lexer", () => {
         raw: "]"
       });
     });
+
+    it("returns source for ObjectExpression", () => {
+      const lexer = Lexer("{'a': 1, 'b': 2}", true);
+      expect(lexer.get()).to.deep.include({
+        type: "ObjectExpression",
+        raw: "{",
+      });
+      expect(lexer.get()).to.include({
+        type: "Literal",
+        raw: "'a'",
+      });
+      expect(lexer.get()).to.include({
+        type: ":",
+        raw: ":",
+      });
+      expect(lexer.get()).to.include({
+        type: "Number",
+        raw: " 1",
+      });
+      expect(lexer.get()).to.include({
+        type: ",",
+        raw: ",",
+      });
+      expect(lexer.get()).to.include({
+        type: "Literal",
+        raw: " 'b'",
+      });
+      expect(lexer.get()).to.include({
+        type: ":",
+        raw: ":",
+      });
+      expect(lexer.get()).to.include({
+        type: "Number",
+        raw: " 2",
+      });
+      expect(lexer.get()).to.include({
+        type: "}",
+        raw: "}",
+      });
+    });
   });
 });
