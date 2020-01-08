@@ -2805,5 +2805,34 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("allows breaking out of forach", (done) => {
+      const markup = `
+        <ul>
+          <esi:foreach collection="[0, 1, 2]">
+            <li>$(item)</li>
+            <esi:choose>
+              <esi:when test="$(item) == 1">
+                <esi:break />
+              </esi:when>
+            </esi:choose>
+          </esi:foreach>
+        </ul>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <ul>
+            <li>0</li>
+            <li>1</li>
+        </ul>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
   });
 });
