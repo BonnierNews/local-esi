@@ -2774,5 +2774,36 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("preserves state between iterations", (done) => {
+      const markup = `
+        <ul>
+          <esi:assign name="sum" value="0" />
+          <esi:foreach collection="[0, 1, 2]">
+            <esi:assign name="sum" value="$(sum) + $(item)" />
+            <li>$(item)</li>
+          </esi:foreach>
+        </ul>
+        <esi:vars>
+          <div>$(sum)</div>
+        </esi:vars>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <ul>
+            <li>0</li>
+            <li>1</li>
+            <li>2</li>
+        </ul>
+        <div>3</div>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
   });
 });
