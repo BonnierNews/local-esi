@@ -411,7 +411,7 @@ describe("functions", () => {
       const markup = `
         <esi:assign name="str" value="'Sean@Banan!'"/>
         <esi:choose>
-          <esi:when test="$base64_encode($(str)) == 'U2VhbkBCYW5hbiE='"/>
+          <esi:when test="$base64_encode($(str)) == 'U2VhbkBCYW5hbiE='">
             <p>true</p>
           </esi:when>
         </esi:choose>
@@ -429,7 +429,7 @@ describe("functions", () => {
       const markup = `
         <esi:assign name="str" value="'U2VhbkBCYW5hbiE='"/>
         <esi:choose>
-          <esi:when test="$base64_decode($(str)) == 'Sean@Banan!'"/>
+          <esi:when test="$base64_decode($(str)) == 'Sean@Banan!'">
             <p>true</p>
           </esi:when>
         </esi:choose>
@@ -446,7 +446,7 @@ describe("functions", () => {
     it("handles base64_decode with undefined value", (done) => {
       const markup = `
         <esi:choose>
-          <esi:when test="$base64_decode($(str)) == 'Sean@Banan!'"/>
+          <esi:when test="$base64_decode($(str)) == 'Sean@Banan!'">
             <p>true</p>
           </esi:when>
           <esi:otherwise>
@@ -466,7 +466,7 @@ describe("functions", () => {
     it("handles base64_encode with undefined value", (done) => {
       const markup = `
         <esi:choose>
-          <esi:when test="$base64_encode($(str)) == 'Sean@Banan!'"/>
+          <esi:when test="$base64_encode($(str)) == 'Sean@Banan!'">
             <p>true</p>
           </esi:when>
           <esi:otherwise>
@@ -489,12 +489,12 @@ describe("functions", () => {
       const markup = `
         <esi:assign name="str" value="'Sean@Banan!'"/>
         <esi:choose>
-          <esi:when test="$index($(str), 'Banan') > -1"/>
+          <esi:when test="$index($(str), 'Banan') > -1">
             <p>true</p>
           </esi:when>
         </esi:choose>
         <esi:choose>
-          <esi:when test="$index($(str), 'Apple') < 0"/>
+          <esi:when test="$index($(str), 'Apple') < 0">
             <p>true again</p>
           </esi:when>
         </esi:choose>
