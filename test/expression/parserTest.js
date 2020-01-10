@@ -79,4 +79,22 @@ describe("parser", () => {
       });
     });
   });
+
+  describe("Literal", () => {
+    it("should return boolean true", () => {
+      const input = "true";
+      expect(parse(input)).to.deep.equal({
+        type: "Literal",
+        value: true
+      });
+    });
+
+    it("should return boolean false", () => {
+      const input = "false";
+      expect(parse(input)).to.deep.equal({
+        type: "Literal",
+        value: false
+      });
+    });
+  });
 });

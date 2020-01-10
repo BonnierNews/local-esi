@@ -560,6 +560,25 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("keyword true false", (done) => {
+      const markup = `
+        <esi:assign name="test" value="true"/>
+        <esi:choose>
+          <esi:when test="$(test) == true">
+            <p>Hej</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "<p>Hej</p>";
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
   });
 
   describe("esi:eval", () => {
