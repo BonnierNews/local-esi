@@ -104,7 +104,7 @@ describe("parser", () => {
           type: "Literal",
           value: 1
         });
-    }); 
+    });
   });
 
   describe("binary expressions", () => {
