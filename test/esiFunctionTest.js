@@ -177,10 +177,36 @@ describe("functions", () => {
       }, done);
     });
 
-    it.skip("supports $set_response_code with status and replacement markup containing what looks like the end of the statement", (done) => {
+    it("supports $set_response_code with status and replacement markup in esi:choose", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="'a' == 'b'">
+            <p>ignore</p>
+          </esi:when>
+          <esi:otherwise>
+            $set_response_code(400, '<p>hej</p>')
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      let setStatus;
+      localEsi(markup, { }, {
+        status(status) {
+          setStatus = status;
+          return this;
+        },
+        send(body) {
+          expect(body).to.equal("<p>hej</p>");
+          expect(setStatus).to.equal(400);
+          done();
+        }
+      }, done);
+    });
+
+    it("supports $set_response_code with status and replacement markup containing what looks like the end of the statement", (done) => {
       const markup = `
         <esi:vars>
-          $set_response_code(400, '<p>')</p>')
+          $set_response_code(400, '<p>)</p>')
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
@@ -191,7 +217,7 @@ describe("functions", () => {
           return this;
         },
         send(body) {
-          expect(body).to.equal("<p>')</p>");
+          expect(body).to.equal("<p>)</p>");
           expect(setStatus).to.not.be.undefined;
           expect(setStatus).to.equal(400);
           done();

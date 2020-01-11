@@ -1,9 +1,7 @@
 "use strict";
 
-const {expect} = require("chai");
 const localEsi = require("../index");
 const nock = require("nock");
-const ck = require("chronokinesis");
 
 describe("local ESI", () => {
   describe("html", () => {
@@ -61,6 +59,18 @@ describe("local ESI", () => {
       localEsi(markup, {}, {
         send(body) {
           expect(body).to.contain(scriptTag);
+          done();
+        }
+      }, done);
+    });
+
+    it("supports weird quotes like “ and ” inside esi:choose", (done) => {
+      const innerText = "Here's a quote by Wayne Gretzky: “You miss 100% of the shots you don't take“. <br> Here's a quote by Homer Simpson: ”do'h”. This text should be valid in any ESI context.";
+      const markup = `<esi:choose><esi:when test="1==1">${innerText}</esi:when></esi:choose>`;
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal(innerText);
           done();
         }
       }, done);
@@ -150,6 +160,48 @@ describe("local ESI", () => {
       }, done);
     });
 
+    it("does assign variable in when if test evaluates to true", (done) => {
+      const markup = `
+        <esi:assign name="myVar" value="'false'" />
+        <esi:choose>
+          <esi:when test="$(QUERY_STRING{'q'})=='2'">
+            <esi:assign name="myVar" value="'true'" />
+          </esi:when>
+        </esi:choose>
+        <esi:vars>
+          $(myVar)
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { query: { q: "2", p: "1"} }, {
+        send(body) {
+          expect(body).to.equal("true");
+          done();
+        }
+      }, done);
+    });
+
+    it("does NOT assign variable in when if test evaluates to false", (done) => {
+      const markup = `
+        <esi:assign name="myVar" value="'false'" />
+        <esi:choose>
+          <esi:when test="$(QUERY_STRING{'q'})=='1'">
+            <esi:assign name="myVar" value="'true'" />
+          </esi:when>
+        </esi:choose>
+        <esi:vars>
+          $(myVar)
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { query: { q: "2", p: "1"} }, {
+        send(body) {
+          expect(body).to.equal("false");
+          done();
+        }
+      }, done);
+    });
+
     it("should not evaluate nested choose when in otherwise if first test evaluates to true", (done) => {
       const markup = `<esi:assign name="blahonga" value="'true'" />
       <esi:choose>
@@ -219,6 +271,132 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         send(body) {
           expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("supports nested esi:choose when all match", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$(QUERY_STRING{'q'})=='1'">
+            <esi:choose>
+              <esi:when test="$(QUERY_STRING{'p'})=='1'">
+                <p>Hej</p>
+              </esi:when>
+            </esi:choose>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "<p>Hej</p>";
+      localEsi(markup, { query: { q: "1", p: "1"} }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should not render anything if outer choose is false", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$(QUERY_STRING{'q'})=='0'">
+            <esi:choose>
+              <esi:when test="$(QUERY_STRING{'p'})=='0'">
+                <p>1</p>
+              </esi:when>
+              <esi:otherwise>
+                <p>2</p>
+              </esi:otherwise>
+            </esi:choose>
+
+            <esi:choose>
+              <esi:when test="$(QUERY_STRING{'p'})=='1'">
+                <p>3</p>
+              </esi:when>
+              <esi:otherwise>
+                <p>4</p>
+              </esi:otherwise>
+            </esi:choose>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "";
+      localEsi(markup, { query: { q: "1", p: "1"} }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should not render anything if outer choose is false (very nested chooses)", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$(QUERY_STRING{'q'})=='0'">
+            <esi:choose>
+              <esi:when test="$(QUERY_STRING{'p'})=='0'">
+                <esi:choose>
+                  <esi:when test="$(QUERY_STRING{'p'})=='1'">
+                    <p>3</p>
+                  </esi:when>
+                  <esi:otherwise>
+                    <p>4</p>
+                  </esi:otherwise>
+                </esi:choose>
+                <esi:choose>
+                  <esi:when test="$(QUERY_STRING{'p'})=='1'">
+                    <p>3</p>
+                  </esi:when>
+                  <esi:otherwise>
+                    <p>4</p>
+                  </esi:otherwise>
+                </esi:choose>
+              </esi:when>
+              <esi:otherwise>
+                <p>2</p>
+              </esi:otherwise>
+            </esi:choose>
+
+            <esi:choose>
+              <esi:when test="$(QUERY_STRING{'p'})=='1'">
+                <p>3</p>
+              </esi:when>
+              <esi:otherwise>
+                <p>4</p>
+              </esi:otherwise>
+            </esi:choose>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "";
+      localEsi(markup, { query: { q: "1", p: "1"} }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("hides nested esi:choose outcome if first level evaluates to false", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$(QUERY_STRING{'q'})=='1'">
+            <esi:choose>
+              <esi:when test="$(QUERY_STRING{'p'})=='1'">
+                <p>Hej</p>
+              </esi:when>
+            </esi:choose>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { query: { q: "2", p: "1"} }, {
+        send(body) {
+          expect(body).to.equal("");
           done();
         }
       }, done);
@@ -1260,178 +1438,6 @@ describe("local ESI", () => {
         }
       }, done);
     });
-
-  });
-
-  describe("esi:choose", () => {
-    it("supports nested esi:choose when all match", (done) => {
-      const markup = `
-        <esi:choose>
-          <esi:when test="$(QUERY_STRING{'q'})=='1'">
-            <esi:choose>
-              <esi:when test="$(QUERY_STRING{'p'})=='1'">
-                <p>Hej</p>
-              </esi:when>
-            </esi:choose>
-          </esi:when>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      const expectedMarkup = "<p>Hej</p>";
-      localEsi(markup, { query: { q: "1", p: "1"} }, {
-        send(body) {
-          expect(body).to.equal(expectedMarkup);
-          done();
-        }
-      }, done);
-    });
-
-    it("should not render anything if outer choose is false", (done) => {
-      const markup = `
-        <esi:choose>
-          <esi:when test="$(QUERY_STRING{'q'})=='0'">
-            <esi:choose>
-              <esi:when test="$(QUERY_STRING{'p'})=='0'">
-                <p>1</p>
-              </esi:when>
-              <esi:otherwise>
-                <p>2</p>
-              </esi:otherwise>
-            </esi:choose>
-
-            <esi:choose>
-              <esi:when test="$(QUERY_STRING{'p'})=='1'">
-                <p>3</p>
-              </esi:when>
-              <esi:otherwise>
-                <p>4</p>
-              </esi:otherwise>
-            </esi:choose>
-          </esi:when>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      const expectedMarkup = "";
-      localEsi(markup, { query: { q: "1", p: "1"} }, {
-        send(body) {
-          expect(body).to.equal(expectedMarkup);
-          done();
-        }
-      }, done);
-    });
-
-
-    it("should not render anything if outer choose is false (very nested chooses)", (done) => {
-      const markup = `
-        <esi:choose>
-          <esi:when test="$(QUERY_STRING{'q'})=='0'">
-            <esi:choose>
-              <esi:when test="$(QUERY_STRING{'p'})=='0'">
-                <esi:choose>
-                  <esi:when test="$(QUERY_STRING{'p'})=='1'">
-                    <p>3</p>
-                  </esi:when>
-                  <esi:otherwise>
-                    <p>4</p>
-                  </esi:otherwise>
-                </esi:choose>
-                <esi:choose>
-                  <esi:when test="$(QUERY_STRING{'p'})=='1'">
-                    <p>3</p>
-                  </esi:when>
-                  <esi:otherwise>
-                    <p>4</p>
-                  </esi:otherwise>
-                </esi:choose>
-              </esi:when>
-              <esi:otherwise>
-                <p>2</p>
-              </esi:otherwise>
-            </esi:choose>
-
-            <esi:choose>
-              <esi:when test="$(QUERY_STRING{'p'})=='1'">
-                <p>3</p>
-              </esi:when>
-              <esi:otherwise>
-                <p>4</p>
-              </esi:otherwise>
-            </esi:choose>
-          </esi:when>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      const expectedMarkup = "";
-      localEsi(markup, { query: { q: "1", p: "1"} }, {
-        send(body) {
-          expect(body).to.equal(expectedMarkup);
-          done();
-        }
-      }, done);
-    });
-
-    it("hides nested esi:choose outcome if first level evaluates to false", (done) => {
-      const markup = `
-        <esi:choose>
-          <esi:when test="$(QUERY_STRING{'q'})=='1'">
-            <esi:choose>
-              <esi:when test="$(QUERY_STRING{'p'})=='1'">
-                <p>Hej</p>
-              </esi:when>
-            </esi:choose>
-          </esi:when>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, { query: { q: "2", p: "1"} }, {
-        send(body) {
-          expect(body).to.equal("");
-          done();
-        }
-      }, done);
-    });
-
-    it("does assign variable in when if test evaluates to true", (done) => {
-      const markup = `
-        <esi:assign name="myVar" value="'false'" />
-        <esi:choose>
-          <esi:when test="$(QUERY_STRING{'q'})=='2'">
-            <esi:assign name="myVar" value="'true'" />
-          </esi:when>
-        </esi:choose>
-        <esi:vars>
-          $(myVar)
-        </esi:vars>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, { query: { q: "2", p: "1"} }, {
-        send(body) {
-          expect(body).to.equal("true");
-          done();
-        }
-      }, done);
-    });
-
-    it("does NOT assign variable in when if test evaluates to false", (done) => {
-      const markup = `
-        <esi:assign name="myVar" value="'false'" />
-        <esi:choose>
-          <esi:when test="$(QUERY_STRING{'q'})=='1'">
-            <esi:assign name="myVar" value="'true'" />
-          </esi:when>
-        </esi:choose>
-        <esi:vars>
-          $(myVar)
-        </esi:vars>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, { query: { q: "2", p: "1"} }, {
-        send(body) {
-          expect(body).to.equal("false");
-          done();
-        }
-      }, done);
-    });
   });
 
   describe("esi:text", () => {
@@ -1481,16 +1487,177 @@ describe("local ESI", () => {
     });
   });
 
-  it("supports weird quotes like “ and ” inside esi:choose", (done) => {
-    const innerText = "Here's a quote by Wayne Gretzky: “You miss 100% of the shots you don't take“. <br> Here's a quote by Homer Simpson: ”do'h”. This text should be valid in any ESI context.";
-    const markup = `<esi:choose><esi:when test="1==1">${innerText}</esi:when></esi:choose>`;
+  describe("esi:assign", () => {
+    it("should evaluate value expression", (done) => {
+      const markup = `
+        <esi:assign name="cookie_val" value="$(HTTP_COOKIE{'cookie1'})" />
+        <esi:vars>
+          $(cookie_val)
+        </esi:vars>
+        `.replace(/^\s+|\n/gm, "");
 
-    localEsi(markup, { }, {
-      send(body) {
-        expect(body).to.equal(innerText);
-        done();
-      }
-    }, done);
+      const expectedMarkup = "jklöjl";
+      localEsi(markup, { cookies: { cookie1: "jklöjl" } }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should support assignment from regex result", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="'blahonga25blahingi' matches '''(blahonga)(\\d*)(5bla)'''" matchname="number_match">
+            <esi:assign name="number" value="$(number_match{2})" />
+          </esi:when>
+        </esi:choose>
+        <esi:vars>
+          $(number)
+        </esi:vars>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "2";
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should not crash when assigning from non-existing value expression", (done) => {
+      const markup = `
+        <esi:assign name="cookie_val" value="$(HTTP_COOKIE{'cookie1'})" />
+        <esi:vars>
+          $(cookie_val)
+        </esi:vars>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "";
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+  });
+
+  describe("esi:foreach", () => {
+    it("loops through supplied array collection", (done) => {
+      const markup = `
+        <ul>
+          <esi:foreach collection="[0, 1, 2]">
+            <li>$(item)</li>
+          </esi:foreach>
+        </ul>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <ul>
+            <li>0</li>
+            <li>1</li>
+            <li>2</li>
+        </ul>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("loops through supplied object collection", (done) => {
+      const markup = `
+        <dl>
+          <esi:foreach collection="{'a': 0, 'b': 1, 'c': 2}">
+            <dt>$(item{0})</dt>
+            <dd>$(item{1})</dd>
+          </esi:foreach>
+        </dl>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <dl>
+            <dt>a</dt>
+            <dd>0</dd>
+            <dt>b</dt>
+            <dd>1</dd>
+            <dt>c</dt>
+            <dd>2</dd>
+        </dl>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("preserves state between iterations", (done) => {
+      const markup = `
+        <ul>
+          <esi:assign name="sum" value="0" />
+          <esi:foreach collection="[0, 1, 2]">
+            <esi:assign name="sum" value="$(sum) + $(item)" />
+            <li>$(item)</li>
+          </esi:foreach>
+        </ul>
+        <esi:vars>
+          <div>$(sum)</div>
+        </esi:vars>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <ul>
+            <li>0</li>
+            <li>1</li>
+            <li>2</li>
+        </ul>
+        <div>3</div>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("allows breaking out of foreach", (done) => {
+      const markup = `
+        <ul>
+          <esi:foreach collection="[0, 1, 2]">
+            <li>$(item)</li>
+            <esi:choose>
+              <esi:when test="$(item) == 1">
+                <esi:break />
+              </esi:when>
+            </esi:choose>
+          </esi:foreach>
+        </ul>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <ul>
+            <li>0</li>
+            <li>1</li>
+        </ul>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
   });
 
   describe("illegal characters", () => {
@@ -1557,636 +1724,6 @@ describe("local ESI", () => {
       if (err) return done(err);
       done(new Error(`Unexpected result: ${result}`));
     }
-  });
-
-  describe("$add_header", () => {
-    it("should set headers when instructed", (done) => {
-      let markup = "<esi:vars>";
-      markup += "$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')";
-      markup += "</esi:vars>";
-
-      const headers = [];
-      function set(name, value) {
-        headers.push({name, value});
-      }
-
-      localEsi(markup, { }, {
-        set,
-        send(body) {
-          expect(body).to.equal("");
-          expect(headers).to.have.length(1);
-          expect(headers[0]).to.have.property("name", "Set-Cookie");
-          expect(headers[0]).to.have.property("value", "MyCookie1=SomeValue; HttpOnly");
-          done();
-        }
-      }, done);
-    });
-
-    it("should set multiple headers when instructed", (done) => {
-      let markup = "<esi:vars>";
-      markup += "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
-      markup += "$add_header('Set-Cookie', 'MyCookie2=SomeValue2; Path=/;Secure;SameSite=Lax')";
-      markup += "</esi:vars>";
-
-      const headers = [];
-      function set(name, value) {
-        headers.push({name, value});
-      }
-
-      localEsi(markup, { }, {
-        set,
-        send(body) {
-          expect(body).to.equal("");
-          expect(headers).to.have.length(2);
-          expect(headers[0]).to.have.property("name", "Set-Cookie");
-          expect(headers[0]).to.have.property("value", "MyCookie1=SomeValue;");
-          expect(headers[1]).to.have.property("name", "Set-Cookie");
-          expect(headers[1]).to.have.property("value", "MyCookie2=SomeValue2; Path=/;Secure;SameSite=Lax");
-          done();
-        }
-      }, done);
-    });
-
-    it("should NOT set headers when instructed outside an ESI tag", (done) => {
-      const markup = "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
-
-      const headers = [];
-      function set(name, value) {
-        headers.push({name, value});
-      }
-
-      localEsi(markup, { }, {
-        set,
-        send(body) {
-          expect(body).to.equal(markup);
-          expect(headers).to.have.length(0);
-          done();
-        }
-      }, done);
-    });
-
-    it("should set headers when instructed in esi:choose", (done) => {
-      const markup = `
-        <esi:assign name="authorized" value="true"/>
-        <esi:choose>
-          <esi:when test="$(authorized)=='true'">
-            $add_header('Set-Cookie', 'MyCookie1=SomeValue;')
-          </esi:when>
-        </esi:choose>
-        <esi:choose>
-          <esi:when test="$(authorized)=='false'">
-          </esi:when>
-          <esi:otherwise>
-            $add_header('Set-Cookie', 'MyCookie2=SomeValue2;')
-          </esi:otherwise>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      const headers = [];
-      function set(name, value) {
-        headers.push({name, value});
-      }
-
-      localEsi(markup, { }, {
-        set,
-        send(body) {
-          expect(body).to.equal("");
-          expect(headers).to.have.length(2);
-          expect(headers[0]).to.have.property("name", "Set-Cookie");
-          expect(headers[0]).to.have.property("value", "MyCookie1=SomeValue;");
-          expect(headers[1]).to.have.property("name", "Set-Cookie");
-          expect(headers[1]).to.have.property("value", "MyCookie2=SomeValue2;");
-          done();
-        }
-      }, done);
-    });
-
-    it("should not set headers when in esi:choose clause that doesn't match", (done) => {
-      const markup = `
-        <esi:assign name="authorized" value="false"/>
-        <esi:choose>
-          <esi:when test="$(authorized)=='true'">
-            $add_header('Set-Cookie', 'MyCookie1=SomeValue;')
-          </esi:when>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      const headers = [];
-      function set(name, value) {
-        headers.push({name, value});
-      }
-
-      localEsi(markup, { }, {
-        set,
-        send(body) {
-          expect(body).to.equal("");
-          expect(headers).to.have.length(0);
-          done();
-        }
-      }, done);
-    });
-  });
-
-  describe("$set_response_code", () => {
-    it("supports $set_response_code with status as only parameter", (done) => {
-      const markup = `
-        <esi:vars>
-          $set_response_code( 401 )
-        </esi:vars>
-      `.replace(/^\s+|\n/gm, "");
-
-      let setStatus;
-      localEsi(markup, { }, {
-        status(status) {
-          setStatus = status;
-          return this;
-        },
-        send(body) {
-          expect(body).to.equal("");
-          expect(setStatus).to.not.be.undefined;
-          expect(setStatus).to.equal(401);
-          done();
-        }
-      }, done);
-    });
-
-    it("supports $set_response_code with status and replacement markup", (done) => {
-      const markup = `
-        <esi:vars>
-          $set_response_code(400, '<p>hej</p>')
-        </esi:vars>
-      `.replace(/^\s+|\n/gm, "");
-
-      let setStatus;
-      localEsi(markup, { }, {
-        status(status) {
-          setStatus = status;
-          return this;
-        },
-        send(body) {
-          expect(body).to.equal("<p>hej</p>");
-          expect(setStatus).to.not.be.undefined;
-          expect(setStatus).to.equal(400);
-          done();
-        }
-      }, done);
-    });
-
-    it("supports $set_response_code with status and replacement markup in esi:choose", (done) => {
-      const markup = `
-        <esi:choose>
-          <esi:when test="'a' == 'b'">
-            <p>ignore</p>
-          </esi:when>
-          <esi:otherwise>
-            $set_response_code(400, '<p>hej</p>')
-          </esi:when>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      let setStatus;
-      localEsi(markup, { }, {
-        status(status) {
-          setStatus = status;
-          return this;
-        },
-        send(body) {
-          expect(body).to.equal("<p>hej</p>");
-          expect(setStatus).to.equal(400);
-          done();
-        }
-      }, done);
-    });
-
-    it.skip("supports $set_response_code with status and replacement markup containing what looks like the end of the statement", (done) => {
-      const markup = `
-        <esi:vars>
-          $set_response_code(400, '<p>')</p>')
-        </esi:vars>
-      `.replace(/^\s+|\n/gm, "");
-
-      let setStatus;
-      localEsi(markup, { }, {
-        status(status) {
-          setStatus = status;
-          return this;
-        },
-        send(body) {
-          expect(body).to.equal("<p>')</p>");
-          expect(setStatus).to.not.be.undefined;
-          expect(setStatus).to.equal(400);
-          done();
-        }
-      }, done);
-    });
-
-    it("supports $set_response_code with status and replacement string", (done) => {
-      const markup = `
-        <esi:vars>
-          $set_response_code(400, 'OK')
-        </esi:vars>
-      `.replace(/^\s+|\n/gm, "");
-
-      let setStatus;
-      localEsi(markup, { }, {
-        status(status) {
-          setStatus = status;
-          return this;
-        },
-        send(body) {
-          expect(body).to.equal("OK");
-          expect(setStatus).to.not.be.undefined;
-          expect(setStatus).to.equal(400);
-          done();
-        }
-      }, done);
-    });
-
-    it("supports $set_response_code in esi:choose", (done) => {
-      const markup = `
-        <esi:assign name="authorized" value="false"/>
-        <esi:choose>
-          <esi:when test="$(authorized)=='true'">
-            <p>Content for you</p>
-          </esi:when>
-          <esi:otherwise>
-            $set_response_code(401, '<p>Unauthorized</p>')
-          </esi:otherwise>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      let setStatus;
-      localEsi(markup, { }, {
-        status(status) {
-          setStatus = status;
-          return this;
-        },
-        send(body) {
-          expect(body).to.equal("<p>Unauthorized</p>");
-          expect(setStatus).to.not.be.undefined;
-          expect(setStatus).to.equal(401);
-          done();
-        }
-      }, done);
-    });
-
-    it("should not set response code in esi:choose clause that doesn't match", (done) => {
-      const markup = `
-        <esi:assign name="authorized" value="true"/>
-        <esi:choose>
-          <esi:when test="$(authorized)=='true'">
-            <p>Content for you</p>
-          </esi:when>
-          <esi:otherwise>
-            $set_response_code(401)
-          </esi:otherwise>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      let setStatus;
-      localEsi(markup, { }, {
-        status(status) {
-          setStatus = status;
-        },
-        send(body) {
-          expect(body).to.equal("<p>Content for you</p>");
-          expect(setStatus).to.be.undefined;
-          done();
-        }
-      }, done);
-    });
-
-    it("should not set response code or modify body when in esi:choose clause that doesn't match", (done) => {
-      const markup = `
-        <esi:assign name="authorized" value="true"/>
-        <esi:choose>
-          <esi:when test="$(authorized)=='true'">
-            <p>Content for you</p>
-          </esi:when>
-          <esi:otherwise>
-            $set_response_code(401, '<p>Unauthorized</p>')
-          </esi:otherwise>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      let setStatus;
-      localEsi(markup, { }, {
-        status(status) {
-          setStatus = status;
-        },
-        send(body) {
-          expect(body).to.equal("<p>Content for you</p>");
-          expect(setStatus).to.be.undefined;
-          done();
-        }
-      }, done);
-    });
-  });
-
-  describe("$set_redirect", () => {
-    it("supports $set_redirect", (done) => {
-      const markup = `
-        <esi:vars>
-          $set_redirect('https://blahonga.com')
-        </esi:vars>
-      `.replace(/^\s+|\n/gm, "");
-
-      let redirectUrl;
-      localEsi(markup, { }, {
-        redirect(url) {
-          redirectUrl = url;
-          expect(redirectUrl).to.equal("https://blahonga.com");
-          done();
-        },
-        send: done
-      });
-    });
-
-    it("supports $set_redirect in esi:choose", (done) => {
-      const markup = `
-        <esi:assign name="authorized" value="false"/>
-        <esi:choose>
-          <esi:when test="$(authorized)=='true'">
-            <p>Content for you</p>
-          </esi:when>
-          <esi:otherwise>
-            $set_redirect('https://blahonga.com')
-          </esi:otherwise>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      let redirectUrl;
-      localEsi(markup, { }, {
-        redirect(url) {
-          redirectUrl = url;
-          expect(redirectUrl).to.equal("https://blahonga.com");
-          done();
-        }
-      });
-    });
-
-    it("should evaluate nested multiple chooses when first test evaluates to true", (done) => {
-      const markup = `<esi:assign name="blahonga" value="true" />
-        <esi:choose>
-          <esi:when test="$(blahonga)=='true'">
-            <esi:choose>
-              <esi:when test="$exists($(HTTP_COOKIE{'cookie1'})) | $exists($(HTTP_COOKIE{'cookie2'}))">
-                <p>hej 1</p>
-              </esi:when>
-              <esi:otherwise>
-                <p>då 1</p>
-              </esi:otherwise>
-            </esi:choose>
-            <esi:choose>
-              <esi:when test="$exists($(HTTP_COOKIE{'cookie3'})) | $exists($(HTTP_COOKIE{'cookie4'}))">
-                <p>hej 2</p>
-              </esi:when>
-              <esi:otherwise>
-                <p>då 2</p>
-              </esi:otherwise>
-            </esi:choose>
-          </esi:when>
-          <esi:otherwise>
-            <p>hej igen</p>
-          </esi:otherwise>
-        </esi:choose>`.replace(/^\s+|\n/gm, "");
-      const expectedMarkup = "<p>hej 1</p><p>då 2</p>";
-      localEsi(markup, { cookies: { cookie1: "jklöjl" } }, {
-        send(body) {
-          expect(body).to.equal(expectedMarkup);
-          done();
-        }
-      }, done);
-    });
-
-
-    it("should not set redirect in esi:choose clause that doesn't match", (done) => {
-      const markup = `
-        <esi:assign name="authorized" value="true"/>
-        <esi:choose>
-          <esi:when test="$(authorized)=='true'">
-            <p>Content for you</p>
-          </esi:when>
-          <esi:otherwise>
-          $set_redirect('https://blahonga.com')
-          </esi:otherwise>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      let redirectUrl;
-      localEsi(markup, { }, {
-        redirect(url) {
-          redirectUrl = url;
-        },
-        send(body) {
-          expect(body).to.equal("<p>Content for you</p>");
-          expect(redirectUrl).to.be.undefined;
-          done();
-        }
-      }, done);
-    });
-  });
-
-  describe("$base64", () => {
-    it("supports $base64_encode", (done) => {
-      const markup = `
-        <esi:assign name="str" value="Sean@Banan!"/>
-        <esi:choose>
-          <esi:when test="$base64_encode($(str)) == 'U2VhbkBCYW5hbiE='">
-            <p>true</p>
-          </esi:when>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, { }, {
-        send(body) {
-          expect(body).to.equal("<p>true</p>");
-          done();
-        }
-      }, done);
-    });
-
-    it("supports $base64_decode", (done) => {
-      const markup = `
-        <esi:assign name="str" value="U2VhbkBCYW5hbiE="/>
-        <esi:choose>
-          <esi:when test="$base64_decode($(str)) == 'Sean@Banan!'">
-            <p>true</p>
-          </esi:when>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, { }, {
-        send(body) {
-          expect(body).to.equal("<p>true</p>");
-          done();
-        }
-      }, done);
-    });
-
-    it("handles base64_decode with undefined value", (done) => {
-      const markup = `
-        <esi:choose>
-          <esi:when test="$base64_decode($(str)) == 'Sean@Banan!'">
-            <p>true</p>
-          </esi:when>
-          <esi:otherwise>
-            <p>false</p>
-          </esi:otherwise>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, { }, {
-        send(body) {
-          expect(body).to.equal("<p>false</p>");
-          done();
-        }
-      }, done);
-    });
-
-    it("handles base64_encode with undefined value", (done) => {
-      const markup = `
-        <esi:choose>
-          <esi:when test="$base64_encode($(str)) == 'Sean@Banan!'">
-            <p>true</p>
-          </esi:when>
-          <esi:otherwise>
-            <p>false</p>
-          </esi:otherwise>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, { }, {
-        send(body) {
-          expect(body).to.equal("<p>false</p>");
-          done();
-        }
-      }, done);
-    });
-  });
-
-  describe("$index", () => {
-    it("supports $index", (done) => {
-      const markup = `
-        <esi:assign name="str" value="Sean@Banan!"/>
-        <esi:choose>
-          <esi:when test="$index($(str), 'Banan') > -1">
-            <p>true</p>
-          </esi:when>
-        </esi:choose>
-        <esi:choose>
-          <esi:when test="$index($(str), 'Apple') < 0">
-            <p>true again</p>
-          </esi:when>
-        </esi:choose>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, { }, {
-        send(body) {
-          expect(body).to.equal("<p>true</p><p>true again</p>");
-          done();
-        }
-      }, done);
-    });
-  });
-
-  describe("$substr", () => {
-    it("supports $substr", (done) => {
-      const markup = `
-        <esi:assign name="str" value="abcdef" />
-        <esi:vars>
-          <p>$substr('12345678', 2, 4)</p>
-          <p>$substr('12345678', 0)</p>
-          <p>$substr('12345678', 1)</p>
-          <p>$substr('12345678', -2)</p>
-          <p>$substr('12345678', 2, 40)</p>
-          <p>$substr('12345678', 2, -4)</p>
-          <p>$substr($(str), 2, 2)</p>
-        </esi:vars>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, { }, {
-        send(body) {
-          expect(body).to.equal("<p>3456</p><p>12345678</p><p>2345678</p><p>78</p><p>345678</p><p>34</p><p>cd</p>");
-          done();
-        }
-      }, done);
-    });
-
-    it("throws when $substr is invoked with non-existing variable", (done) => {
-      const markup = `
-        <esi:vars>
-          <p>$substr($(str), 2, 2)</p>
-        </esi:vars>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, { }, {
-        send() {
-        }
-      }, (nextErr) => {
-        expect(nextErr).to.not.equal(undefined);
-        done();
-      });
-    });
-
-    it("throws when $substr is invoked without valid params", (done) => {
-      const markup = `
-        <esi:vars>
-          <p>$substr($(str))</p>
-        </esi:vars>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, { }, {
-        send() {
-        }
-      }, (nextErr) => {
-        expect(nextErr).to.not.equal(undefined);
-        done();
-      });
-    });
-  });
-
-  describe("$time", () => {
-    before(() => {
-      ck.freeze("2019-06-30");
-    });
-
-    after(ck.reset);
-
-    it("supports $time", (done) => {
-      const markup = `
-        <esi:assign name="now" value="$time()" />
-        <esi:vars>
-          <p>$(now)</p>
-        </esi:vars>
-      `.replace(/^\s+|\n/gm, "");
-
-      const now = Math.round(Date.now() / 1000);
-      localEsi(markup, { }, {
-        send(body) {
-          expect(body).to.equal(`<p>${now}</p>`);
-          done();
-        }
-      }, done);
-    });
-  });
-
-  describe("$http_time", () => {
-    it("supports $http_time", (done) => {
-      const markup = `
-        <esi:assign name="now" value="$http_time(995319416)" />
-        <esi:vars>
-          <p>$(now)</p>
-        </esi:vars>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, { }, {
-        send(body) {
-          expect(body).to.equal("<p>Mon, 16 Jul 2001 21:36:56 GMT</p>");
-          done();
-        }
-      }, done);
-    });
   });
 
   describe("has and has_i operator", () => {
@@ -2534,63 +2071,6 @@ describe("local ESI", () => {
     });
   });
 
-  describe("esi:assign", () => {
-    it("should evaluate value expression", (done) => {
-      const markup = `
-        <esi:assign name="cookie_val" value="$(HTTP_COOKIE{'cookie1'})" />
-        <esi:vars>
-          $(cookie_val)
-        </esi:vars>
-        `.replace(/^\s+|\n/gm, "");
-
-      const expectedMarkup = "jklöjl";
-      localEsi(markup, { cookies: { cookie1: "jklöjl" } }, {
-        send(body) {
-          expect(body).to.equal(expectedMarkup);
-          done();
-        }
-      }, done);
-    });
-
-    it("should support assignment from regex result", (done) => {
-      const markup = `
-        <esi:choose>
-          <esi:when test="'blahonga25blahingi' matches '''(blahonga)(\\d*)(5bla)'''" matchname="number_match">
-            <esi:assign name="number" value="$(number_match{2})" />
-          </esi:when>
-        </esi:choose>
-        <esi:vars>
-          $(number)
-        </esi:vars>
-        `.replace(/^\s+|\n/gm, "");
-
-      const expectedMarkup = "2";
-      localEsi(markup, {}, {
-        send(body) {
-          expect(body).to.equal(expectedMarkup);
-          done();
-        }
-      }, done);
-    });
-
-    it("should not crash when assigning from non-existing value expression", (done) => {
-      const markup = `
-        <esi:assign name="cookie_val" value="$(HTTP_COOKIE{'cookie1'})" />
-        <esi:vars>
-          $(cookie_val)
-        </esi:vars>
-        `.replace(/^\s+|\n/gm, "");
-
-      const expectedMarkup = "";
-      localEsi(markup, { }, {
-        send(body) {
-          expect(body).to.equal(expectedMarkup);
-          done();
-        }
-      }, done);
-    });
-  });
-
   describe("math operators", () => {
     it("should handle addition", (done) => {
       const markup = `
@@ -2735,122 +2215,6 @@ describe("local ESI", () => {
       localEsi(markup, {}, {
         send(body) {
           expect(body.trim()).to.equal("Ja");
-          done();
-        }
-      }, done);
-    });
-  });
-
-  describe("esi:foreach", () => {
-    it("loops through supplied array collection", (done) => {
-      const markup = `
-        <ul>
-          <esi:foreach collection="[0, 1, 2]">
-            <li>$(item)</li>
-          </esi:foreach>
-        </ul>
-        `.replace(/^\s+|\n/gm, "");
-
-      const expectedMarkup = `
-        <ul>
-            <li>0</li>
-            <li>1</li>
-            <li>2</li>
-        </ul>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, {}, {
-        send(body) {
-          expect(body).to.equal(expectedMarkup);
-          done();
-        }
-      }, done);
-    });
-
-    it("loops through supplied object collection", (done) => {
-      const markup = `
-        <dl>
-          <esi:foreach collection="{'a': 0, 'b': 1, 'c': 2}">
-            <dt>$(item{0})</dt>
-            <dd>$(item{1})</dd>
-          </esi:foreach>
-        </dl>
-        `.replace(/^\s+|\n/gm, "");
-
-      const expectedMarkup = `
-        <dl>
-            <dt>a</dt>
-            <dd>0</dd>
-            <dt>b</dt>
-            <dd>1</dd>
-            <dt>c</dt>
-            <dd>2</dd>
-        </dl>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, {}, {
-        send(body) {
-          expect(body).to.equal(expectedMarkup);
-          done();
-        }
-      }, done);
-    });
-
-    it("preserves state between iterations", (done) => {
-      const markup = `
-        <ul>
-          <esi:assign name="sum" value="0" />
-          <esi:foreach collection="[0, 1, 2]">
-            <esi:assign name="sum" value="$(sum) + $(item)" />
-            <li>$(item)</li>
-          </esi:foreach>
-        </ul>
-        <esi:vars>
-          <div>$(sum)</div>
-        </esi:vars>
-        `.replace(/^\s+|\n/gm, "");
-
-      const expectedMarkup = `
-        <ul>
-            <li>0</li>
-            <li>1</li>
-            <li>2</li>
-        </ul>
-        <div>3</div>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, {}, {
-        send(body) {
-          expect(body).to.equal(expectedMarkup);
-          done();
-        }
-      }, done);
-    });
-
-    it("allows breaking out of foreach", (done) => {
-      const markup = `
-        <ul>
-          <esi:foreach collection="[0, 1, 2]">
-            <li>$(item)</li>
-            <esi:choose>
-              <esi:when test="$(item) == 1">
-                <esi:break />
-              </esi:when>
-            </esi:choose>
-          </esi:foreach>
-        </ul>
-        `.replace(/^\s+|\n/gm, "");
-
-      const expectedMarkup = `
-        <ul>
-            <li>0</li>
-            <li>1</li>
-        </ul>
-      `.replace(/^\s+|\n/gm, "");
-
-      localEsi(markup, {}, {
-        send(body) {
-          expect(body).to.equal(expectedMarkup);
           done();
         }
       }, done);
