@@ -175,6 +175,85 @@ describe("parser", () => {
     });
   });
 
+  describe("ArrayExpression", () => {
+    it("happy trail", () => {
+      const input = "[1, 2, 3]";
+      const object = parse(input);
+      expect(object).to.deep.equal({
+        type: "ArrayExpression",
+        elements: [{
+          type: "Literal",
+          value: 1,
+        }, {
+          type: "Literal",
+          value: 2,
+        }, {
+          type: "Literal",
+          value: 3,
+        }]
+      });
+    });
+
+    it("empty aray", () => {
+      const input = "[]";
+      const object = parse(input);
+      expect(object).to.deep.equal({
+        type: "ArrayExpression",
+        elements: [],
+      });
+    });
+
+    it("element as BlockStatement", () => {
+      const input = "['a', 0, (1 < 2)]";
+      const object = parse(input);
+      expect(object).to.deep.equal({
+        type: "ArrayExpression",
+        elements: [{
+          type: "Literal",
+          value: "a",
+        }, {
+          type: "Literal",
+          value: 0,
+        }, {
+          type: "BlockStatement",
+          body: {
+            type: "BinaryExpression",
+            operator: "<",
+            left: {
+              type: "Literal",
+              value: 1,
+            },
+            right: {
+              type: "Literal",
+              value: 2,
+            }
+          },
+        }],
+      });
+    });
+
+    it("throws if unclosed", () => {
+      const input = "[1, 2, 3";
+      expect(() => {
+        parse(input);
+      }).to.throw(SyntaxError, "Unclosed ArrayExpression");
+    });
+
+    it("throws if missing comma between elements", () => {
+      const input = "[1, 2 3]";
+      expect(() => {
+        parse(input);
+      }).to.throw(SyntaxError, "Unexpected Literal in ArrayExpression");
+    });
+
+    it("throws if initialized with comma", () => {
+      const input = "[ , 2 3]";
+      expect(() => {
+        parse(input);
+      }).to.throw(SyntaxError, "Unexpected , in ArrayExpression");
+    });
+  });
+
   describe("source map", () => {
     it("returns raw source for empty CallExpression", () => {
       const input = "$time()";
