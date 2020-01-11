@@ -6,64 +6,65 @@ const nock = require("nock");
 const ck = require("chronokinesis");
 
 describe("local ESI", () => {
+  describe("html", () => {
+    it("should not touch regular markup", (done) => {
+      const markup = "<!DOCTYPE html><html><head><title>This is a title</title></head><body>Test: <b>Testsson</b></body></html>";
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(markup);
+          done();
+        }
+      }, done);
+    });
 
-  it("should not touch regular markup", (done) => {
-    const markup = "<!DOCTYPE html><html><head><title>This is a title</title></head><body>Test: <b>Testsson</b></body></html>";
-    localEsi(markup, {}, {
-      send(body) {
-        expect(body).to.equal(markup);
-        done();
-      }
-    }, done);
-  });
+    it("should not touch multi-byte characters", (done) => {
+      const prefix = "<!DOCTYPE html><html><head><title>This is a title</title></head><body>";
+      const suffix = "</body></html>";
+      const characters = Array(9817).fill("Töst").join("");
+      const markup = prefix + characters + suffix;
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(markup);
+          done();
+        }
+      }, done);
+    });
 
-  it("should not touch multi-byte characters", (done) => {
-    const prefix = "<!DOCTYPE html><html><head><title>This is a title</title></head><body>";
-    const suffix = "</body></html>";
-    const characters = Array(9817).fill("Töst").join("");
-    const markup = prefix + characters + suffix;
-    localEsi(markup, {}, {
-      send(body) {
-        expect(body).to.equal(markup);
-        done();
-      }
-    }, done);
-  });
+    it("should not touch JS in script-tag inside <esi:choose>", (done) => {
+      const scriptTag = `<script>!function(){"use strict";window.foobar=function(e){var n=document.getElementsByClassName(e)[0];}();</script>`; //eslint-disable-line quotes
 
-  it("should not touch JS in script-tag inside <esi:choose>", (done) => {
-    const scriptTag = `<script>!function(){"use strict";window.foobar=function(e){var n=document.getElementsByClassName(e)[0];}();</script>`; //eslint-disable-line quotes
+      const markup = `<!DOCTYPE html><html><head><title>This is a title</title></head><body>Test: <b>Testsson</b>
+      <esi:choose>
+        <esi:when test="1 == 1">
+          ${scriptTag}
+        </esi:when>
+      </esi:choose>
+      </body></html>`;
 
-    const markup = `<!DOCTYPE html><html><head><title>This is a title</title></head><body>Test: <b>Testsson</b>
-    <esi:choose>
-      <esi:when test="1 == 1">
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.contain(scriptTag);
+          done();
+        }
+      }, done);
+    });
+
+    it("should not touch JS in script-tag inside <esi:vars>", (done) => {
+      const scriptTag = `<script>!function(){"use strict";window.foobar=function(e){var n=document.getElementsByClassName(e)[0];}();</script>`; //eslint-disable-line quotes
+
+      const markup = `<!DOCTYPE html><html><head><title>This is a title</title></head><body>Test: <b>Testsson</b>
+      <esi:vars>
         ${scriptTag}
-      </esi:when>
-    </esi:choose>
-    </body></html>`;
+      </esi:vars>
+      </body></html>`;
 
-    localEsi(markup, {}, {
-      send(body) {
-        expect(body).to.contain(scriptTag);
-        done();
-      }
-    }, done);
-  });
-
-  it("should not touch JS in script-tag inside <esi:vars>", (done) => {
-    const scriptTag = `<script>!function(){"use strict";window.foobar=function(e){var n=document.getElementsByClassName(e)[0];}();</script>`; //eslint-disable-line quotes
-
-    const markup = `<!DOCTYPE html><html><head><title>This is a title</title></head><body>Test: <b>Testsson</b>
-    <esi:vars>
-      ${scriptTag}
-    </esi:vars>
-    </body></html>`;
-
-    localEsi(markup, {}, {
-      send(body) {
-        expect(body).to.contain(scriptTag);
-        done();
-      }
-    }, done);
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.contain(scriptTag);
+          done();
+        }
+      }, done);
+    });
   });
 
   describe("esi:choose", () => {
@@ -88,7 +89,7 @@ describe("local ESI", () => {
     });
 
     it("should render the when statement of an esi:choose when testing existance of assigned esi variable", (done) => {
-      let markup = "<esi:assign name=\"user_email\" value=\"jan.bananberg@test.com\"/>";
+      let markup = "<esi:assign name=\"user_email\" value=\"'jan.bananberg@test.com'\"/>";
       markup += "<esi:choose>";
       markup += `<esi:when test="$exists($(user_email))">`; //eslint-disable-line quotes
       markup += "<pre>When</pre>";
@@ -129,7 +130,7 @@ describe("local ESI", () => {
     });
 
     it("should handle test of assigned variable value", (done) => {
-      const markup = `<esi:assign name="someVar" value="true" />
+      const markup = `<esi:assign name="someVar" value="'true'" />
       <esi:choose>
         <esi:when test="$(someVar)=='true'">
           <p>hej</p>
@@ -150,7 +151,7 @@ describe("local ESI", () => {
     });
 
     it("should not evaluate nested choose when in otherwise if first test evaluates to true", (done) => {
-      const markup = `<esi:assign name="blahonga" value="true" />
+      const markup = `<esi:assign name="blahonga" value="'true'" />
       <esi:choose>
         <esi:when test="$(blahonga)=='true'">
           <p>hej</p>
@@ -178,7 +179,7 @@ describe("local ESI", () => {
     });
 
     it("should not evaluate crashing code in when if criteria evaluates to false", (done) => {
-      const markup = `<esi:assign name="blahonga" value="false" />
+      const markup = `<esi:assign name="blahonga" value="'false'" />
       <esi:choose>
         <esi:when test="$(blahonga)=='true'">
           $substr($(nonexisting), 0)
@@ -196,7 +197,7 @@ describe("local ESI", () => {
     });
 
     it("should handle nested choose in when when test evaluates to true", (done) => {
-      const markup = `<esi:assign name="var_a" value="true" />
+      const markup = `<esi:assign name="var_a" value="'true'" />
       <esi:choose>
         <esi:when test="$(var_a)=='true'">
           <esi:choose>
@@ -545,7 +546,7 @@ describe("local ESI", () => {
     it("should handle custom HTTP HEADER", (done) => {
       const markup = `
         <esi:choose>
-          <esi:when test="$(HTTP_X_CUSTOM_HEADER)'">
+          <esi:when test="$(HTTP_X_CUSTOM_HEADER)">
             <p>Custom header identified</p>
           </esi:when>
         </esi:choose>
@@ -553,6 +554,25 @@ describe("local ESI", () => {
 
       const expectedMarkup = "<p>Custom header identified</p>";
       localEsi(markup, { headers: { "x-custom-header": "My header value" } }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("keyword true false", (done) => {
+      const markup = `
+        <esi:assign name="test" value="true"/>
+        <esi:choose>
+          <esi:when test="$(test) == true">
+            <p>Hej</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = "<p>Hej</p>";
+      localEsi(markup, {}, {
         send(body) {
           expect(body).to.equal(expectedMarkup);
           done();
@@ -664,37 +684,65 @@ describe("local ESI", () => {
         }
       }, done);
     });
-  });
 
-  it("should be able to include path without trailing slash", (done) => {
-    const markup = "<esi:eval src=\"/mystuff\" dca=\"none\"/><p>efter</p>";
+    it("should handle re-assign variable value from esi:eval", (done) => {
+      const markup = `<esi:assign name="some_variable" value="'true'" />
+      <esi:eval src="http://mystuff/" dca="none"/>
+      <esi:choose>
+        <esi:when test="$(some_variable)=='true'">
+          <p>hej</p>
+        </esi:when>
+        <esi:otherwise>
+          <p>då</p>
+        </esi:otherwise>
+      </esi:choose>`.replace(/^\s+|\n/gm, "");
 
-    nock("http://localhost:1234")
-      .get("/mystuff")
-      .reply(200, "Tjabo");
+      const evalResponse = "<esi:assign name=\"some_variable\" value=\"'false'\" />".replace(/^\s+|\n/gm, "");
 
-    const headers = [];
-    function set(name, value) {
-      headers.push({name, value});
-    }
+      nock("http://mystuff")
+        .get("/")
+        .reply(200, evalResponse);
 
-    localEsi(markup, {
-      socket: {
-        server: {
-          address() {
-            return {
-              port: 1234
-            };
+      const expectedMarkup = "<p>då</p>";
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should be able to eval source without trailing slash", (done) => {
+      const markup = "<esi:eval src=\"/mystuff\" dca=\"none\"/><p>efter</p>";
+
+      nock("http://localhost:1234")
+        .get("/mystuff")
+        .reply(200, "Tjabo");
+
+      const headers = [];
+      function set(name, value) {
+        headers.push({name, value});
+      }
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
           }
         }
-      }
-    }, {
-      set,
-      send(body) {
-        expect(body).to.equal("Tjabo<p>efter</p>");
-        done();
-      }
-    }, done);
+      }, {
+        set,
+        send(body) {
+          expect(body).to.equal("Tjabo<p>efter</p>");
+          done();
+        }
+      }, done);
+    });
   });
 
   describe("esi:include", () => {
@@ -781,7 +829,7 @@ describe("local ESI", () => {
     });
 
     it("should handle include source query parameters", (done) => {
-      let markup = "<esi:assign name=\"user_email\" value=\"sammy_g@test.com\"/>";
+      let markup = "<esi:assign name=\"user_email\" value=\"'sammy_g@test.com'\"/>";
       markup += "<esi:include src=\"/mystuff/?a=b&user=$url_encode($(user_email))\" dca=\"esi\"/>";
 
       nock("http://localhost:1234")
@@ -936,36 +984,8 @@ describe("local ESI", () => {
       });
     });
 
-    it("should handle re-assign variable value from esi:eval", (done) => {
-      const markup = `<esi:assign name="some_variable" value="true" />
-      <esi:eval src="http://mystuff/" dca="none"/>
-      <esi:choose>
-        <esi:when test="$(some_variable)=='true'">
-          <p>hej</p>
-        </esi:when>
-        <esi:otherwise>
-          <p>då</p>
-        </esi:otherwise>
-      </esi:choose>`.replace(/^\s+|\n/gm, "");
-
-      const evalResponse = "<esi:assign name=\"some_variable\" value=\"false\" />".replace(/^\s+|\n/gm, "");
-
-      nock("http://mystuff")
-        .get("/")
-        .reply(200, evalResponse);
-
-      const expectedMarkup = "<p>då</p>";
-
-      localEsi(markup, { }, {
-        send(body) {
-          expect(body).to.equal(expectedMarkup);
-          done();
-        }
-      }, done);
-    });
-
     it("should not execute esi:assign from esi:include in the original scope", (done) => {
-      const markup = `<esi:assign name="some_variable" value="true" />
+      const markup = `<esi:assign name="some_variable" value="'true'" />
       <esi:include src="http://mystuff/" dca="esi"/>
       <esi:choose>
         <esi:when test="$(some_variable)=='true'">
@@ -976,7 +996,7 @@ describe("local ESI", () => {
         </esi:otherwise>
       </esi:choose>`.replace(/^\s+|\n/gm, "");
 
-      const includeResponse = `<esi:assign name="some_variable" value="false" />
+      const includeResponse = `<esi:assign name="some_variable" value="'false'" />
           <esi:choose>
           <esi:when test="$(some_variable)=='true'">
             <p>hej</p>
@@ -1160,7 +1180,7 @@ describe("local ESI", () => {
     });
 
     it("should support esi:include when entire URL is a variable", (done) => {
-      let markup = "<esi:assign name=\"daurl\" value=\"http://mystuff.com/\"/>";
+      let markup = "<esi:assign name=\"daurl\" value=\"'http://mystuff.com/'\"/>";
       markup += "<esi:include src=\"$(daurl)\" dca=\"esi\"/><p>efter</p>";
 
       nock("http://mystuff.com", {
@@ -1188,7 +1208,7 @@ describe("local ESI", () => {
     });
 
     it("should support esi:include when URL contains a variable", (done) => {
-      let markup = "<esi:assign name=\"host\" value=\"mystuff.com\"/>";
+      let markup = "<esi:assign name=\"host\" value=\"'mystuff.com'\"/>";
       markup += "<esi:include src=\"http://$(host)/path/\" dca=\"esi\"/><p>efter</p>";
 
       nock("http://mystuff.com", {
@@ -1373,10 +1393,10 @@ describe("local ESI", () => {
 
     it("does assign variable in when if test evaluates to true", (done) => {
       const markup = `
-        <esi:assign name="myVar" value="false" />
+        <esi:assign name="myVar" value="'false'" />
         <esi:choose>
           <esi:when test="$(QUERY_STRING{'q'})=='2'">
-            <esi:assign name="myVar" value="true" />
+            <esi:assign name="myVar" value="'true'" />
           </esi:when>
         </esi:choose>
         <esi:vars>
@@ -1394,10 +1414,10 @@ describe("local ESI", () => {
 
     it("does NOT assign variable in when if test evaluates to false", (done) => {
       const markup = `
-        <esi:assign name="myVar" value="false" />
+        <esi:assign name="myVar" value="'false'" />
         <esi:choose>
           <esi:when test="$(QUERY_STRING{'q'})=='1'">
-            <esi:assign name="myVar" value="true" />
+            <esi:assign name="myVar" value="'true'" />
           </esi:when>
         </esi:choose>
         <esi:vars>
@@ -1472,7 +1492,6 @@ describe("local ESI", () => {
       }
     }, done);
   });
-
 
   describe("illegal characters", () => {
     const illegalCharacters = [
@@ -1680,6 +1699,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("");
@@ -1701,10 +1721,37 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("<p>hej</p>");
           expect(setStatus).to.not.be.undefined;
+          expect(setStatus).to.equal(400);
+          done();
+        }
+      }, done);
+    });
+
+    it("supports $set_response_code with status and replacement markup in esi:choose", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="'a' == 'b'">
+            <p>ignore</p>
+          </esi:when>
+          <esi:otherwise>
+            $set_response_code(400, '<p>hej</p>')
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      let setStatus;
+      localEsi(markup, { }, {
+        status(status) {
+          setStatus = status;
+          return this;
+        },
+        send(body) {
+          expect(body).to.equal("<p>hej</p>");
           expect(setStatus).to.equal(400);
           done();
         }
@@ -1722,6 +1769,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("<p>')</p>");
@@ -1743,6 +1791,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("OK");
@@ -1770,6 +1819,7 @@ describe("local ESI", () => {
       localEsi(markup, { }, {
         status(status) {
           setStatus = status;
+          return this;
         },
         send(body) {
           expect(body).to.equal("<p>Unauthorized</p>");
@@ -1942,7 +1992,7 @@ describe("local ESI", () => {
       const markup = `
         <esi:assign name="str" value="Sean@Banan!"/>
         <esi:choose>
-          <esi:when test="$base64_encode($(str)) == 'U2VhbkBCYW5hbiE='"/>
+          <esi:when test="$base64_encode($(str)) == 'U2VhbkBCYW5hbiE='">
             <p>true</p>
           </esi:when>
         </esi:choose>
@@ -1960,7 +2010,7 @@ describe("local ESI", () => {
       const markup = `
         <esi:assign name="str" value="U2VhbkBCYW5hbiE="/>
         <esi:choose>
-          <esi:when test="$base64_decode($(str)) == 'Sean@Banan!'"/>
+          <esi:when test="$base64_decode($(str)) == 'Sean@Banan!'">
             <p>true</p>
           </esi:when>
         </esi:choose>
@@ -1977,7 +2027,7 @@ describe("local ESI", () => {
     it("handles base64_decode with undefined value", (done) => {
       const markup = `
         <esi:choose>
-          <esi:when test="$base64_decode($(str)) == 'Sean@Banan!'"/>
+          <esi:when test="$base64_decode($(str)) == 'Sean@Banan!'">
             <p>true</p>
           </esi:when>
           <esi:otherwise>
@@ -1997,7 +2047,7 @@ describe("local ESI", () => {
     it("handles base64_encode with undefined value", (done) => {
       const markup = `
         <esi:choose>
-          <esi:when test="$base64_encode($(str)) == 'Sean@Banan!'"/>
+          <esi:when test="$base64_encode($(str)) == 'Sean@Banan!'">
             <p>true</p>
           </esi:when>
           <esi:otherwise>
@@ -2020,12 +2070,12 @@ describe("local ESI", () => {
       const markup = `
         <esi:assign name="str" value="Sean@Banan!"/>
         <esi:choose>
-          <esi:when test="$index($(str), 'Banan') > -1"/>
+          <esi:when test="$index($(str), 'Banan') > -1">
             <p>true</p>
           </esi:when>
         </esi:choose>
         <esi:choose>
-          <esi:when test="$index($(str), 'Apple') < 0"/>
+          <esi:when test="$index($(str), 'Apple') < 0">
             <p>true again</p>
           </esi:when>
         </esi:choose>
@@ -2142,14 +2192,14 @@ describe("local ESI", () => {
   describe("has and has_i operator", () => {
     it("supports has operator", (done) => {
       const markup = `
-        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:assign name="str" value="'Sean@Banan!'"/>
         <esi:choose>
-          <esi:when test="$(str) has 'Banan'"/>
+          <esi:when test="$(str) has 'Banan'">
             <p>true</p>
           </esi:when>
         </esi:choose>
         <esi:choose>
-          <esi:when test="$(str) has 'banan'"/>
+          <esi:when test="$(str) has 'banan'">
             <p>true again</p>
           </esi:when>
         </esi:choose>
@@ -2165,14 +2215,14 @@ describe("local ESI", () => {
 
     it("supports has_i operator", (done) => {
       const markup = `
-        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:assign name="str" value="'Sean@Banan!'"/>
         <esi:choose>
-          <esi:when test="$(str) has_i 'banan'"/>
+          <esi:when test="$(str) has_i 'banan'">
             <p>true</p>
           </esi:when>
         </esi:choose>
         <esi:choose>
-          <esi:when test="$(str) has_i 'Apple'"/>
+          <esi:when test="$(str) has_i 'Apple'">
             <p>true again</p>
           </esi:when>
         </esi:choose>
@@ -2190,14 +2240,14 @@ describe("local ESI", () => {
   describe("matches and matches_i operator", () => {
     it("supports matches operator", (done) => {
       const markup = `
-        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:assign name="str" value="'Sean@Banan!'"/>
         <esi:choose>
-          <esi:when test="$(str) matches 'B.nan'"/>
+          <esi:when test="$(str) matches 'B.nan'">
             <p>true</p>
           </esi:when>
         </esi:choose>
         <esi:choose>
-          <esi:when test="$(str) matches 'b.Nan'"/>
+          <esi:when test="$(str) matches 'b.Nan'">
             <p>true again</p>
           </esi:when>
         </esi:choose>
@@ -2213,14 +2263,14 @@ describe("local ESI", () => {
 
     it("supports matches_i operator", (done) => {
       const markup = `
-        <esi:assign name="str" value="Sean@Banan!"/>
+        <esi:assign name="str" value="'Sean@Banan!'"/>
         <esi:choose>
-          <esi:when test="$(str) matches_i 'b.Nan'"/>
+          <esi:when test="$(str) matches_i 'b.Nan'">
             <p>true</p>
           </esi:when>
         </esi:choose>
         <esi:choose>
-          <esi:when test="$(str) matches_i 'Apple'"/>
+          <esi:when test="$(str) matches_i 'Apple'">
             <p>true again</p>
           </esi:when>
         </esi:choose>
@@ -2295,7 +2345,7 @@ describe("local ESI", () => {
   describe("outputting variables", () => {
     it("outputs the value of variables in context of esi:vars", (done) => {
       const markup = `
-        <esi:assign name="game1" value="Sim city"/>
+        <esi:assign name="game1" value="'Sim city'"/>
         <p>$(game1)</p>
         <esi:vars>
           <p>Some $(game1) text</p>
@@ -2393,7 +2443,7 @@ describe("local ESI", () => {
     it("removes backslashes when assigning variables", (done) => {
       // We test this using esi:include and nock as we want to ensure that it isn't simply as output time that the variables value is without backslashes
       const markup = `
-        <esi:assign name="daurl" value="\\/my\\stuff/" />
+        <esi:assign name="daurl" value="'\\/my\\stuff/'" />
         <esi:include src="$(daurl)" dca="none"/>
         <esi:vars>
           <p>$(daurl)</p>
@@ -2425,7 +2475,7 @@ describe("local ESI", () => {
     it("supports escaping using backslash when assigning variables", (done) => {
       // We test this using esi:include and nock as we want to ensure that it isn't simply as output time that the variables value is without backslashes
       const markup = `
-        <esi:assign name="daurl" value="\\\\/my\\\\stuff/" />
+        <esi:assign name="daurl" value="'\\\\/my\\\\stuff/'" />
         <esi:include src="$(daurl)" dca="none"/>
         <esi:vars>
           <p>$(daurl)</p>
@@ -2641,6 +2691,166 @@ describe("local ESI", () => {
       localEsi(markup, {}, {
         send(body) {
           expect(body.trim()).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+  });
+
+  describe("collection", () => {
+    it("should handle collection", (done) => {
+      const markup = `
+        <esi:assign name="myColl" value="[1, 2]" />
+        <esi:choose>
+          <esi:when test="$(myColl{0}) == 1">
+            Ja
+          </esi:when>
+          <esi:otherwise>
+            Nej
+          </esi:otherwise>
+        </esi:choose>`;
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body.trim()).to.equal("Ja");
+          done();
+        }
+      }, done);
+    });
+
+    it("handles collection with identifiers", (done) => {
+      const markup = `
+        <esi:assign name="myVar1" value="1" />
+        <esi:assign name="myVar2" value="2" />
+        <esi:assign name="myColl" value="[$(myVar1), $(myVar2)]" />
+        <esi:choose>
+          <esi:when test="$(myColl{0}) == 1">
+            Ja
+          </esi:when>
+          <esi:otherwise>
+            Nej
+          </esi:otherwise>
+        </esi:choose>`;
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body.trim()).to.equal("Ja");
+          done();
+        }
+      }, done);
+    });
+  });
+
+  describe("esi:foreach", () => {
+    it("loops through supplied array collection", (done) => {
+      const markup = `
+        <ul>
+          <esi:foreach collection="[0, 1, 2]">
+            <li>$(item)</li>
+          </esi:foreach>
+        </ul>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <ul>
+            <li>0</li>
+            <li>1</li>
+            <li>2</li>
+        </ul>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("loops through supplied object collection", (done) => {
+      const markup = `
+        <dl>
+          <esi:foreach collection="{'a': 0, 'b': 1, 'c': 2}">
+            <dt>$(item{0})</dt>
+            <dd>$(item{1})</dd>
+          </esi:foreach>
+        </dl>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <dl>
+            <dt>a</dt>
+            <dd>0</dd>
+            <dt>b</dt>
+            <dd>1</dd>
+            <dt>c</dt>
+            <dd>2</dd>
+        </dl>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("preserves state between iterations", (done) => {
+      const markup = `
+        <ul>
+          <esi:assign name="sum" value="0" />
+          <esi:foreach collection="[0, 1, 2]">
+            <esi:assign name="sum" value="$(sum) + $(item)" />
+            <li>$(item)</li>
+          </esi:foreach>
+        </ul>
+        <esi:vars>
+          <div>$(sum)</div>
+        </esi:vars>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <ul>
+            <li>0</li>
+            <li>1</li>
+            <li>2</li>
+        </ul>
+        <div>3</div>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
+    it("allows breaking out of foreach", (done) => {
+      const markup = `
+        <ul>
+          <esi:foreach collection="[0, 1, 2]">
+            <li>$(item)</li>
+            <esi:choose>
+              <esi:when test="$(item) == 1">
+                <esi:break />
+              </esi:when>
+            </esi:choose>
+          </esi:foreach>
+        </ul>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <ul>
+            <li>0</li>
+            <li>1</li>
+        </ul>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
           done();
         }
       }, done);
