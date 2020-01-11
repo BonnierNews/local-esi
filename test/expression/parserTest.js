@@ -31,11 +31,79 @@ describe("parser", () => {
   });
 
   describe("BlockStatement", () => {
+    it("happy trail", () => {
+      const input = "($(someVar) <= 590)";
+      expect(parse(input)).to.deep.equal({
+        type: "BlockStatement",
+        body: {
+          type: "BinaryExpression",
+          operator: "<=",
+          left: {
+            type: "Identifier",
+            name: "someVar"
+          },
+          right: {
+            type: "Literal",
+            value: 590
+          },
+        }
+      });
+    });
+
     it("throws if unclosed", () => {
       const input = "($(someVar) <= 590";
       expect(() => {
         parse(input);
       }).to.throw(SyntaxError, "Unclosed BlockStatement");
+    });
+  });
+
+  describe("CallExpression", () => {
+    it("happy trail", () => {
+      const input = "$substr($(myvar), 1 + 2)";
+      expect(parse(input)).to.deep.equal({
+        type: "CallExpression",
+        callee: {
+          type: "Identifier",
+          name: "substr",
+        },
+        arguments: [{
+          type: "Identifier",
+          name: "myvar",
+        }, {
+          type: "BinaryExpression",
+          operator: "+",
+          left: {
+            type: "Literal",
+            value: 1
+          },
+          right: {
+            type: "Literal",
+            value: 2
+          },
+        }]
+      });
+    });
+
+    it("throws if unclosed", () => {
+      const input = "$substr($(myvar), 1 + 2";
+      expect(() => {
+        parse(input);
+      }).to.throw(SyntaxError, "Unclosed CallExpression");
+    });
+
+    it("throws if missing comma between arguments", () => {
+      const input = "$substr($(myvar) 1 + 2)";
+      expect(() => {
+        parse(input);
+      }).to.throw(SyntaxError, "Unexpected Literal in CallExpression");
+    });
+
+    it("throws if initialized with comma", () => {
+      const input = "$substr( , $(myvar), 1 + 2)";
+      expect(() => {
+        parse(input);
+      }).to.throw(SyntaxError, "Unexpected , in CallExpression");
     });
   });
 
