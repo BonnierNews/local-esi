@@ -19,12 +19,22 @@ describe("expression parser", () => {
         type: "MemberExpression",
         object: {
           type: "Identifier",
-          name: "someVar"
+          name: "someVar",
         },
         property: {
           type: "Literal",
-          value: "a"
-        }
+          value: "a",
+          loc: {
+            source: "'a'",
+            start: {line: 1, column: 10},
+            end: {line: 1, column: 13}
+          }
+        },
+        loc: {
+          source: "$(someVar{'a'})",
+          start: {line: 1, column: 0},
+          end: {line: 1, column: 15}
+        },
       });
     });
 
@@ -38,14 +48,24 @@ describe("expression parser", () => {
         },
         property: {
           type: "Identifier",
-          name: "someName"
-        }
+          name: "someName",
+          loc: {
+            source: "$(someName)",
+            start: {line: 1, column: 10},
+            end: {line: 1, column: 21}
+          }
+        },
+        loc: {
+          source: "$(someVar{$(someName)})",
+          start: {line: 1, column: 0},
+          end: {line: 1, column: 23}
+        },
       });
     });
 
     it("property as MemberExpression", () => {
       const input = "$(someVar{$(someName{'b'})})";
-      expect(parse(input)).to.deep.equal({
+      expect(parse(input)).to.deep.contain({
         type: "MemberExpression",
         object: {
           type: "Identifier",
@@ -59,9 +79,42 @@ describe("expression parser", () => {
           },
           property: {
             type: "Literal",
-            value: "b"
+            value: "b",
+            loc: {
+              source: "'b'",
+              start: {
+                line: 1,
+                column: 21
+              },
+              end: {
+                line: 1,
+                column: 24
+              }
+            },
           },
-        }
+          loc: {
+            source: "$(someName{'b'})",
+            start: {
+              line: 1,
+              column: 10
+            },
+            end: {
+              line: 1,
+              column: 26
+            }
+          },
+        },
+        loc: {
+          source: "$(someVar{$(someName{'b'})})",
+          start: {
+            line: 1,
+            column: 0
+          },
+          end: {
+            line: 1,
+            column: 28
+          }
+        },
       });
     });
 
@@ -72,14 +125,14 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "MemberExpression");
       expect(result)
         .to.have.property("object")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "HTTP_COOKIE"
         });
 
       expect(result)
         .to.have.property("property")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: "remember_me"
         });
@@ -92,14 +145,14 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "MemberExpression");
       expect(result)
         .to.have.property("object")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "someVar"
         });
 
       expect(result)
         .to.have.property("property")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 1
         });
@@ -140,7 +193,7 @@ describe("expression parser", () => {
 
     it("should return boolean true", () => {
       const input = "true";
-      expect(parse(input)).to.deep.equal({
+      expect(parse(input)).to.include({
         type: "Literal",
         value: true
       });
@@ -148,7 +201,7 @@ describe("expression parser", () => {
 
     it("should return boolean false", () => {
       const input = "false";
-      expect(parse(input)).to.deep.equal({
+      expect(parse(input)).to.include({
         type: "Literal",
         value: false
       });
@@ -166,13 +219,13 @@ describe("expression parser", () => {
 
     it("removes backslash in string", () => {
       let result = parse("'\\Program Files\\Game\\Fun.exe.'");
-      expect(result).to.deep.equal({
+      expect(result).to.include({
         type: "Literal",
         value: "Program FilesGameFun.exe."
       });
 
       result = parse("'\\\\/my\\\\stuff/'");
-      expect(result).to.deep.equal({
+      expect(result).to.include({
         type: "Literal",
         value: "\\/my\\stuff/"
       });
@@ -180,7 +233,7 @@ describe("expression parser", () => {
 
     it("keeps escaped backslash in string", () => {
       const result = parse("'\\\\Program Files\\\\Game\\\\Fun.exe.'");
-      expect(result).to.eql({
+      expect(result).to.include({
         type: "Literal",
         value: "\\Program Files\\Game\\Fun.exe."
       });
@@ -188,13 +241,13 @@ describe("expression parser", () => {
 
     it("keeps backslash in escaped string", () => {
       let result = parse("'''\\Program Files\\Game\\Fun.exe.'''");
-      expect(result).to.eql({
+      expect(result).to.include({
         type: "Literal",
         value: "\\Program Files\\Game\\Fun.exe."
       });
 
       result = parse("'''\\/my\\stuff/'''");
-      expect(result).to.eql({
+      expect(result).to.include({
         type: "Literal",
         value: "\\/my\\stuff/"
       });
@@ -205,7 +258,7 @@ describe("expression parser", () => {
       const result = parse(input);
 
       expect(result).to.have.property("type", "Literal");
-      expect(result).to.eql({
+      expect(result).to.include({
         type: "Literal",
         value: "string_split HTTP_USER_AGENT,10)"
       });
@@ -236,13 +289,57 @@ describe("expression parser", () => {
           operator: "<=",
           left: {
             type: "Identifier",
-            name: "someVar"
+            name: "someVar",
+            loc: {
+              source: "$(someVar) ",
+              start: {
+                line: 1,
+                column: 1,
+              },
+              end: {
+                line: 1,
+                column: 12,
+              }
+            },
           },
           right: {
             type: "Literal",
-            value: 590
+            value: 590,
+            loc: {
+              source: "590",
+              start: {
+                line: 1,
+                column: 15,
+              },
+              end: {
+                line: 1,
+                column: 18,
+              }
+            },
           },
-        }
+          loc: {
+            source: "$(someVar) <= 590",
+            start: {
+              line: 1,
+              column: 1,
+            },
+            end: {
+              line: 1,
+              column: 18,
+            }
+          },
+        },
+        loc: {
+          source: "($(someVar) <= 590)",
+          start: {
+            line: 1,
+            column: 0,
+          },
+          end: {
+            line: 1,
+            column: 19,
+          }
+        },
       });
     });
 
@@ -266,18 +363,73 @@ describe("expression parser", () => {
         arguments: [{
           type: "Identifier",
           name: "myvar",
+          loc: {
+            source: "$(myvar)",
+            start: {
+              line: 1,
+              column: 8,
+            },
+            end: {
+              line: 1,
+              column: 16,
+            },
+          }
         }, {
           type: "BinaryExpression",
           operator: "+",
           left: {
             type: "Literal",
-            value: 1
+            value: 1,
+            loc: {
+              source: ", 1 ",
+              start: {
+                line: 1,
+                column: 16,
+              },
+              end: {
+                line: 1,
+                column: 20,
+              },
+            },
           },
           right: {
             type: "Literal",
-            value: 2
+            value: 2,
+            loc: {
+              source: "2",
+              start: {
+                line: 1,
+                column: 22,
+              },
+              end: {
+                line: 1,
+                column: 23,
+              },
+            },
           },
-        }]
+          loc: {
+            source: ", 1 + 2",
+            start: {
+              line: 1,
+              column: 16,
+            },
+            end: {
+              line: 1,
+              column: 23,
+            },
+          },
+        }],
+        loc: {
+          source: "$substr($(myvar), 1 + 2)",
+          start: {
+            line: 1,
+            column: 0,
+          },
+          end: {
+            line: 1,
+            column: 24,
+          },
+        }
       });
     });
 
@@ -288,18 +440,27 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "CallExpression");
       expect(result)
         .to.have.property("callee")
-        .that.eql({
+        .that.deep.equal({
           type: "Identifier",
-          name: "exists"
+          name: "exists",
         });
       expect(result)
         .to.have.property("arguments")
-        .to.eql([
-          {
-            type: "Identifier",
-            name: "user_email"
+        .to.deep.equal([{
+          type: "Identifier",
+          name: "user_email",
+          loc: {
+            source: "$(user_email)",
+            start: {
+              line: 1,
+              column: 8,
+            },
+            end: {
+              line: 1,
+              column: 21,
+            }
           }
-        ]);
+        }]);
     });
 
     it("handles call expression without argument", () => {
@@ -309,7 +470,7 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "CallExpression");
       expect(result)
         .to.have.property("callee")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "time"
         });
@@ -323,7 +484,7 @@ describe("expression parser", () => {
       const result = parse(input);
 
       expect(result).to.have.property("type", "CallExpression");
-      expect(result).to.eql({
+      expect(result).to.deep.equal({
         type: "CallExpression",
         callee: {
           type: "Identifier",
@@ -332,17 +493,61 @@ describe("expression parser", () => {
         arguments: [
           {
             type: "Identifier",
-            name: "HTTP_USER_AGENT"
+            name: "HTTP_USER_AGENT",
+            loc: {
+              source: "$(HTTP_USER_AGENT)",
+              start: {
+                line: 1,
+                column: 14,
+              },
+              end: {
+                line: 1,
+                column: 32,
+              },
+            },
           },
           {
             type: "Literal",
-            value: ";"
+            value: ";",
+            loc: {
+              source: ", ';'",
+              start: {
+                line: 1,
+                column: 32,
+              },
+              end: {
+                line: 1,
+                column: 37,
+              },
+            },
           },
           {
             type: "Literal",
-            value: 10
+            value: 10,
+            loc: {
+              source: ", 10",
+              start: {
+                line: 1,
+                column: 37,
+              },
+              end: {
+                line: 1,
+                column: 41,
+              },
+            },
           }
-        ]
+        ],
+        loc: {
+          source: "$string_split($(HTTP_USER_AGENT), ';', 10)",
+          start: {
+            line: 1,
+            column: 0,
+          },
+          end: {
+            line: 1,
+            column: 42,
+          },
+        }
       });
     });
 
@@ -362,15 +567,59 @@ describe("expression parser", () => {
             type: "BinaryExpression",
             left: {
               type: "Identifier",
-              name: "REMOTE_ADDR"
+              name: "REMOTE_ADDR",
+              loc: {
+                source: "$(REMOTE_ADDR) ",
+                start: {
+                  line: 1,
+                  column: 12,
+                },
+                end: {
+                  line: 1,
+                  column: 27,
+                },
+              },
             },
             operator: "+",
             right: {
               type: "Identifier",
-              name: "HTTP_USER_AGENT"
-            }
+              name: "HTTP_USER_AGENT",
+              loc: {
+                source: "$(HTTP_USER_AGENT)",
+                start: {
+                  line: 1,
+                  column: 29,
+                },
+                end: {
+                  line: 1,
+                  column: 47,
+                },
+              },
+            },
+            loc: {
+              source: "$(REMOTE_ADDR) + $(HTTP_USER_AGENT)",
+              start: {
+                line: 1,
+                column: 12,
+              },
+              end: {
+                line: 1,
+                column: 47,
+              },
+            },
           }
-        ]
+        ],
+        loc: {
+          source: "$digest_md5($(REMOTE_ADDR) + $(HTTP_USER_AGENT))",
+          start: {
+            line: 1,
+            column: 0,
+          },
+          end: {
+            line: 1,
+            column: 48,
+          },
+        },
       });
     });
 
@@ -430,16 +679,16 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "someVar"
         });
       expect(result)
         .to.have.property("operator")
-        .that.eql("==");
+        .that.equal("==");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 59
         });
@@ -452,16 +701,16 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "someVar"
         });
       expect(result)
         .to.have.property("operator")
-        .that.eql("==");
+        .that.equal("==");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: -1
         });
@@ -474,16 +723,16 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "someVar"
         });
       expect(result)
         .to.have.property("operator")
-        .that.eql(">=");
+        .that.equal(">=");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 59
         });
@@ -496,16 +745,16 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "someVar"
         });
       expect(result)
         .to.have.property("operator")
-        .that.eql("<=");
+        .that.equal("<=");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 590
         });
@@ -518,16 +767,16 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "someVar"
         });
       expect(result)
         .to.have.property("operator")
-        .that.eql("<");
+        .that.equal("<");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 590
         });
@@ -540,16 +789,16 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "someVar"
         });
       expect(result)
         .to.have.property("operator")
-        .that.eql(">");
+        .that.equal(">");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 590
         });
@@ -564,7 +813,7 @@ describe("expression parser", () => {
       expect(result.body).to.have.property("type", "BinaryExpression");
       expect(result.body)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "someVar"
         });
@@ -573,7 +822,7 @@ describe("expression parser", () => {
         .that.eql("<=");
       expect(result.body)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 590
         });
@@ -588,57 +837,16 @@ describe("expression parser", () => {
       expect(result.left).to.have.property("type", "BlockStatement");
       expect(result.left)
         .to.have.property("body")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "someVar"
         });
       expect(result.right).to.have.property("type", "BlockStatement");
       expect(result.right)
         .to.have.property("body")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 590
-        });
-    });
-
-    it("handles binary expression where each expression is enclosed in unnecessary parentheses", () => {
-      const input = "($(someVar) == 1) && (2 == $(someVar))";
-      const result = parse(input);
-
-      expect(result).to.have.property("type", "LogicalExpression");
-      expect(result)
-        .to.have.property("left")
-        .with.property("type", "BlockStatement");
-      expect(result.left)
-        .to.have.property("body")
-        .that.eql({
-          type: "BinaryExpression",
-          left: {
-            type: "Identifier",
-            name: "someVar"
-          },
-          operator: "==",
-          right: {
-            type: "Literal",
-            value: 1
-          }
-        });
-      expect(result)
-        .to.have.property("right")
-        .with.property("type", "BlockStatement");
-      expect(result.right)
-        .to.have.property("body")
-        .that.eql({
-          type: "BinaryExpression",
-          left: {
-            type: "Literal",
-            value: 2
-          },
-          operator: "==",
-          right: {
-            type: "Identifier",
-            name: "someVar"
-          }
         });
     });
 
@@ -649,7 +857,7 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: "1"
         });
@@ -658,7 +866,7 @@ describe("expression parser", () => {
         .that.eql("+");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: "2"
         });
@@ -671,7 +879,7 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "has"
         });
@@ -680,7 +888,7 @@ describe("expression parser", () => {
         .that.eql("==");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: "true"
         });
@@ -693,7 +901,7 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "has_i"
         });
@@ -702,7 +910,7 @@ describe("expression parser", () => {
         .that.eql("==");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "has"
         });
@@ -715,7 +923,7 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 1
         });
@@ -724,7 +932,7 @@ describe("expression parser", () => {
         .that.eql("+");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 2
         });
@@ -737,7 +945,7 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 1
         });
@@ -746,7 +954,7 @@ describe("expression parser", () => {
         .that.eql("-");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 2
         });
@@ -759,7 +967,7 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 1
         });
@@ -768,7 +976,7 @@ describe("expression parser", () => {
         .that.eql("*");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 2
         });
@@ -781,7 +989,7 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 1
         });
@@ -790,7 +998,7 @@ describe("expression parser", () => {
         .that.eql("/");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 2
         });
@@ -803,7 +1011,7 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 1
         });
@@ -812,7 +1020,7 @@ describe("expression parser", () => {
         .that.eql("%");
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 2
         });
@@ -828,22 +1036,37 @@ describe("expression parser", () => {
         .that.eql("==");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.deep.equal({
           type: "BinaryExpression",
+          operator: "+",
           left: {
             type: "Literal",
-            value: 1
+            value: 1,
+            loc: {
+              source: "1 ",
+              start: {line: 1, column: 0},
+              end: {line: 1, column: 2},
+            }
           },
-          operator: "+",
           right: {
             type: "Literal",
-            value: 2
+            value: 2,
+            loc: {
+              source: "2 ",
+              start: {line: 1, column: 4},
+              end: {line: 1, column: 6},
+            }
+          },
+          loc: {
+            source: "1 + 2 ",
+            start: {line: 1, column: 0},
+            end: {line: 1, column: 6},
           }
         });
 
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 3
         });
@@ -859,22 +1082,37 @@ describe("expression parser", () => {
         .that.eql("==");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.deep.equal({
           type: "BinaryExpression",
+          operator: "-",
           left: {
             type: "Literal",
-            value: 1
+            value: 1,
+            loc: {
+              source: "1 ",
+              start: {line: 1, column: 0},
+              end: {line: 1, column: 2},
+            }
           },
-          operator: "-",
           right: {
             type: "Literal",
-            value: 2
+            value: 2,
+            loc: {
+              source: "2 ",
+              start: {line: 1, column: 4},
+              end: {line: 1, column: 6},
+            }
+          },
+          loc: {
+            source: "1 - 2 ",
+            start: {line: 1, column: 0},
+            end: {line: 1, column: 6},
           }
         });
 
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 3
         });
@@ -890,22 +1128,14 @@ describe("expression parser", () => {
         .that.eql("==");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "BinaryExpression",
-          left: {
-            type: "Literal",
-            value: 1
-          },
           operator: "*",
-          right: {
-            type: "Literal",
-            value: 2
-          }
         });
 
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 3
         });
@@ -921,22 +1151,14 @@ describe("expression parser", () => {
         .that.eql("==");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "BinaryExpression",
-          left: {
-            type: "Literal",
-            value: 1
-          },
           operator: "/",
-          right: {
-            type: "Literal",
-            value: 2
-          }
         });
 
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 3
         });
@@ -952,48 +1174,50 @@ describe("expression parser", () => {
         .that.eql("==");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "BinaryExpression",
-          left: {
-            type: "Literal",
-            value: 1
-          },
           operator: "%",
-          right: {
-            type: "Literal",
-            value: 2
-          }
         });
 
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: 3
         });
     });
 
     it("handles binary expression where one expression is a regular expression", () => {
-      const input =
-        "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$'''";
+      const input = "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$'''";
       const result = parse(input);
 
-      expect(result).to.have.property("type", "BinaryExpression");
-      expect(result)
-        .to.have.property("left")
-        .that.eql({
+      expect(result).to.deep.equal({
+        type: "BinaryExpression",
+        operator: "matches",
+        left: {
           type: "Identifier",
-          name: "HTTP_REFERER"
-        });
-      expect(result)
-        .to.have.property("operator")
-        .that.eql("matches");
-      expect(result)
-        .to.have.property("right")
-        .that.eql({
+          name: "HTTP_REFERER",
+          loc: {
+            source: "$(HTTP_REFERER) ",
+            start: {line: 1, column: 0},
+            end: {line: 1, column: 16},
+          }
+        },
+        right: {
           type: "Literal",
-          value: "(google|yahoo|bing|yandex)\\.\\d+$"
-        });
+          value: "(google|yahoo|bing|yandex)\\.\\d+$",
+          loc: {
+            source: "'''(google|yahoo|bing|yandex)\\.\\d+$'''",
+            start: {line: 1, column: 24},
+            end: {line: 1, column: 62},
+          }
+        },
+        loc: {
+          source: "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$'''",
+          start: {line: 1, column: 0},
+          end: {line: 1, column: 62},
+        }
+      });
     });
 
     it("handles triple quoute enclosed string", () => {
@@ -1002,13 +1226,13 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "BinaryExpression");
       expect(result)
         .to.have.property("left")
-        .that.eql({
+        .that.include({
           type: "Identifier",
           name: "someVar"
         });
       expect(result)
         .to.have.property("right")
-        .that.eql({
+        .that.include({
           type: "Literal",
           value: "my\\value"
         });
@@ -1029,118 +1253,331 @@ describe("expression parser", () => {
 
   describe("LogicalExpression", () => {
     it("handle logical expression with & operator ", () => {
-      const input =
-        "$(HTTP_USER_AGENT{'os'})=='WIN' & $(HTTP_USER_AGENT{'browser'})=='MSIE'";
+      const input = "$(HTTP_USER_AGENT{'os'})=='WIN' & $(HTTP_USER_AGENT{'browser'})=='MSIE'";
       const result = parse(input);
 
-      expect(result).to.have.property("type", "LogicalExpression");
-      expect(result).to.have.property("operator", "&");
-      expect(result)
-        .to.have.property("left")
-        .that.eql({
+      expect(result).to.deep.equal({
+        type: "LogicalExpression",
+        operator: "&",
+        left: {
           type: "BinaryExpression",
           operator: "==",
           left: {
             type: "MemberExpression",
             object: {
               type: "Identifier",
-              name: "HTTP_USER_AGENT"
+              name: "HTTP_USER_AGENT",
             },
             property: {
               type: "Literal",
-              value: "os"
+              value: "os",
+              loc: {
+                source: "'os'",
+                start: {line: 1, column: 18},
+                end: {line: 1, column: 22},
+              }
+            },
+            loc: {
+              source: "$(HTTP_USER_AGENT{'os'})",
+              start: {line: 1, column: 0},
+              end: {line: 1, column: 24},
             }
           },
           right: {
             type: "Literal",
-            value: "WIN"
+            value: "WIN",
+            loc: {
+              source: "'WIN' ",
+              start: {line: 1, column: 26},
+              end: {line: 1, column: 32},
+            }
+          },
+          loc: {
+            source: "$(HTTP_USER_AGENT{'os'})=='WIN' ",
+            start: {line: 1, column: 0},
+            end: {line: 1, column: 32},
           }
-        });
-      expect(result)
-        .to.have.property("right")
-        .that.eql({
+        },
+        right: {
           type: "BinaryExpression",
           operator: "==",
           left: {
             type: "MemberExpression",
             object: {
               type: "Identifier",
-              name: "HTTP_USER_AGENT"
+              name: "HTTP_USER_AGENT",
             },
             property: {
               type: "Literal",
-              value: "browser"
+              value: "browser",
+              loc: {
+                source: "'browser'",
+                start: {line: 1, column: 52},
+                end: {line: 1, column: 61},
+              }
+            },
+            loc: {
+              source: "$(HTTP_USER_AGENT{'browser'})",
+              start: {line: 1, column: 34},
+              end: {line: 1, column: 63},
             }
           },
           right: {
             type: "Literal",
-            value: "MSIE"
+            value: "MSIE",
+            loc: {
+              source: "'MSIE'",
+              start: {line: 1, column: 65},
+              end: {line: 1, column: 71},
+            }
+          },
+          loc: {
+            source: "$(HTTP_USER_AGENT{'browser'})=='MSIE'",
+            start: {line: 1, column: 34},
+            end: {line: 1, column: 71},
           }
-        });
+        },
+        loc: {
+          source: "$(HTTP_USER_AGENT{'os'})=='WIN' & $(HTTP_USER_AGENT{'browser'})=='MSIE'",
+          start: {line: 1, column: 0},
+          end: {line: 1, column: 71},
+        }
+      });
     });
 
-    it("should logical binary expression with call expressions", () => {
-      const input =
-        "$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'}))";
+    it("handles logical expression where left and right are enclosed in unnecessary parentheses", () => {
+      const input = "($(someVar) == 1) && (2 == $(someOtherVar))";
       const result = parse(input);
 
-      expect(result).to.have.property("type", "LogicalExpression");
-      expect(result).to.have.property("operator", "|");
-      expect(result)
-        .to.have.property("left")
-        .that.eql({
+      expect(result).to.deep.equal({
+        type: "LogicalExpression",
+        operator: "&&",
+        left: {
+          type: "BlockStatement",
+          body: {
+            type: "BinaryExpression",
+            operator: "==",
+            left: {
+              type: "Identifier",
+              name: "someVar",
+              loc: {
+                source: "$(someVar) ",
+                start: {
+                  line: 1,
+                  column: 1,
+                },
+                end: {
+                  line: 1,
+                  column: 12,
+                }
+              }
+            },
+            right: {
+              type: "Literal",
+              value: 1,
+              loc: {
+                source: "1",
+                start: {
+                  line: 1,
+                  column: 15,
+                },
+                end: {
+                  line: 1,
+                  column: 16,
+                }
+              }
+            },
+            loc: {
+              source: "$(someVar) == 1",
+              start: {
+                line: 1,
+                column: 1,
+              },
+              end: {
+                line: 1,
+                column: 16,
+              }
+            },
+          },
+          loc: {
+            source: "($(someVar) == 1) ",
+            start: {
+              line: 1,
+              column: 0,
+            },
+            end: {
+              line: 1,
+              column: 18,
+            }
+          },
+        },
+        right: {
+          type: "BlockStatement",
+          body: {
+            type: "BinaryExpression",
+            operator: "==",
+            left: {
+              type: "Literal",
+              value: 2,
+              loc: {
+                source: "2 ",
+                start: {
+                  line: 1,
+                  column: 22,
+                },
+                end: {
+                  line: 1,
+                  column: 24,
+                }
+              }
+            },
+            right: {
+              type: "Identifier",
+              name: "someOtherVar",
+              loc: {
+                source: "$(someOtherVar)",
+                start: {
+                  line: 1,
+                  column: 27,
+                },
+                end: {
+                  line: 1,
+                  column: 42,
+                }
+              }
+            },
+            loc: {
+              source: "2 == $(someOtherVar)",
+              start: {
+                line: 1,
+                column: 22,
+              },
+              end: {
+                line: 1,
+                column: 42,
+              }
+            },
+          },
+          loc: {
+            source: "(2 == $(someOtherVar))",
+            start: {
+              line: 1,
+              column: 21,
+            },
+            end: {
+              line: 1,
+              column: 43,
+            }
+          },
+        },
+        loc: {
+          source: "($(someVar) == 1) && (2 == $(someOtherVar))",
+          start: {
+            line: 1,
+            column: 0,
+          },
+          end: {
+            line: 1,
+            column: 43,
+          },
+        },
+      });
+    });
+
+    it("should handle logical expression with call expressions", () => {
+      const input = "$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'}))";
+      const result = parse(input);
+
+      expect(result).to.deep.equal({
+        type: "LogicalExpression",
+        operator: "|",
+        left: {
           type: "CallExpression",
           callee: {
             type: "Identifier",
-            name: "exists"
+            name: "exists",
           },
-          arguments: [
-            {
-              type: "MemberExpression",
-              object: {
-                type: "Identifier",
-                name: "HTTP_COOKIE"
-              },
-              property: {
-                type: "Literal",
-                value: "remember_me"
+          arguments: [{
+            type: "MemberExpression",
+            object: {
+              type: "Identifier",
+              name: "HTTP_COOKIE",
+            },
+            property: {
+              type: "Literal",
+              value: "remember_me",
+              loc: {
+                source: "'remember_me'",
+                start: {line: 1, column: 22},
+                end: {line: 1, column: 35},
               }
+            },
+            loc: {
+              source: "$(HTTP_COOKIE{'remember_me'})",
+              start: {line: 1, column: 8},
+              end: {line: 1, column: 37},
             }
-          ]
-        });
-      expect(result)
-        .to.have.property("right")
-        .that.eql({
+          }],
+          loc: {
+            source: "$exists($(HTTP_COOKIE{'remember_me'})) ",
+            start: {line: 1, column: 0},
+            end: {line: 1, column: 39},
+          },
+        },
+        right: {
           type: "CallExpression",
           callee: {
             type: "Identifier",
-            name: "exists"
+            name: "exists",
           },
-          arguments: [
-            {
-              type: "MemberExpression",
-              object: {
-                type: "Identifier",
-                name: "HTTP_COOKIE"
-              },
-              property: {
-                type: "Literal",
-                value: "accessToken"
+          arguments: [{
+            type: "MemberExpression",
+            object: {
+              type: "Identifier",
+              name: "HTTP_COOKIE",
+            },
+            property: {
+              type: "Literal",
+              value: "accessToken",
+              loc: {
+                source: "'accessToken'",
+                start: {line: 1, column: 63},
+                end: {line: 1, column: 76},
               }
+            },
+            loc: {
+              source: "$(HTTP_COOKIE{'accessToken'})",
+              start: {line: 1, column: 49},
+              end: {line: 1, column: 78},
             }
-          ]
-        });
+          }],
+          loc: {
+            source: "$exists($(HTTP_COOKIE{'accessToken'}))",
+            start: {line: 1, column: 41},
+            end: {line: 1, column: 79},
+          },
+        },
+        loc: {
+          source: "$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'}))",
+          start: {
+            line: 1,
+            column: 0,
+          },
+          end: {
+            line: 1,
+            column: 79,
+          }
+        },
+      });
     });
 
     it("handle logical expression where left is a unary expression", () => {
-      const input =
-        "!$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'}))";
+      const input = "!$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'}))";
       const result = parse(input);
-      expect(result).to.have.property("type", "LogicalExpression");
-      expect(result).to.have.property("operator", "|");
-      expect(result)
-        .to.have.property("left")
-        .that.eql({
+      expect(result).to.deep.equal({
+        type: "LogicalExpression",
+        operator: "|",
+        left: {
           type: "UnaryExpression",
           operator: "!",
           prefix: true,
@@ -1150,31 +1587,7 @@ describe("expression parser", () => {
               type: "Identifier",
               name: "exists"
             },
-            arguments: [
-              {
-                type: "MemberExpression",
-                object: {
-                  type: "Identifier",
-                  name: "HTTP_COOKIE"
-                },
-                property: {
-                  type: "Literal",
-                  value: "remember_me"
-                }
-              }
-            ]
-          }
-        });
-      expect(result)
-        .to.have.property("right")
-        .that.eql({
-          type: "CallExpression",
-          callee: {
-            type: "Identifier",
-            name: "exists"
-          },
-          arguments: [
-            {
+            arguments: [{
               type: "MemberExpression",
               object: {
                 type: "Identifier",
@@ -1182,88 +1595,190 @@ describe("expression parser", () => {
               },
               property: {
                 type: "Literal",
-                value: "accessToken"
+                value: "remember_me",
+                loc: {
+                  source: "'remember_me'",
+                  start: {line: 1, column: 23},
+                  end: {line: 1, column: 36},
+                },
+              },
+              loc: {
+                source: "$(HTTP_COOKIE{'remember_me'})",
+                start: {line: 1, column: 9},
+                end: {line: 1, column: 38},
+              },
+            }],
+            loc: {
+              source: "$exists($(HTTP_COOKIE{'remember_me'})) ",
+              start: {line: 1, column: 1},
+              end: {line: 1, column: 40},
+            },
+          },
+          loc: {
+            source: "!$exists($(HTTP_COOKIE{'remember_me'})) ",
+            start: {line: 1, column: 0},
+            end: {line: 1, column: 40},
+          }
+        },
+        right: {
+          type: "CallExpression",
+          callee: {
+            type: "Identifier",
+            name: "exists",
+          },
+          arguments: [{
+            type: "MemberExpression",
+            object: {
+              type: "Identifier",
+              name: "HTTP_COOKIE",
+            },
+            property: {
+              type: "Literal",
+              value: "accessToken",
+              loc: {
+                source: "'accessToken'",
+                start: {line: 1, column: 64},
+                end: {line: 1, column: 77},
               }
+            },
+            loc: {
+              source: "$(HTTP_COOKIE{'accessToken'})",
+              start: {line: 1, column: 50},
+              end: {line: 1, column: 79},
             }
-          ]
-        });
+          }],
+          loc: {
+            source: "$exists($(HTTP_COOKIE{'accessToken'}))",
+            start: {line: 1, column: 42},
+            end: {line: 1, column: 80},
+          },
+        },
+        loc: {
+          source: "!$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'}))",
+          start: {line: 1, column: 0},
+          end: {line: 1, column: 80},
+        }
+      });
     });
 
     it("handle multiple ors", () => {
-      const input =
-        "$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'})) | $exists($(HTTP_COOKIE{'sessionKey'}))";
+      const input = "$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'})) | $exists($(HTTP_COOKIE{'sessionKey'}))";
       const result = parse(input);
 
-      expect(result).to.have.property("type", "LogicalExpression");
-      expect(result).to.have.property("operator", "|");
-      expect(result)
-        .to.have.property("left")
-        .that.eql({
+      // console.log(JSON.stringify(result, null, 2))
+
+      expect(result).to.deep.equal({
+        type: "LogicalExpression",
+        operator: "|",
+        left: {
           type: "CallExpression",
           callee: {
             type: "Identifier",
             name: "exists"
           },
-          arguments: [
-            {
-              type: "MemberExpression",
-              object: {
-                type: "Identifier",
-                name: "HTTP_COOKIE"
+          arguments: [{
+            type: "MemberExpression",
+            object: {
+              type: "Identifier",
+              name: "HTTP_COOKIE"
+            },
+            property: {
+              type: "Literal",
+              value: "remember_me",
+              loc: {
+                source: "'remember_me'",
+                start: {line: 1, column: 23},
+                end: {line: 1, column: 36},
               },
-              property: {
-                type: "Literal",
-                value: "remember_me"
-              }
-            }
-          ]
-        });
-      expect(result)
-        .to.have.property("right")
-        .that.eql({
+            },
+            loc: {
+              source: "$(HTTP_COOKIE{'remember_me'})",
+              start: {line: 1, column: 9},
+              end: {line: 1, column: 38},
+            },
+          }],
+          loc: {
+            source: "$exists($(HTTP_COOKIE{'remember_me'})) ",
+            start: {line: 1, column: 1},
+            end: {line: 1, column: 40},
+          },
+        },
+        right: {
           type: "LogicalExpression",
           operator: "|",
           left: {
             type: "CallExpression",
             callee: {
               type: "Identifier",
-              name: "exists"
+              name: "exists",
             },
-            arguments: [
-              {
-                type: "MemberExpression",
-                object: {
-                  type: "Identifier",
-                  name: "HTTP_COOKIE"
-                },
-                property: {
-                  type: "Literal",
-                  value: "accessToken"
+            arguments: [{
+              type: "MemberExpression",
+              object: {
+                type: "Identifier",
+                name: "HTTP_COOKIE",
+              },
+              property: {
+                type: "Literal",
+                value: "accessToken",
+                loc: {
+                  source: "'accessToken'",
+                  start: {line: 1, column: 64},
+                  end: {line: 1, column: 77},
                 }
+              },
+              loc: {
+                source: "$(HTTP_COOKIE{'accessToken'})",
+                start: {line: 1, column: 50},
+                end: {line: 1, column: 79},
               }
-            ]
+            }],
+            loc: {
+              source: "$exists($(HTTP_COOKIE{'accessToken'}))",
+              start: {line: 1, column: 41},
+              end: {line: 1, column: 82},
+            },
           },
           right: {
             type: "CallExpression",
             callee: {
               type: "Identifier",
-              name: "exists"
+              name: "exists",
             },
-            arguments: [
-              {
-                type: "MemberExpression",
-                object: {
-                  type: "Identifier",
-                  name: "HTTP_COOKIE"
-                },
-                property: {
-                  type: "Literal",
-                  value: "sessionKey"
+            arguments: [{
+              type: "MemberExpression",
+              object: {
+                type: "Identifier",
+                name: "HTTP_COOKIE",
+              },
+              property: {
+                type: "Literal",
+                value: "sessionKey",
+                loc: {
+                  source: "'sessionKey'",
+                  start: {line: 1, column: 64},
+                  end: {line: 1, column: 77},
                 }
+              },
+              loc: {
+                source: "$(HTTP_COOKIE{'sessionKey'})",
+                start: {line: 1, column: 50},
+                end: {line: 1, column: 79},
               }
-            ]
+            }],
+            loc: {
+              source: "$exists($(HTTP_COOKIE{'sessionKey'}))",
+              start: {line: 1, column: 42},
+              end: {line: 1, column: 80},
+            },
+          },
+          loc: {
+            source: "!$exists($(HTTP_COOKIE{'accessToken'})) | $exists($(HTTP_COOKIE{'sessionKey'}))",
+            start: {line: 1, column: 41},
+            end: {line: 1, column: 119},
           }
-        });
+        }
+      });
     });
 
     it("handles multiple evaluations with two regular expressions", () => {
