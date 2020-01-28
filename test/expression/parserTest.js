@@ -1665,8 +1665,6 @@ describe("expression parser", () => {
       const input = "$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'})) | $exists($(HTTP_COOKIE{'sessionKey'}))";
       const result = parse(input);
 
-      // console.log(JSON.stringify(result, null, 2))
-
       expect(result).to.deep.equal({
         type: "LogicalExpression",
         operator: "|",
@@ -1687,20 +1685,20 @@ describe("expression parser", () => {
               value: "remember_me",
               loc: {
                 source: "'remember_me'",
-                start: {line: 1, column: 23},
-                end: {line: 1, column: 36},
+                start: {line: 1, column: 22},
+                end: {line: 1, column: 35},
               },
             },
             loc: {
               source: "$(HTTP_COOKIE{'remember_me'})",
-              start: {line: 1, column: 9},
-              end: {line: 1, column: 38},
+              start: {line: 1, column: 8},
+              end: {line: 1, column: 37},
             },
           }],
           loc: {
             source: "$exists($(HTTP_COOKIE{'remember_me'})) ",
-            start: {line: 1, column: 1},
-            end: {line: 1, column: 40},
+            start: {line: 1, column: 0},
+            end: {line: 1, column: 39},
           },
         },
         right: {
@@ -1723,20 +1721,20 @@ describe("expression parser", () => {
                 value: "accessToken",
                 loc: {
                   source: "'accessToken'",
-                  start: {line: 1, column: 64},
-                  end: {line: 1, column: 77},
+                  start: {line: 1, column: 63},
+                  end: {line: 1, column: 76},
                 }
               },
               loc: {
                 source: "$(HTTP_COOKIE{'accessToken'})",
-                start: {line: 1, column: 50},
-                end: {line: 1, column: 79},
+                start: {line: 1, column: 49},
+                end: {line: 1, column: 78},
               }
             }],
             loc: {
-              source: "$exists($(HTTP_COOKIE{'accessToken'}))",
+              source: "$exists($(HTTP_COOKIE{'accessToken'})) ",
               start: {line: 1, column: 41},
-              end: {line: 1, column: 82},
+              end: {line: 1, column: 80},
             },
           },
           right: {
@@ -1756,35 +1754,103 @@ describe("expression parser", () => {
                 value: "sessionKey",
                 loc: {
                   source: "'sessionKey'",
-                  start: {line: 1, column: 64},
-                  end: {line: 1, column: 77},
+                  start: {line: 1, column: 104},
+                  end: {line: 1, column: 116},
                 }
               },
               loc: {
                 source: "$(HTTP_COOKIE{'sessionKey'})",
-                start: {line: 1, column: 50},
-                end: {line: 1, column: 79},
+                start: {line: 1, column: 90},
+                end: {line: 1, column: 118},
               }
             }],
             loc: {
               source: "$exists($(HTTP_COOKIE{'sessionKey'}))",
-              start: {line: 1, column: 42},
-              end: {line: 1, column: 80},
+              start: {line: 1, column: 82},
+              end: {line: 1, column: 119},
             },
           },
           loc: {
-            source: "!$exists($(HTTP_COOKIE{'accessToken'})) | $exists($(HTTP_COOKIE{'sessionKey'}))",
+            source: "$exists($(HTTP_COOKIE{'accessToken'})) | $exists($(HTTP_COOKIE{'sessionKey'}))",
             start: {line: 1, column: 41},
             end: {line: 1, column: 119},
           }
+        },
+        loc: {
+          source: "$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'})) | $exists($(HTTP_COOKIE{'sessionKey'}))",
+          start: {line: 1, column: 0},
+          end: {line: 1, column: 119},
         }
       });
     });
 
     it("handles multiple evaluations with two regular expressions", () => {
-      const input =
-        "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$''' && 'newyork' matches 'newyorknewyork'";
+      const input = "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$''' && 'newyork' matches 'newyorknewyork'";
       const result = parse(input);
+
+      expect(result).to.deep.equal({
+        type: "LogicalExpression",
+        operator: "&&",
+        left: {
+          type: "BinaryExpression",
+          operator: "matches",
+          left: {
+            type: "Identifier",
+            name: "HTTP_REFERER",
+            loc: {
+              source: "$(HTTP_REFERER) ",
+              start: {line: 1, column: 0},
+              end: {line: 1, column: 16},
+            }
+          },
+          right: {
+            type: "Literal",
+            value: "(google|yahoo|bing|yandex)\\.\\d+$",
+            loc: {
+              source: "'''(google|yahoo|bing|yandex)\\.\\d+$''' ",
+              start: {line: 1, column: 24},
+              end: {line: 1, column: 63},
+            }
+          },
+          loc: {
+            source: "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$''' ",
+            start: {line: 1, column: 0},
+            end: {line: 1, column: 63},
+          }
+        },
+        right: {
+          type: "BinaryExpression",
+          operator: "matches",
+          left: {
+            type: "Literal",
+            value: "newyork",
+            loc: {
+              source: "'newyork' ",
+              start: {line: 1, column: 66},
+              end: {line: 1, column: 76},
+            }
+          },
+          right: {
+            type: "Literal",
+            value: "newyorknewyork",
+            loc: {
+              source: "'newyorknewyork'",
+              start: {line: 1, column: 84},
+              end: {line: 1, column: 100},
+            }
+          },
+          loc: {
+            source: "'newyork' matches 'newyorknewyork'",
+            start: {line: 1, column: 66},
+            end: {line: 1, column: 100},
+          }
+        },
+        loc: {
+          source: "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$''' && 'newyork' matches 'newyorknewyork'",
+          start: {line: 1, column: 0},
+          end: {line: 1, column: 100},
+        }
+      });
 
       expect(result).to.have.property("type", "LogicalExpression");
       expect(result)
