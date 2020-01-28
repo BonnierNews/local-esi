@@ -1664,7 +1664,6 @@ describe("expression parser", () => {
     it("handle multiple ors", () => {
       const input = "$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'})) | $exists($(HTTP_COOKIE{'sessionKey'}))";
       const result = parse(input);
-
       expect(result).to.deep.equal({
         type: "LogicalExpression",
         operator: "|",
@@ -1735,7 +1734,7 @@ describe("expression parser", () => {
               source: "$exists($(HTTP_COOKIE{'accessToken'})) ",
               start: {line: 1, column: 41},
               end: {line: 1, column: 80},
-            },
+            }
           },
           right: {
             type: "CallExpression",
@@ -1768,7 +1767,7 @@ describe("expression parser", () => {
               source: "$exists($(HTTP_COOKIE{'sessionKey'}))",
               start: {line: 1, column: 82},
               end: {line: 1, column: 119},
-            },
+            }
           },
           loc: {
             source: "$exists($(HTTP_COOKIE{'accessToken'})) | $exists($(HTTP_COOKIE{'sessionKey'}))",
@@ -1778,79 +1777,16 @@ describe("expression parser", () => {
         },
         loc: {
           source: "$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'})) | $exists($(HTTP_COOKIE{'sessionKey'}))",
-          start: {line: 1, column: 0},
-          end: {line: 1, column: 119},
+          start: {column: 0, line: 1},
+          end: {column: 119, line: 1},
         }
       });
     });
 
     it("handles multiple evaluations with two regular expressions", () => {
-      const input = "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$''' && 'newyork' matches 'newyorknewyork'";
+      const input =
+        "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$''' && 'newyork' matches 'newyorknewyork'";
       const result = parse(input);
-
-      expect(result).to.deep.equal({
-        type: "LogicalExpression",
-        operator: "&&",
-        left: {
-          type: "BinaryExpression",
-          operator: "matches",
-          left: {
-            type: "Identifier",
-            name: "HTTP_REFERER",
-            loc: {
-              source: "$(HTTP_REFERER) ",
-              start: {line: 1, column: 0},
-              end: {line: 1, column: 16},
-            }
-          },
-          right: {
-            type: "Literal",
-            value: "(google|yahoo|bing|yandex)\\.\\d+$",
-            loc: {
-              source: "'''(google|yahoo|bing|yandex)\\.\\d+$''' ",
-              start: {line: 1, column: 24},
-              end: {line: 1, column: 63},
-            }
-          },
-          loc: {
-            source: "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$''' ",
-            start: {line: 1, column: 0},
-            end: {line: 1, column: 63},
-          }
-        },
-        right: {
-          type: "BinaryExpression",
-          operator: "matches",
-          left: {
-            type: "Literal",
-            value: "newyork",
-            loc: {
-              source: "'newyork' ",
-              start: {line: 1, column: 66},
-              end: {line: 1, column: 76},
-            }
-          },
-          right: {
-            type: "Literal",
-            value: "newyorknewyork",
-            loc: {
-              source: "'newyorknewyork'",
-              start: {line: 1, column: 84},
-              end: {line: 1, column: 100},
-            }
-          },
-          loc: {
-            source: "'newyork' matches 'newyorknewyork'",
-            start: {line: 1, column: 66},
-            end: {line: 1, column: 100},
-          }
-        },
-        loc: {
-          source: "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$''' && 'newyork' matches 'newyorknewyork'",
-          start: {line: 1, column: 0},
-          end: {line: 1, column: 100},
-        }
-      });
 
       expect(result).to.have.property("type", "LogicalExpression");
       expect(result)
@@ -2208,35 +2144,51 @@ describe("expression parser", () => {
   });
 
   describe("source map", () => {
-    it("returns raw source for empty CallExpression", () => {
+    it("returns loc source for empty CallExpression", () => {
       const input = "$time()";
       expect(parse(input, true)).to.deep.include({
         type: "CallExpression",
-        raw: input
+        loc: {
+          source: input,
+          start: {line: 1, column: 0},
+          end: {line: 1, column: input.length},
+        }
       });
     });
 
-    it("returns raw source for ArrayExpression", () => {
+    it("returns loc source for ArrayExpression", () => {
       const input = "['a', '1', 'b']";
       expect(parse(input, true)).to.deep.include({
         type: "ArrayExpression",
-        raw: input
+        loc: {
+          source: input,
+          start: {line: 1, column: 0},
+          end: {line: 1, column: input.length},
+        }
       });
     });
 
-    it("returns raw source for empty ObjectExpression", () => {
+    it("returns loc source for empty ObjectExpression", () => {
       const input = "{}";
       expect(parse(input, true)).to.deep.include({
         type: "ObjectExpression",
-        raw: input
+        loc: {
+          source: input,
+          start: {line: 1, column: 0},
+          end: {line: 1, column: input.length},
+        }
       });
     });
 
-    it("returns raw source for ObjectExpression", () => {
+    it("returns loc source for ObjectExpression", () => {
       const input = "{'a': 1, 'b': 2}";
       expect(parse(input, true)).to.deep.include({
         type: "ObjectExpression",
-        raw: input
+        loc: {
+          source: input,
+          start: {line: 1, column: 0},
+          end: {line: 1, column: input.length},
+        }
       });
     });
   });
@@ -2451,6 +2403,77 @@ describe("expression parser", () => {
         raw: "$(QUERY_STRING{'user'})"
       });
       expect(result.length).to.equal(3);
+    });
+  });
+
+  describe("CallExpression", () => {
+    it("accepts binary expression", () => {
+      const input = "$int(1+4)";
+      expect(parse(input)).to.deep.include({
+        type: "CallExpression",
+        callee: {
+          type: "Identifier",
+          name: "int",
+        },
+        arguments: [{
+          type: "BinaryExpression",
+          operator: "+",
+          left: {
+            type: "Literal",
+            value: 1
+          },
+          right: {
+            type: "Literal",
+            value: 4
+          }
+        }]
+      });
+    });
+
+    it("accepts complex argument", () => {
+      const input = "$int($str(1) + $str(4))";
+      expect(parse(input)).to.deep.include({
+        type: "CallExpression",
+        callee: {
+          type: "Identifier",
+          name: "int",
+        },
+        arguments: [{
+          type: "BinaryExpression",
+          operator: "+",
+          left: {
+            type: "CallExpression",
+            callee: {
+              type: "Identifier",
+              name: "str"
+            },
+            arguments: [{
+              type: "Literal",
+              value: 1
+            }]
+          },
+          right: {
+            type: "CallExpression",
+            callee: {
+              type: "Identifier",
+              name: "str"
+            },
+            arguments: [{
+              type: "Literal",
+              value: 4
+            }]
+          },
+        }]
+      });
+    });
+  });
+
+  describe("split", () => {
+    it("works", () => {
+      const input = "$int(1+4)";
+      expect(split(input)).to.deep.include([{
+        type: "CallExpression",
+      }]);
     });
   });
 });
