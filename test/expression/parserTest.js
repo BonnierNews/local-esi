@@ -2470,10 +2470,15 @@ describe("expression parser", () => {
 
   describe("split", () => {
     it("works", () => {
-      const input = "$int(1+4)";
-      expect(split(input)).to.deep.include([{
-        type: "CallExpression",
-      }]);
+      const input = "a: $int(1+1),\n b: $int(1+2),\n c: $int(1+3)";
+      const hits = split(input);
+      expect(hits.length).to.equal(6);
+      expect(hits[0]).to.deep.equal({type: "TEXT", text: "a: "});
+      expect(hits[1]).to.have.property("expression").with.property("type", "CallExpression");
+      expect(hits[2]).to.deep.equal({type: "TEXT", text: ",\n b: "});
+      expect(hits[3]).to.have.property("expression").with.property("type", "CallExpression");
+      expect(hits[4]).to.deep.equal({type: "TEXT", text: ",\n c: "});
+      expect(hits[5]).to.have.property("expression").with.property("type", "CallExpression");
     });
   });
 });
