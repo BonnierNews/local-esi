@@ -535,7 +535,7 @@ describe("functions", () => {
     });
   });
 
-  describe.only("$str", () => {
+  describe("$str", () => {
     it("supports $str", (done) => {
       const markup = `
         <esi:assign name="int" value="1" />
