@@ -535,6 +535,98 @@ describe("functions", () => {
     });
   });
 
+  describe.only("$str", () => {
+    it("supports $str", (done) => {
+      const markup = `
+        <esi:assign name="int" value="1" />
+        <esi:assign name="additionWithStr" value="$str($(int)) + $str($(int))" />
+        <esi:assign name="additionWithoutStr" value="$(int) + $(int)" />
+        Result: <esi:vars>$(additionWithStr)</esi:vars>,
+        Same with $str():
+        <esi:choose>
+          <esi:when test="$(additionWithStr)==$(additionWithoutStr)">
+            yes
+          </esi:when>
+          <esi:otherwise>
+            no
+          </esi:otherwise>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal("Result: 11,Same with $str():no");
+          done();
+        }
+      }, done);
+    });
+
+    it("outputs string representations of values with different types", (done) => {
+      const markup = `
+        <esi:assign name="bool" value="false" />
+        <esi:assign name="int" value="0" />
+        <esi:vars>
+          <ul>
+            <li>$str($(bool))
+            <li>$str($(int))
+          </ul>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal("" +
+            "<ul>" +
+              "<li>false" +
+              "<li>0" +
+            "</ul>"
+          );
+          done();
+        }
+      }, done);
+    });
+
+    it("outputs None when $str is invoked with non-existing variable", (done) => {
+      const markup = `
+        <esi:vars>
+          $str($(noexist))
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal("None");
+          done();
+        }
+      }, done);
+    });
+
+    it.skip("outputs string representations of objects", (done) => {
+      const markup = `
+        <esi:assign name="list" value="[1, 2]" />
+        <esi:assign name="obj" value="{'a': 1, 'b': 2}" />
+        <esi:vars>
+          <ul>
+            <li>$str($(list))
+            <li>$str($(obj))
+          </ul>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal("" +
+            "<ul>" +
+              "<li>[1, 2]" +
+              "<li>{'a': 1, 'b': 2}" +
+            "</ul>"
+          );
+          done();
+        }
+      }, done);
+    });
+  });
+
   describe("$substr", () => {
     it("supports $substr", (done) => {
       const markup = `
