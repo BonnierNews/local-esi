@@ -2201,6 +2201,45 @@ describe("expression parser", () => {
     });
   });
 
+  describe("CallExpression", () => {
+    it("accepts binary expression", () => {
+      const input = "$int(1+4)";
+      const result = parse(input);
+      expect(result).to.have.property("type", "CallExpression");
+      expect(result).to.have.property("arguments").that.have.length(1);
+      expect(result.arguments[0]).to.deep.include({
+        type: "BinaryExpression",
+        operator: "+",
+      });
+      expect(result.arguments[0]).to.have.property("left").that.deep.include({
+        type: "Literal",
+        value: 1
+      });
+      expect(result.arguments[0]).to.have.property("right").that.deep.include({
+        type: "Literal",
+        value: 4
+      });
+    });
+
+    it("accepts complex argument", () => {
+      const input = "$int($str(1) + $str(4))";
+      const result = parse(input);
+      expect(result).to.have.property("type", "CallExpression");
+      expect(result).to.have.property("arguments").with.length(1);
+
+      expect(result.arguments[0]).to.deep.include({
+        type: "BinaryExpression",
+        operator: "+",
+      });
+      expect(result.arguments[0]).to.have.property("left").that.deep.include({
+        type: "CallExpression",
+      });
+      expect(result.arguments[0]).to.have.property("right").that.deep.include({
+        type: "CallExpression",
+      });
+    });
+  });
+
   describe("split text into and expressions and plain text", () => {
     it("extracts identifier from text", () => {
       const text = "some text surrounding $(var) and beyond";
@@ -2265,7 +2304,7 @@ describe("expression parser", () => {
     it("extracts call expression with one argument from text", () => {
       const text = "\n$set_response_code( 401 ) \n";
       const result = split(text);
-      expect(result).to.eql([
+      expect(result).to.deep.equal([
         {
           type: "TEXT",
           text: "\n"
@@ -2341,6 +2380,7 @@ describe("expression parser", () => {
     it("extracts call expression with two arguments from text", () => {
       const text = "\n$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')\n";
       const result = split(text);
+      expect(result[0]).to.deep.equal({type: "TEXT", text: "\n"});
       expect(result[1]).to.eql({
         expression: {
           type: "CallExpression",
@@ -2439,58 +2479,108 @@ describe("expression parser", () => {
       });
       expect(result.length).to.equal(3);
     });
-  });
 
-  describe("CallExpression", () => {
-    it("accepts binary expression", () => {
-      const input = "$int(1+4)";
-      const result = parse(input);
-      expect(result).to.have.property("type", "CallExpression");
-      expect(result).to.have.property("arguments").that.have.length(1);
-      expect(result.arguments[0]).to.deep.include({
-        type: "BinaryExpression",
-        operator: "+",
-      });
-      expect(result.arguments[0]).to.have.property("left").that.deep.include({
-        type: "Literal",
-        value: 1
-      });
-      expect(result.arguments[0]).to.have.property("right").that.deep.include({
-        type: "Literal",
-        value: 4
-      });
-    });
-
-    it("accepts complex argument", () => {
-      const input = "$int($str(1) + $str(4))";
-      const result = parse(input);
-      expect(result).to.have.property("type", "CallExpression");
-      expect(result).to.have.property("arguments").with.length(1);
-
-      expect(result.arguments[0]).to.deep.include({
-        type: "BinaryExpression",
-        operator: "+",
-      });
-      expect(result.arguments[0]).to.have.property("left").that.deep.include({
-        type: "CallExpression",
-      });
-      expect(result.arguments[0]).to.have.property("right").that.deep.include({
-        type: "CallExpression",
-      });
-    });
-  });
-
-  describe("split", () => {
-    it("works", () => {
+    it("works with pretext and new lines", () => {
       const input = "a: $int(1+1),\n b: $int(1+2),\n c: $int(1+3)";
       const hits = split(input);
-      expect(hits.length).to.equal(6);
       expect(hits[0]).to.deep.equal({type: "TEXT", text: "a: "});
-      expect(hits[1]).to.have.property("expression").with.property("type", "CallExpression");
-      expect(hits[2]).to.deep.equal({type: "TEXT", text: ",\n b: "});
-      expect(hits[3]).to.have.property("expression").with.property("type", "CallExpression");
-      expect(hits[4]).to.deep.equal({type: "TEXT", text: ",\n c: "});
-      expect(hits[5]).to.have.property("expression").with.property("type", "CallExpression");
+
+      expect(hits[1]).to.have.property("expression").that.deep.equal({
+        type: "CallExpression",
+        callee: {
+          type: "Identifier",
+          name: "int",
+        },
+        arguments: [{
+          type: "BinaryExpression",
+          operator: "+",
+          left: {
+            type: "Literal",
+            value: 1,
+            loc: {
+              source: "1",
+              start: {line: 1, column: 8},
+              end: {line: 1, column: 9},
+            }
+          },
+          right: {
+            type: "Literal",
+            value: 1,
+            loc: {
+              source: "1",
+              start: {line: 1, column: 10},
+              end: {line: 1, column: 11},
+            }
+          },
+          loc: {
+            source: "1+1",
+            start: {line: 1, column: 8},
+            end: {line: 1, column: 11},
+          }
+        }],
+        loc: {
+          source: "$int(1+1)",
+          start: {line: 1, column: 3},
+          end: {line: 1, column: 12},
+        }
+      });
+
+      expect(hits[2]).to.deep.equal({type: "TEXT", text: ",\n"});
+      expect(hits[3]).to.deep.equal({type: "TEXT", text: " b: "});
+
+      expect(hits[4]).to.have.property("expression").that.deep.equal({
+        type: "CallExpression",
+        callee: {
+          type: "Identifier",
+          name: "int",
+        },
+        arguments: [{
+          type: "BinaryExpression",
+          operator: "+",
+          left: {
+            type: "Literal",
+            value: 1,
+            loc: {
+              source: "1",
+              start: {line: 2, column: 9},
+              end: {line: 2, column: 10},
+            }
+          },
+          right: {
+            type: "Literal",
+            value: 2,
+            loc: {
+              source: "2",
+              start: {line: 2, column: 11},
+              end: {line: 2, column: 12},
+            }
+          },
+          loc: {
+            source: "1+2",
+            start: {line: 2, column: 9},
+            end: {line: 2, column: 12},
+          }
+        }],
+        loc: {
+          source: "$int(1+2)",
+          start: {line: 2, column: 4},
+          end: {line: 2, column: 13},
+        }
+      });
+
+      expect(hits[5]).to.deep.equal({type: "TEXT", text: ",\n"});
+      expect(hits[6]).to.deep.equal({type: "TEXT", text: " c: "});
+      expect(hits[7]).to.have.property("expression").with.property("type", "CallExpression");
+
+      expect(hits.length).to.equal(8);
+    });
+
+    it("throws SyntaxError with line and column", () => {
+      const input = "a: $int(1+1),\n b: $int(1 2),\n c: $int(1+3)";
+
+      expect(() => {
+        split(input);
+      }).to.throw(SyntaxError, "Unexpected Literal in CallExpression at 2:11");
     });
   });
 });
