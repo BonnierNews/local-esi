@@ -1603,7 +1603,7 @@ describe("local ESI", () => {
       const markup = `
         <ul>
           <esi:assign name="sum" value="0" />
-          <esi:foreach collection="[0, 1, 2, 3]">
+          <esi:foreach collection="[0, 1, 2, 3, 4, 5]">
             <esi:assign name="sum" value="$(sum) + $(item)" />
             <li>$(item)</li>
             <esi:choose>
