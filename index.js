@@ -43,9 +43,10 @@ function streaming(req) {
   let responseCode;
   const headers = {};
 
-  pipeline.once("set_response_code", onResponseCode);
-  pipeline.once("add_header", onAddHeader);
-  pipeline.once("set_redirect", close);
+  pipeline
+    .on("set_response_code", onResponseCode)
+    .on("add_header", onAddHeader)
+    .once("set_redirect", close);
 
   return pipeline;
 
@@ -62,10 +63,11 @@ function streaming(req) {
   }
 
   function close() {
-    pipeline.removeListener("set_response_code", onResponseCode);
-    pipeline.removeListener("add_header", onAddHeader);
-    pipeline.removeListener("set_redirect", close);
-    pipeline.destroy();
+    pipeline
+      .removeListener("set_response_code", onResponseCode)
+      .removeListener("add_header", onAddHeader)
+      .removeListener("set_redirect", close)
+      .destroy();
   }
 }
 

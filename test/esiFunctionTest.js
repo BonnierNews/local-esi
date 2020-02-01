@@ -177,10 +177,36 @@ describe("functions", () => {
       }, done);
     });
 
-    it.skip("supports $set_response_code with status and replacement markup containing what looks like the end of the statement", (done) => {
+    it("supports $set_response_code with status and replacement markup in esi:choose", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="'a' == 'b'">
+            <p>ignore</p>
+          </esi:when>
+          <esi:otherwise>
+            $set_response_code(400, '<p>hej</p>')
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      let setStatus;
+      localEsi(markup, { }, {
+        status(status) {
+          setStatus = status;
+          return this;
+        },
+        send(body) {
+          expect(body).to.equal("<p>hej</p>");
+          expect(setStatus).to.equal(400);
+          done();
+        }
+      }, done);
+    });
+
+    it("supports $set_response_code with status and replacement markup containing what looks like the end of the statement", (done) => {
       const markup = `
         <esi:vars>
-          $set_response_code(400, '<p>')</p>')
+          $set_response_code(400, '<p>)</p>')
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
@@ -191,7 +217,7 @@ describe("functions", () => {
           return this;
         },
         send(body) {
-          expect(body).to.equal("<p>')</p>");
+          expect(body).to.equal("<p>)</p>");
           expect(setStatus).to.not.be.undefined;
           expect(setStatus).to.equal(400);
           done();
@@ -503,6 +529,98 @@ describe("functions", () => {
       localEsi(markup, { }, {
         send(body) {
           expect(body).to.equal("<p>true</p><p>true again</p>");
+          done();
+        }
+      }, done);
+    });
+  });
+
+  describe("$str", () => {
+    it("supports $str", (done) => {
+      const markup = `
+        <esi:assign name="int" value="1" />
+        <esi:assign name="additionWithStr" value="$str($(int)) + $str($(int))" />
+        <esi:assign name="additionWithoutStr" value="$(int) + $(int)" />
+        Result: <esi:vars>$(additionWithStr)</esi:vars>,
+        Same with $str():
+        <esi:choose>
+          <esi:when test="$(additionWithStr)==$(additionWithoutStr)">
+            yes
+          </esi:when>
+          <esi:otherwise>
+            no
+          </esi:otherwise>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal("Result: 11,Same with $str():no");
+          done();
+        }
+      }, done);
+    });
+
+    it("outputs string representations of values with different types", (done) => {
+      const markup = `
+        <esi:assign name="bool" value="false" />
+        <esi:assign name="int" value="0" />
+        <esi:vars>
+          <ul>
+            <li>$str($(bool))
+            <li>$str($(int))
+          </ul>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal("" +
+            "<ul>" +
+              "<li>false" +
+              "<li>0" +
+            "</ul>"
+          );
+          done();
+        }
+      }, done);
+    });
+
+    it("outputs None when $str is invoked with non-existing variable", (done) => {
+      const markup = `
+        <esi:vars>
+          $str($(noexist))
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal("None");
+          done();
+        }
+      }, done);
+    });
+
+    it.skip("outputs string representations of objects", (done) => {
+      const markup = `
+        <esi:assign name="list" value="[1, 2]" />
+        <esi:assign name="obj" value="{'a': 1, 'b': 2}" />
+        <esi:vars>
+          <ul>
+            <li>$str($(list))
+            <li>$str($(obj))
+          </ul>
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal("" +
+            "<ul>" +
+              "<li>[1, 2]" +
+              "<li>{'a': 1, 'b': 2}" +
+            "</ul>"
+          );
           done();
         }
       }, done);

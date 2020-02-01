@@ -3,6 +3,8 @@
 const fs = require("fs");
 const localEsi = require("..");
 const path = require("path");
+const pump = require("pump");
+const pumpify = require("pumpify");
 const {convert} = require("../lib/transformHtml");
 
 describe("stream", () => {
@@ -39,7 +41,7 @@ describe("stream", () => {
       redirect = {statusCode, location};
     });
 
-    stream.pipe(transform).on("close", () => {
+    pumpify.obj(stream, transform).on("close", () => {
       expect(redirect.statusCode).to.equal(302);
       expect(redirect.location).to.equal("https://blahonga.com");
       done();
@@ -49,12 +51,15 @@ describe("stream", () => {
   [200, 201, 206].forEach((responseCode) => {
     it(`continues stream if response code (${responseCode}) instruction is used`, (done) => {
       const markup = [(`
-        <html><body>
+        <html>
+        <head>
         <esi:vars>
           $set_response_code(${responseCode})
         </esi:vars>
+        </head>
+        <body>
       `)]
-        .concat(Array(1000).fill().map((_, idx) => `<div><p>${idx}</p><div>`), "</body></html>")
+        .concat(Array(1000).fill().map((_, idx) => `<div><p>${idx}</p></div>`), "</body></html>")
         .join("")
         .replace(/^\s+|\n/gm, "");
 
@@ -66,15 +71,15 @@ describe("stream", () => {
       transform.on("set_response_code", (statusCode, body) => {
         send = {statusCode, body};
       });
-      transform.on("data", (chunk) => {
-        chunks.push(chunk);
-      });
 
-      stream.pipe(transform).on("end", () => {
+      pump(stream, transform, (err) => {
+        if (err) return done(err);
         expect(send.statusCode).to.equal(responseCode);
         expect(send.body).to.undefined;
-        expect(chunks).to.have.length.above(2);
+        expect(chunks).to.have.length.above(4);
         done();
+      }).on("data", (chunk) => {
+        chunks.push(chunk);
       });
     });
 
@@ -97,7 +102,7 @@ describe("stream", () => {
         send = {statusCode, body};
       });
 
-      stream.pipe(transform).on("close", () => {
+      pumpify.obj(stream, transform).on("close", () => {
         expect(send.statusCode).to.equal(responseCode);
         expect(send.body).to.equal("Great success");
         done();
@@ -126,7 +131,7 @@ describe("stream", () => {
         send = {statusCode, body};
       });
 
-      stream.pipe(transform).on("close", () => {
+      pumpify.obj(stream, transform).on("close", () => {
         expect(send.statusCode).to.equal(responseCode);
         expect(send.body).to.undefined;
         done();
@@ -153,7 +158,7 @@ describe("stream", () => {
         send = {statusCode, body};
       });
 
-      stream.pipe(transform).on("close", () => {
+      pumpify.obj(stream, transform).on("close", () => {
         expect(send.statusCode).to.equal(responseCode);
         expect(send.body).to.undefined;
         done();
@@ -181,7 +186,7 @@ describe("stream", () => {
         send = {statusCode, body};
       });
 
-      stream.pipe(transform).on("close", () => {
+      pumpify.obj(stream, transform).on("close", () => {
         expect(send.statusCode).to.equal(responseCode);
         expect(send.body).to.undefined;
         done();
@@ -204,16 +209,10 @@ describe("stream", () => {
 
     const transform = localEsi.createStream({});
 
-    let error;
-
-    transform.on("error", (err) => {
-      error = err;
-    });
-
-    stream.on("end", () => {
-      expect(error).to.be.ok.and.match(/is not implemented/i);
+    pumpify.obj(stream, transform).on("error", (err) => {
+      expect(err).to.be.ok.and.match(/is not implemented/i);
       done();
-    }).pipe(transform);
+    });
   });
 });
 
