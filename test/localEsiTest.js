@@ -6,8 +6,40 @@ const nock = require("nock");
 describe("local ESI", () => {
   describe("html", () => {
     it("should not touch regular markup", (done) => {
-      const markup = "<!DOCTYPE html><html><head><title>This is a title</title></head><body>Test: <b>Testsson</b></body></html>";
+      const markup = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>This is a title</title>
+          </head>
+          <body>
+            Test: <b>Testsson</b>
+            <script async src="path/to/script.js"></script>
+          </body>
+        </html>`.replace(/^\s+|\n/gm, "");
+
       localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(markup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should not touch regular markup in esi context", (done) => {
+      const markup = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>This is a title</title>
+          </head>
+          <body>
+            Test: <b>Testsson</b>
+            <script async src="path/to/script.js"></script>
+          </body>
+        </html>`.replace(/^\s+|\n/gm, "");
+
+      localEsi(`<esi:vars>${markup}</esi:vars>`, {}, {
         send(body) {
           expect(body).to.equal(markup);
           done();
