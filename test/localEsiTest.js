@@ -6,8 +6,40 @@ const nock = require("nock");
 describe("local ESI", () => {
   describe("html", () => {
     it("should not touch regular markup", (done) => {
-      const markup = "<!DOCTYPE html><html><head><title>This is a title</title></head><body>Test: <b>Testsson</b></body></html>";
+      const markup = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>This is a title</title>
+          </head>
+          <body>
+            Test: <b>Testsson</b>
+            <script async src="path/to/script.js"></script>
+          </body>
+        </html>`.replace(/^\s+|\n/gm, "");
+
       localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(markup);
+          done();
+        }
+      }, done);
+    });
+
+    it("should not touch regular markup in esi context", (done) => {
+      const markup = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>This is a title</title>
+          </head>
+          <body>
+            Test: <b>Testsson</b>
+            <script async src="path/to/script.js"></script>
+          </body>
+        </html>`.replace(/^\s+|\n/gm, "");
+
+      localEsi(`<esi:vars>${markup}</esi:vars>`, {}, {
         send(body) {
           expect(body).to.equal(markup);
           done();
@@ -164,7 +196,7 @@ describe("local ESI", () => {
       const markup = `
         <esi:assign name="myVar" value="'false'" />
         <esi:choose>
-          <esi:when test="$(QUERY_STRING{'q'})=='2'">
+          <esi:when test="$(QUERY_STRING{'q'})=='2' & $(REQUEST_PATH)=='/hanubis-introversion/'">
             <esi:assign name="myVar" value="'true'" />
           </esi:when>
         </esi:choose>
@@ -173,7 +205,7 @@ describe("local ESI", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      localEsi(markup, { query: { q: "2", p: "1"} }, {
+      localEsi(markup, { query: { q: "2", p: "1"}, path: "/hanubis-introversion/" }, {
         send(body) {
           expect(body).to.equal("true");
           done();
