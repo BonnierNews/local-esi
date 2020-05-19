@@ -27,7 +27,7 @@
     "request": "^2.88.0"
   },
   "engines": {
-    "node": ">=8.9.0"
+    "node": ">=9.11.12"
   },
   "repository": {
     "type": "git",
