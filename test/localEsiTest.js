@@ -1703,7 +1703,7 @@ describe("local ESI", () => {
     ];
 
     illegalCharacters.forEach((character) => {
-      it(`doesn't crash on illegal "${character}" character outside of esi context`, (done) => {
+      it(`doesn't crash on illegal "${character}" character outside esi context`, (done) => {
         const html = `<p>This text contains expected ${character} character</p>`;
 
         localEsi(html, {}, {
@@ -1714,28 +1714,20 @@ describe("local ESI", () => {
         }, unexpectedCallback.bind(null, done));
       });
 
-      it(`crashes on unexpected illegal "${character}" character inside <esi:choose></esi:choose>`, (done) => {
+      it(`crashes on unexpected illegal "${character}" character inside esi context`, (done) => {
         const html = `<p>This text contains unexpected ${character} character</p>`;
-        const markup = `
-          <esi:choose>
-            <esi:when test="$(some_variable)=='true'">
-              When ${html}
-            </esi:when>
-            <esi:otherwise>
-              Otherwise ${html}
-            </esi:otherwise>
-          </esi:choose>`.replace(/^\s+|\n/gm, "");
+        const markup = `<esi:vars>${html}</esi:vars>`;
 
         localEsi(markup, {}, {send: unexpectedCallback.bind(null, done, null)}, (err) => {
           expect(err).to.exist;
-          expect(err.message, "wrong error").to.include("Illegal character");
+          expect(err.message, "wrong error").to.include("Unexpected char  ");
           done();
         });
       });
 
       it(`doesn't crash on illegal "${character}" character inside <esi:text></esi:text>`, (done) => {
         const html = `<p>This text contains expected ${character} character</p>`;
-        const markup = `<esi:text>${html}</esi:text>`;
+        const markup = `<esi:vars><esi:text>${html}</esi:text></esi:vars>`;
 
         localEsi(markup, {}, {
           send(body) {
@@ -1747,10 +1739,11 @@ describe("local ESI", () => {
 
       it(`doesn't crash on escaped illegal "${character}" character`, (done) => {
         const html = `<p>This text contains expected \\${character} character</p>`;
+        const markup = `<esi:vars>${html}</esi:vars>`;
 
-        localEsi(html, {}, {
+        localEsi(markup, {}, {
           send(body) {
-            expect(body).to.equal(html);
+            expect(body).to.equal(html.replace("\\", ""));
             done();
           }
         }, unexpectedCallback.bind(null, done));
