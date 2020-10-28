@@ -1631,6 +1631,27 @@ describe("local ESI", () => {
       }, done);
     });
 
+    it("can access values from a Dictionary variable", (done) => {
+      const markup = `
+        <esi:assign name="pizzaIngredients" value="{'cheese': 'true', 'avocado': 'false'}" />
+        <esi:assign name="hasAvocado" value="$(pizzaIngredients{avocado})" />
+        <esi:vars>
+          <p>Does a pizza have avocado: $(hasAvocado)</p>
+        </esi:vars>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <p>Does a pizza have avocado: false</p>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
     it("preserves state between iterations", (done) => {
       const markup = `
         <ul>
