@@ -1631,13 +1631,11 @@ describe("local ESI", () => {
       }, done);
     });
 
-    it("can access values from a Dictionary variable", (done) => {
+    it("can access values from a Dictionary variable (via single-quoted key)", (done) => {
+      // Note: ESI supports variable access using both with or without single-quotes, but local-esi requires the single-quotes
       const markup = `
         <esi:assign name="pizzaIngredients" value="{'cheese': 'true', 'avocado': 'false'}" />
-        <esi:assign name="hasAvocado" value="$(pizzaIngredients{avocado})" />
-        <esi:vars>
-          <p>Does a pizza have avocado: $(hasAvocado)</p>
-        </esi:vars>
+        <p><esi:vars>Does a pizza have avocado: $(pizzaIngredients{'avocado'})</esi:vars></p>
         `.replace(/^\s+|\n/gm, "");
 
       const expectedMarkup = `
