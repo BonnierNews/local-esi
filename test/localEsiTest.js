@@ -5,7 +5,7 @@ const nock = require("nock");
 
 describe("local ESI", () => {
   describe("html", () => {
-    it("should not touch regular markup", (done) => {
+    it("should not touch regular markup (notably)", (done) => {
       const markup = `
         <!DOCTYPE html>
         <html>
@@ -14,13 +14,24 @@ describe("local ESI", () => {
           </head>
           <body>
             Test: <b>Testsson</b>
+            <a href=/some/where/>link</a>
+            <div data-something='{"linkUrl": "/some/where/"}'>component</div>
             <script async src="path/to/script.js"></script>
           </body>
         </html>`.replace(/^\s+|\n/gm, "");
 
       localEsi(markup, {}, {
         send(body) {
-          expect(body).to.equal(markup);
+          const quotedAndEscaped = markup
+            .replace(
+              "/some/where/",
+              "\"/some/where/\""
+            )
+            .replace(
+              "'{\"linkUrl\": \"/some/where/\"}'",
+              "\"{&quot;linkUrl&quot;: &quot;/some/where/&quot;}\"",
+            );
+          expect(body).to.equal(quotedAndEscaped);
           done();
         }
       }, done);
