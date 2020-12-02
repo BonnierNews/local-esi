@@ -48,6 +48,21 @@ describe("esi:text", () => {
     }, done);
   });
 
+  it("escaped quotes in tag attributes inside json property nested in esi:text are kept", (done) => {
+    const markup = `
+      <esi:text>
+        {"items":[{"content":"<div class=\\"div_class_tag\\"><p class=\\"p_class_tag\\">TEXT</p></div>","type":"html-widget"}]}
+      </esi:text>
+      `.replace(/^\s+|\n/gm, "");
+
+    localEsi(markup, { }, {
+      send(body) {
+        expect(JSON.parse(body).items[0].content).to.equal("<div class=\"div_class_tag\"><p class=\"p_class_tag\">TEXT</p></div>");
+        done();
+      }
+    }, done);
+  });
+
   it("remove escaped quotes inside esi context unless esi:text", (done) => {
     const markup = `
       <p>\\"quote 0\\"</p>
