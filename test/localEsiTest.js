@@ -1813,6 +1813,122 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("supports comparison of undefined identifier", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$(undefined) has 'banan'">
+            <p>'' has 'banan'</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="'banan' has $(undefined)">
+            <p>'banan' has ''</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="$(undefined) has $(not_defined)">
+            <p>'' has ''</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="$(undefined) has_i 'banan'">
+            <p>'' has_i "bana''</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="'banan' has_i $(undefined)">
+            <p>'banan' has_i ''</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="$(undefined) has_i $(not_defined)">
+            <p>'' has_i ''</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(
+        markup,
+        {},
+        {
+          send(body) {
+            expect(body).to.equal(
+              "<p>'banan' has ''</p>" +
+              "<p>'' has ''</p>" +
+              "<p>'banan' has_i ''</p>" +
+              "<p>'' has_i ''</p>"
+            );
+            done();
+          },
+        },
+        done
+      );
+    });
+
+    it("supports comparison of numbers and strings", (done) => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="10 has 1">
+            <p>10 has 1</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="'10' has 1">
+            <p>'10' has 1</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="10 has '1'">
+            <p>10 has '1'</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="10 has 2">
+            <p>10 has 2</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="10 has_i 1">
+            <p>10 has_i 1</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="'10' has_i 1">
+            <p>'10' has_i 1</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="10 has_i '1'">
+            <p>10 has_i '1'</p>
+          </esi:when>
+        </esi:choose>
+        <esi:choose>
+          <esi:when test="10 has_i 2">
+            <p>10 has_i 2</p>
+          </esi:when>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(
+        markup,
+        {},
+        {
+          send(body) {
+            expect(body).to.equal(
+              "<p>10 has 1</p>" +
+              "<p>'10' has 1</p>" +
+              "<p>10 has '1'</p>" +
+              "<p>10 has_i 1</p>" +
+              "<p>'10' has_i 1</p>" +
+              "<p>10 has_i '1'</p>"
+            );
+            done();
+          },
+        },
+        done
+      );
+    });
   });
 
   describe("matches and matches_i operator", () => {
