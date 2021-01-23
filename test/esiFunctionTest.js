@@ -2,6 +2,7 @@
 
 const ck = require("chronokinesis");
 const localEsi = require("..");
+const toCookieStr = require("./toCookieStr");
 
 describe("functions", () => {
   describe("$add_header", () => {
@@ -11,12 +12,12 @@ describe("functions", () => {
       markup += "</esi:vars>";
 
       const headers = [];
-      function set(name, value) {
-        headers.push({name, value});
+      function cookie(name, value, options) {
+        headers.push({name: "Set-Cookie", value: toCookieStr(name, value, options)});
       }
 
       localEsi(markup, { }, {
-        set,
+        cookie,
         send(body) {
           expect(body).to.equal("");
           expect(headers).to.have.length(1);
@@ -30,23 +31,23 @@ describe("functions", () => {
     it("should set multiple headers when instructed", (done) => {
       let markup = "<esi:vars>";
       markup += "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
-      markup += "$add_header('Set-Cookie', 'MyCookie2=SomeValue2; Path=/;Secure;SameSite=Lax')";
+      markup += "$add_header('Set-Cookie', 'MyCookie2=SomeValue2; Path=/; Secure; SameSite=Lax')";
       markup += "</esi:vars>";
 
       const headers = [];
-      function set(name, value) {
-        headers.push({name, value});
+      function cookie(name, value, options) {
+        headers.push({name: "Set-Cookie", value: toCookieStr(name, value, options)});
       }
 
       localEsi(markup, { }, {
-        set,
+        cookie,
         send(body) {
           expect(body).to.equal("");
           expect(headers).to.have.length(2);
           expect(headers[0]).to.have.property("name", "Set-Cookie");
           expect(headers[0]).to.have.property("value", "MyCookie1=SomeValue;");
           expect(headers[1]).to.have.property("name", "Set-Cookie");
-          expect(headers[1]).to.have.property("value", "MyCookie2=SomeValue2; Path=/;Secure;SameSite=Lax");
+          expect(headers[1]).to.have.property("value", "MyCookie2=SomeValue2; Path=/; Secure; SameSite=Lax");
           done();
         }
       }, done);
@@ -56,12 +57,12 @@ describe("functions", () => {
       const markup = "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
 
       const headers = [];
-      function set(name, value) {
-        headers.push({name, value});
+      function cookie(name, value, options) {
+        headers.push({name: "Set-Cookie", value: toCookieStr(name, value, options)});
       }
 
       localEsi(markup, { }, {
-        set,
+        cookie,
         send(body) {
           expect(body).to.equal(markup);
           expect(headers).to.have.length(0);
@@ -88,12 +89,12 @@ describe("functions", () => {
       `.replace(/^\s+|\n/gm, "");
 
       const headers = [];
-      function set(name, value) {
-        headers.push({name, value});
+      function cookie(name, value, options) {
+        headers.push({name: "Set-Cookie", value: toCookieStr(name, value, options)});
       }
 
       localEsi(markup, { }, {
-        set,
+        cookie,
         send(body) {
           expect(body).to.equal("");
           expect(headers).to.have.length(2);
