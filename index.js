@@ -22,7 +22,9 @@ function localEsi(html, req, res, next) {
   context.on("add_header", (name, value) => {
     if (name.toLowerCase() === "set-cookie") {
       const cookie = parseCookie(value);
-      res.cookie(cookie.name, cookie.value, cookie.attributes);
+      if (cookie) {
+        res.cookie(cookie.name, cookie.value, cookie.attributes);
+      }
     } else {
       res.set(name, value);
     }
@@ -86,7 +88,11 @@ function createParser(req) {
 
 function parseCookie(cookieStr) {
   const attrs = cookieStr.split(";");
+  if (!attrs || attrs.length === 0) return;
+
   const [name, value] = attrs[0].split("=");
+  if (!name || !value) return;
+
   const attributes = attrs.reduce((acc, attr, index) => {
     if (index > 0) {
       const [attrName, attrValue] = attr.split("=");
