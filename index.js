@@ -87,9 +87,7 @@ function createParser(req) {
 }
 
 function parseCookie(cookieStr) {
-  const attrs = cookieStr.split(";");
-  if (!attrs || attrs.length === 0) return;
-
+  const attrs = (cookieStr || "").split(";");
   const [name, value] = attrs[0].split("=");
   if (!name || !value) return;
 
