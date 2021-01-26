@@ -20,7 +20,14 @@ function localEsi(html, req, res, next) {
     res.status(statusCode).send(body === undefined ? "" : body);
   });
   context.on("add_header", (name, value) => {
-    res.set(name, value);
+    if (name.toLowerCase() === "set-cookie") {
+      const cookie = parseCookie(value);
+      if (cookie) {
+        res.cookie(cookie.name, cookie.value, cookie.attributes);
+      }
+    } else {
+      res.set(name, value);
+    }
   });
   context.once("set_redirect", (statusCode, location) => {
     completed = true;
@@ -77,4 +84,24 @@ function createParser(req) {
   const optimusPrime = createESIParser(listener);
   context.emitter = optimusPrime;
   return optimusPrime;
+}
+
+function parseCookie(cookieStr) {
+  const attrs = (cookieStr || "").split(";");
+  const [name, value] = attrs[0].split("=");
+  if (!name || !value) return;
+
+  const attributes = attrs.reduce((acc, attr, index) => {
+    if (index > 0) {
+      const [attrName, attrValue] = attr.split("=");
+      acc[attrName.trim()] = attrValue && attrValue.trim() || "";
+    }
+    return acc;
+  }, {});
+
+  return {
+    name,
+    value,
+    attributes
+  };
 }

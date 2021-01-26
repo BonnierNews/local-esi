@@ -2,6 +2,7 @@
 
 const localEsi = require("../index");
 const nock = require("nock");
+const toCookieStr = require("./toCookieStr");
 
 describe("local ESI", () => {
   describe("html", () => {
@@ -845,6 +846,10 @@ describe("local ESI", () => {
         headers.push({name, value});
       }
 
+      function cookie(name, value, options) {
+        headers.push({name: "Set-Cookie", value: toCookieStr(name, value, options)});
+      }
+
       localEsi(markup, {
         socket: {
           server: {
@@ -857,6 +862,7 @@ describe("local ESI", () => {
         }
       }, {
         set,
+        cookie,
         send(body) {
           expect(body).to.equal("$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')<p>efter</p>");
           expect(headers).to.have.length(2);
@@ -880,8 +886,8 @@ describe("local ESI", () => {
 
 
       const headers = [];
-      function set(name, value) {
-        headers.push({name, value});
+      function cookie(name, value, options) {
+        headers.push({name: "Set-Cookie", value: toCookieStr(name, value, options)});
       }
 
       localEsi(markup, {
@@ -895,7 +901,7 @@ describe("local ESI", () => {
           }
         }
       }, {
-        set,
+        cookie,
         send(body) {
           expect(body).to.equal("<p>efter</p>");
           expect(headers).to.have.length(1);
@@ -1249,8 +1255,8 @@ describe("local ESI", () => {
 
 
       const headers = [];
-      function set(name, value) {
-        headers.push({name, value});
+      function cookie(name, value, options) {
+        headers.push({name: "Set-Cookie", value: toCookieStr(name, value, options)});
       }
 
       localEsi(markup, {
@@ -1264,12 +1270,53 @@ describe("local ESI", () => {
           }
         }
       }, {
-        set,
+        cookie,
         send(body) {
           expect(body).to.equal("<p>efter</p>");
           expect(headers).to.have.length(1);
           expect(headers[0]).to.have.property("name", "Set-Cookie");
           expect(headers[0]).to.have.property("value", "my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT");
+          done();
+        }
+      }, done);
+    });
+
+    it("should add headers when instructed via query parameter", (done) => {
+      const markup =
+        "<esi:choose>\n" +
+        "  <esi:when test=\"$(QUERY_STRING{'add-headers'}) == 'true'\">" +
+        "    <esi:vars>" +
+        "      $add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')" +
+        "      $add_header('Set-Cookie', 'my_cookie2=val2; path=/; HttpOnly; Expires=Wed, 31 Aug 2019 00:00:00 GMT')" +
+        "    </esi:vars>" +
+        "  </esi:when>" +
+        "</esi:choose>";
+
+      const headers = [];
+      function cookie(name, value, options) {
+        headers.push({name: "Set-Cookie", value: toCookieStr(name, value, options)});
+      }
+
+      localEsi(markup, {
+        query: { "add-headers": true },
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        cookie,
+        send() {
+          expect(headers).to.have.length(2);
+          expect(headers[0]).to.have.property("name", "Set-Cookie");
+          expect(headers[0]).to.have.property("value", "my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT");
+          expect(headers[1]).to.have.property("name", "Set-Cookie");
+          expect(headers[1]).to.have.property("value", "my_cookie2=val2; path=/; HttpOnly; Expires=Wed, 31 Aug 2019 00:00:00 GMT");
+
           done();
         }
       }, done);
@@ -1283,8 +1330,8 @@ describe("local ESI", () => {
         .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars>");
 
       const headers = [];
-      function set(name, value) {
-        headers.push({name, value});
+      function cookie(name, value, options) {
+        headers.push({name: "Set-Cookie", value: toCookieStr(name, value, options)});
       }
 
       localEsi(markup, {
@@ -1298,7 +1345,7 @@ describe("local ESI", () => {
           }
         }
       }, {
-        set,
+        cookie,
         send(body) {
           expect(body).to.equal("<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars><p>efter</p>");
           expect(headers).to.have.length(0);
@@ -1308,7 +1355,6 @@ describe("local ESI", () => {
     });
 
     it("should handle path without trailing slash, even when in esi:try", (done) => {
-
       nock("http://localhost:1234")
         .get("/mystuff")
         .reply(200, "Alles gut");
