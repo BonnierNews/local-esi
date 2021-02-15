@@ -21,7 +21,7 @@
     "nock": "^11.7.2"
   },
   "dependencies": {
-    "atlas-html-stream": "git://github.com/BonnierNews/atlas-html-stream.git",
+    "atlas-html-stream": "https://github.com/BonnierNews/atlas-html-stream.git",
     "pump": "^3.0.0",
     "pumpify": "^2.0.1",
     "request": "^2.88.0"
