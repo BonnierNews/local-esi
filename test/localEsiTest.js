@@ -1688,6 +1688,25 @@ describe("local ESI", () => {
       }, done);
     });
 
+    it("can access values from a Dictionary variable (via single-quoted key)", (done) => {
+      // Note: ESI supports variable access using both with or without single-quotes, but local-esi requires the single-quotes
+      const markup = `
+        <esi:assign name="pizzaIngredients" value="{'cheese': 'true', 'avocado': 'false'}" />
+        <p><esi:vars>Does a pizza have avocado: $(pizzaIngredients{'avocado'})</esi:vars></p>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <p>Does a pizza have avocado: false</p>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
     it("preserves state between iterations", (done) => {
       const markup = `
         <ul>
