@@ -1752,6 +1752,34 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("can handle named item variables in foreach", (done) => {
+      const markup = `
+        <ul>
+          <esi:foreach item="myItemVariable" collection="[1,2,3]">
+            <esi:vars>
+              <li>$(myItemVariable)</li>
+            </esi:vars>
+          </esi:foreach>
+        </ul>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <ul>
+            <li>1</li>
+            <li>2</li>
+            <li>3</li>
+        </ul>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, {}, {
+        send(body) {
+          expect(body).to.equal(expectedMarkup);
+          done();
+        }
+      }, done);
+    });
+
   });
 
   describe("illegal characters", () => {
