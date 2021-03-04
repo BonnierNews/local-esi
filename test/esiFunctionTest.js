@@ -756,15 +756,15 @@ describe("functions", () => {
   describe("supports $string_split", () => {
     it("can split a string by a single character as a separator", (done) => {
       const markup = `
-      <esi:assign name="commaSeparatedString" value="one,two,three"/>
-      <esi:foreach collection="$string_split($(commaSeparatedString), ',')">
-        <p>hello!</p>
+      <esi:assign name="someString" value="one,two,three"/>
+      <esi:foreach collection="$string_split($(someString), ',')">
+        <p>$(item)</p>
       </esi:foreach>
       `.replace(/^\s+|\n/gm, "");
 
       localEsi(markup, { }, {
         send(body) {
-          expect(body).to.equal(`<p>hello!</p><p>hello!</p><p>hello!</p>`);
+          expect(body).to.equal(`<p>one</p><p>two</p><p>three</p>`);
           done();
         }
       }, done);
@@ -772,15 +772,15 @@ describe("functions", () => {
 
     it("can split a string by multiple characters as a separator", (done) => {
       const markup = `
-      <esi:assign name="commaSeparatedString" value="one...two...three"/>
-      <esi:foreach collection="$string_split($(commaSeparatedString), '...')">
-        <p>hello!</p>
+      <esi:assign name="somesString" value="one...two...three"/>
+      <esi:foreach collection="$string_split($(somesString), '...')">
+        <p>$(item)</p>
       </esi:foreach>
       `.replace(/^\s+|\n/gm, "");
 
       localEsi(markup, { }, {
         send(body) {
-          expect(body).to.equal(`<p>hello!</p><p>hello!</p><p>hello!</p>`);
+          expect(body).to.equal(`<p>one</p><p>two</p><p>three</p>`);
           done();
         }
       }, done);
