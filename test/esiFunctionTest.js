@@ -752,4 +752,38 @@ describe("functions", () => {
       }, done);
     });
   });
+
+  describe("supports $string_split", () => {
+    it("can split a string by a single character as a separator", (done) => {
+      const markup = `
+      <esi:assign name="commaSeparatedString" value="one,two,three"/>
+      <esi:foreach collection="$string_split($(commaSeparatedString), ',')">
+        <p>hello!</p>
+      </esi:foreach>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal(`<p>hello!</p><p>hello!</p><p>hello!</p>`);
+          done();
+        }
+      }, done);
+    });
+
+    it("can split a string by multiple characters as a separator", (done) => {
+      const markup = `
+      <esi:assign name="commaSeparatedString" value="one...two...three"/>
+      <esi:foreach collection="$string_split($(commaSeparatedString), '...')">
+        <p>hello!</p>
+      </esi:foreach>
+      `.replace(/^\s+|\n/gm, "");
+
+      localEsi(markup, { }, {
+        send(body) {
+          expect(body).to.equal(`<p>hello!</p><p>hello!</p><p>hello!</p>`);
+          done();
+        }
+      }, done);
+    });
+  });
 });
