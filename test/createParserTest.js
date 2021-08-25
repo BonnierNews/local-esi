@@ -1,7 +1,7 @@
 "use strict";
 
 const fs = require("fs");
-const HtmlParser = require("atlas-html-stream");
+const HtmlParser = require("@bonniernews/atlas-html-stream");
 const localEsi = require("..");
 const path = require("path");
 

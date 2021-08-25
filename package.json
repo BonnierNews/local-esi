@@ -1,6 +1,6 @@
 {
   "name": "@bonniernews/local-esi",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "Local Edge Side Includes parser",
   "main": "index.js",
   "scripts": {
@@ -21,7 +21,7 @@
     "nock": "^11.7.2"
   },
   "dependencies": {
-    "atlas-html-stream": "https://github.com/BonnierNews/atlas-html-stream.git",
+    "@bonniernews/atlas-html-stream": "^1.2.2",
     "pump": "^3.0.0",
     "pumpify": "^2.0.1",
     "request": "^2.88.0"
