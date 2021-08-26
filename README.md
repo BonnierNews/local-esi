@@ -73,7 +73,7 @@ Requires [markup stream](#markup-object-stream) to read from. Writes object stre
 ```javascript
 "use strict";
 
-const HtmlParser = require("atlas-html-stream");
+const HtmlParser = require("@bonniernews/atlas-html-stream");
 const {createParser: createESIParser, htmlWriter} = require("@bonniernews/local-esi");
 
 module.exports = function channelRendering(req, res, next) {

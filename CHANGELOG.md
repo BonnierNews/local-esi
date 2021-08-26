@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.7] - 2021-08-25
+### Changed
+- Use bonniernews scoped packaged fork of atlas-html-stream dependency
+
 ## [1.2.6] - 2021-02-16
 ### Changed
 - Change protocol of atlas-html-stream dependency
