@@ -1,6 +1,6 @@
 {
   "name": "@bonniernews/local-esi",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "description": "Local Edge Side Includes parser",
   "main": "index.js",
   "scripts": {
@@ -22,9 +22,9 @@
   },
   "dependencies": {
     "@bonniernews/atlas-html-stream": "^1.2.2",
+    "got": "^11.8.2",
     "pump": "^3.0.0",
-    "pumpify": "^2.0.1",
-    "request": "^2.88.0"
+    "pumpify": "^2.0.1"
   },
   "engines": {
     "node": ">=9.11.2"

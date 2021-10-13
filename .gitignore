@@ -26,3 +26,5 @@ npm-debug.log
 
 # Vim swap files
 .*.sw[a-z]
+
+package-lock.json
