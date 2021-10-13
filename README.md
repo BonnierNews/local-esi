@@ -1,7 +1,7 @@
 Local-ESI
 =========
 
-[![Build Status](https://travis-ci.org/BonnierNews/local-esi.svg?branch=master)](https://travis-ci.org/BonnierNews/local-esi)[![dependencies Status](https://david-dm.org/BonnierNews/local-esi/status.svg)](https://david-dm.org/BonnierNews/local-esi)
+[![Built latest](https://github.com/BonnierNews/local-esi/actions/workflows/build-latest.yaml/badge.svg)](https://github.com/BonnierNews/local-esi/actions/workflows/build-latest.yaml)
 
 Make your Express app work like it had Akamai Edge Side Includes parsing or just stream your ESI decorated markup to the parser.
 
