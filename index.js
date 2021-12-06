@@ -34,7 +34,7 @@ function localEsi(html, req, res, next) {
     res.redirect(location);
   });
 
-  const listener = ESIEvaluator(context);
+  const listener = new ESIEvaluator(context);
   return transform(html, listener, (err, parsed) => {
     if (err) return next(err);
     if (!completed) res.send(parsed);
@@ -43,7 +43,7 @@ function localEsi(html, req, res, next) {
 
 function streaming(req) {
   const context = ListenerContext(req);
-  const listener = ESIEvaluator(context);
+  const listener = new ESIEvaluator(context);
   const pipeline = asStream(listener);
   context.emitter = pipeline;
 
@@ -80,7 +80,7 @@ function streaming(req) {
 
 function createParser(req) {
   const context = ListenerContext(req);
-  const listener = ESIEvaluator(context);
+  const listener = new ESIEvaluator(context);
   const optimusPrime = createESIParser(listener);
   context.emitter = optimusPrime;
   return optimusPrime;
