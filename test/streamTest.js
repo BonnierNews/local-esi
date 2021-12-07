@@ -1,11 +1,11 @@
 "use strict";
 
+const {convert} = require("../lib/transformHtml");
+const {pipeline} = require("stream");
 const fs = require("fs");
 const localEsi = require("..");
 const path = require("path");
-const pump = require("pump");
 const pumpify = require("pumpify");
-const {convert} = require("../lib/transformHtml");
 
 describe("stream", () => {
   it("can be piped", (done) => {
@@ -72,7 +72,7 @@ describe("stream", () => {
         send = {statusCode, body};
       });
 
-      pump(stream, transform, (err) => {
+      pipeline(stream, transform, (err) => {
         if (err) return done(err);
         expect(send.statusCode).to.equal(responseCode);
         expect(send.body).to.undefined;
