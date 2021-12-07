@@ -2580,7 +2580,7 @@ describe("expression parser", () => {
 
       expect(() => {
         split(input);
-      }).to.throw(SyntaxError, "Unexpected Literal in CallExpression at 2:11");
+      }).to.throw(SyntaxError, "Unexpected Literal in CallExpression at \"$int(1 2),\" 2:11");
     });
   });
 });
