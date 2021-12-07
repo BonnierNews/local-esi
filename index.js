@@ -12,14 +12,14 @@ module.exports.createParser = createParser;
 module.exports.htmlWriter = require("./lib/htmlWriter");
 
 function localEsi(html, req, res, next) {
-  const context = ListenerContext(req);
+  const context = new ListenerContext(req);
   let completed = false;
 
-  context.on("set_response_code", (statusCode, body) => {
+  context.emitter.on("set_response_code", (statusCode, body) => {
     completed = true;
     res.status(statusCode).send(body === undefined ? "" : body);
   });
-  context.on("add_header", (name, value) => {
+  context.emitter.on("add_header", (name, value) => {
     if (name.toLowerCase() === "set-cookie") {
       const cookie = parseCookie(value);
       if (cookie) {
@@ -29,7 +29,7 @@ function localEsi(html, req, res, next) {
       res.set(name, value);
     }
   });
-  context.once("set_redirect", (statusCode, location) => {
+  context.emitter.once("set_redirect", (statusCode, location) => {
     completed = true;
     res.redirect(location);
   });
@@ -42,7 +42,7 @@ function localEsi(html, req, res, next) {
 }
 
 function streaming(req) {
-  const context = ListenerContext(req);
+  const context = new ListenerContext(req);
   const listener = new ESIEvaluator(context);
   const pipeline = asStream(listener);
   context.emitter = pipeline;
@@ -79,10 +79,11 @@ function streaming(req) {
 }
 
 function createParser(req) {
-  const context = ListenerContext(req);
+  const context = new ListenerContext(req);
   const listener = new ESIEvaluator(context);
   const optimusPrime = createESIParser(listener);
   context.emitter = optimusPrime;
+
   return optimusPrime;
 }
 
