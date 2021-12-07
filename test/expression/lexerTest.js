@@ -5,7 +5,7 @@ const {Lexer} = require("../../lib/expression/lexer");
 describe("lexer", () => {
   describe("CallExpression", () => {
     it("has start and end parantheses", () => {
-      const lexer = Lexer("$time()");
+      const lexer = new Lexer("$time()");
       expect(lexer.get()).to.deep.include({
         type: "CallExpression",
         cargo: "time",
@@ -17,7 +17,7 @@ describe("lexer", () => {
     });
 
     it("has source map", () => {
-      const lexer = Lexer("$http_time($time() + 60)");
+      const lexer = new Lexer("$http_time($time() + 60)");
       expect(lexer.get()).to.deep.include({
         type: "CallExpression",
         cargo: "http_time",
@@ -111,14 +111,14 @@ describe("lexer", () => {
     });
 
     it("throws SyntaxError if not followed by start parantheses", () => {
-      const lexer = Lexer("$time");
+      const lexer = new Lexer("$time");
       expect(() => {
         lexer.get();
       }).to.throw(SyntaxError, "Unexpected end of line");
     });
 
     it("throws SyntaxError if unexpected other char after identifier", () => {
-      const lexer = Lexer("$time)");
+      const lexer = new Lexer("$time)");
       expect(() => {
         lexer.get();
       }).to.throw(SyntaxError, "Unexpected char ) at 0:5");
@@ -127,7 +127,7 @@ describe("lexer", () => {
 
   describe("Identifier", () => {
     it("consumes both start and end parantheses", () => {
-      const lexer = Lexer("$(myVar)");
+      const lexer = new Lexer("$(myVar)");
       expect(lexer.get()).to.deep.include({
         type: "Identifier",
         cargo: "myVar",
@@ -149,14 +149,14 @@ describe("lexer", () => {
     });
 
     it("throws SyntaxError if not followed by start parantheses", () => {
-      const lexer = Lexer("$(myVar");
+      const lexer = new Lexer("$(myVar");
       expect(() => {
         lexer.get();
       }).to.throw(SyntaxError, "Unexpected end of line");
     });
 
     it("throws SyntaxError if unexpected other char after identifier", () => {
-      const lexer = Lexer("$(myVar(");
+      const lexer = new Lexer("$(myVar(");
       expect(() => {
         lexer.get();
       }).to.throw(SyntaxError, "Unexpected char ( at 0:7");
@@ -165,7 +165,7 @@ describe("lexer", () => {
 
   describe("ObjectExpression", () => {
     it("consumes both start and end curly brace", () => {
-      const lexer = Lexer("{'myProp': 1}");
+      const lexer = new Lexer("{'myProp': 1}");
       expect(lexer.get()).to.deep.include({
         type: "ObjectExpression",
         cargo: "{",
