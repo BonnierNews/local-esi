@@ -275,7 +275,7 @@ describe("expression parser", () => {
     it("throws on unexpected keyword", () => {
       expect(() => {
         parse("stick");
-      }).to.throw(SyntaxError, "Unknown keyword stick at 0:0");
+      }).to.throw(SyntaxError, "Unknown keyword \"stick\" at \"stick\" 0:0");
     });
   });
 
@@ -1241,13 +1241,13 @@ describe("expression parser", () => {
     it("throws unexpected token if unclosed binary", () => {
       expect(() => {
         parse("$(someVar)==");
-      }).to.throw(SyntaxError, "Unexpected token == at 0:10");
+      }).to.throw(SyntaxError, "Unexpected token \"==\" at \"$(someVar)==\" 0:10");
     });
 
     it("throws unexpected token if starting with operator", () => {
       expect(() => {
         parse("   == $(someVar)");
-      }).to.throw(SyntaxError, "Unexpected token == at 0:0");
+      }).to.throw(SyntaxError, "Unexpected token \"==\" at \"== $(someVar)\" 0:0");
     });
   });
 
@@ -1844,13 +1844,13 @@ describe("expression parser", () => {
     it("throws unexpected token if unclosed logical", () => {
       expect(() => {
         parse("$(someVar) |   ");
-      }).to.throw(SyntaxError, "Unexpected token | at 0:11");
+      }).to.throw(SyntaxError, "Unexpected token \"|\" at \"$(someVar) |\" 0:11");
     });
 
     it("throws unexpected token if starting with operator", () => {
       expect(() => {
         parse("| $(someVar)");
-      }).to.throw(SyntaxError, "Unexpected token | at 0:0");
+      }).to.throw(SyntaxError, "Unexpected token \"|\" at \"| $(someVar)\" 0:0");
     });
   });
 
@@ -1930,7 +1930,7 @@ describe("expression parser", () => {
     it("throws unexpected token if just exclamation mark", () => {
       expect(() => {
         parse("!");
-      }).to.throw(SyntaxError, "Unexpected token ! at 0:0");
+      }).to.throw(SyntaxError, "Unexpected token \"!\" at \"!\" 0:1");
     });
   });
 

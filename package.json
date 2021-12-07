@@ -1,6 +1,6 @@
 {
   "name": "@bonniernews/local-esi",
-  "version": "1.2.9",
+  "version": "2.0.0",
   "description": "Local Edge Side Includes parser",
   "main": "index.js",
   "scripts": {
@@ -26,7 +26,7 @@
     "pumpify": "^2.0.1"
   },
   "engines": {
-    "node": ">=9.11.2"
+    "node": ">=12"
   },
   "repository": {
     "type": "git",

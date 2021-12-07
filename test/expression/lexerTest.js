@@ -114,14 +114,14 @@ describe("lexer", () => {
       const lexer = new Lexer("$time");
       expect(() => {
         lexer.get();
-      }).to.throw(SyntaxError, "Unexpected end of line");
+      }).to.throw(SyntaxError, "Unexpected end of line at \"$time\" 0:5");
     });
 
     it("throws SyntaxError if unexpected other char after identifier", () => {
       const lexer = new Lexer("$time)");
       expect(() => {
         lexer.get();
-      }).to.throw(SyntaxError, "Unexpected char ) at 0:5");
+      }).to.throw(SyntaxError, "Unexpected char ) at \"$time)\" 0:5");
     });
   });
 
@@ -152,14 +152,14 @@ describe("lexer", () => {
       const lexer = new Lexer("$(myVar");
       expect(() => {
         lexer.get();
-      }).to.throw(SyntaxError, "Unexpected end of line");
+      }).to.throw(SyntaxError, "Unexpected end of line at \"$(myVar\" 0:7");
     });
 
     it("throws SyntaxError if unexpected other char after identifier", () => {
       const lexer = new Lexer("$(myVar(");
       expect(() => {
         lexer.get();
-      }).to.throw(SyntaxError, "Unexpected char ( at 0:7");
+      }).to.throw(SyntaxError, "Unexpected char ( at \"$(myVar(\" 0:7");
     });
   });
 
