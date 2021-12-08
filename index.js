@@ -1,14 +1,40 @@
 "use strict";
 
+const {Transform} = require("stream");
 const ESIEvaluator = require("./lib/ESIEvaluator");
 const ListenerContext = require("./lib/ListenerContext");
-const {asStream, transform, createESIParser} = require("./lib/transformHtml");
+const {asStream, transform} = require("./lib/transformHtml");
 
 const redirectCodes = [301, 302, 303, 307, 308];
 
+class ESI extends Transform {
+  constructor(req, options) {
+    options = {...options, objectMode: true};
+    super(options);
+    const context = new ListenerContext(req);
+    const evaluator = new ESIEvaluator(context);
+    context.emitter = this;
+    this.evaluator = evaluator;
+  }
+
+  _transform(obj, encoding, next) {
+    this.filter(obj, next);
+  }
+
+  filter({name, data, text}, next) {
+    if (text) {
+      return this.evaluator.ontext(text, next);
+    } else if (name && data) {
+      return this.evaluator.onopentag(name, data, next);
+    } else {
+      return this.evaluator.onclosetag(name, next);
+    }
+  }
+}
+
 module.exports = localEsi;
+module.exports.ESI = ESI;
 module.exports.createStream = streaming;
-module.exports.createParser = createParser;
 module.exports.htmlWriter = require("./lib/htmlWriter");
 
 function localEsi(html, req, res, next) {
@@ -76,15 +102,6 @@ function streaming(req) {
       .removeListener("set_redirect", close)
       .destroy();
   }
-}
-
-function createParser(req) {
-  const context = new ListenerContext(req);
-  const listener = new ESIEvaluator(context);
-  const optimusPrime = createESIParser(listener);
-  context.emitter = optimusPrime;
-
-  return optimusPrime;
 }
 
 function parseCookie(cookieStr) {

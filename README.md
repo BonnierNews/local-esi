@@ -7,11 +7,6 @@ Make your Express app work like it had Akamai Edge Side Includes parsing or just
 
 # API
 
-- [`localEsi(html, req, res, next)`](#localesihtml-req-res-next)
-- [`localEsi.createStream(req)`](#localesicreatestreamreq)
-- [`localEsi.createParser(req)`](#localesicreateparserreq)
-- [`localEsi.htmlWriter()`](#localesihtmlwriter)
-
 ## `localEsi(html, req, res, next)`
 
 Use as an expressjs request callback function.
@@ -61,9 +56,9 @@ module.exports = (req, res, next) => {
 };
 ```
 
-## `localEsi.createParser(req)`
+## `new ESI(req)`
 
-Create ESI parse transform stream. Emits [events](#esi-parsing-events).
+Create an ESI transform stream. Emits [events](#esi-parsing-events).
 
 Arguments:
 - `req`: request with headers and cookies
@@ -74,10 +69,10 @@ Requires [markup stream](#markup-object-stream) to read from. Writes object stre
 "use strict";
 
 const HtmlParser = require("@bonniernews/atlas-html-stream");
-const {createParser: createESIParser, htmlWriter} = require("@bonniernews/local-esi");
+const {ESI, htmlWriter} = require("@bonniernews/local-esi");
 
 module.exports = function channelRendering(req, res, next) {
-  const esiParser = createESIParser(req)
+  const esi = new ESI(req)
     .once("set_redirect", (statusCode, location) => {
       res.status(statusCode).redirect(location);
     })
@@ -91,7 +86,7 @@ module.exports = function channelRendering(req, res, next) {
 
   return res.render("index")
     .pipe(new HtmlParser({preserveWS: true}))
-    .pipe(esiParser)
+    .pipe(esi)
     .pipe(htmlWriter())
     .pipe(res)
     .once("error", (err) => {

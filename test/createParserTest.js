@@ -1,16 +1,16 @@
 "use strict";
 
+const {ESI} = require("..");
 const fs = require("fs");
 const HtmlParser = require("@bonniernews/atlas-html-stream");
-const localEsi = require("..");
 const path = require("path");
 
-describe("createParser(req)", () => {
+describe("parse ESI", () => {
   it("takes piped object stream", (done) => {
     const stream = fs.createReadStream(path.join(__dirname, "/esi.html"));
     const chunks = [];
 
-    stream.pipe(new HtmlParser({preserveWS: true})).pipe(localEsi.createParser({}))
+    stream.pipe(new HtmlParser({preserveWS: true})).pipe(new ESI({}))
       .on("data", (chunk) => {
         chunks.push(chunk);
       })
@@ -23,7 +23,7 @@ describe("createParser(req)", () => {
   it("emits redirect instruction", (done) => {
     const stream = fs.createReadStream(path.join(__dirname, "/redirect.html"));
 
-    const transform = localEsi.createParser({});
+    const transform = new ESI({});
     let redirect;
     transform.on("set_redirect", (statusCode, location) => {
       redirect = {statusCode, location};

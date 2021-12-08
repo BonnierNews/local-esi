@@ -10,6 +10,9 @@ Use classes to reduce ticks
 
 - More descriptive expression error messages
 
+### Breaking
+- eslint requires nodejs v12 or later so supported engine is upped
+
 ## [1.2.7] - 2021-08-25
 ### Changed
 - Use bonniernews scoped packaged fork of atlas-html-stream dependency
