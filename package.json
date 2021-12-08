@@ -26,7 +26,7 @@
     "pumpify": "^2.0.1"
   },
   "engines": {
-    "node": ">=12"
+    "node": ">=14"
   },
   "repository": {
     "type": "git",

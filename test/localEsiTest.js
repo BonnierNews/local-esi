@@ -970,6 +970,34 @@ describe("local ESI", () => {
         }
       }, done);
     });
+
+    it("should handle connection errors when used within esi:attempt", (done) => {
+      let markup = "<esi:try>";
+      markup += "<esi:attempt>";
+      markup += "<esi:eval src=\"/mystuff/\" dca=\"esi\"/>";
+      markup += "</esi:attempt>";
+      markup += "<esi:except>";
+      markup += "<p>Hej kom och hjälp mig!</p>";
+      markup += "</esi:except>";
+      markup += "</esi:try>";
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>Hej kom och hjälp mig!</p>");
+          done();
+        }
+      }, done);
+    });
   });
 
   describe("esi:include", () => {
@@ -1130,6 +1158,34 @@ describe("local ESI", () => {
       nock("http://localhost:1234")
         .get("/mystuff/")
         .reply(500, "<p>Error</p>");
+
+      localEsi(markup, {
+        socket: {
+          server: {
+            address() {
+              return {
+                port: 1234
+              };
+            }
+          }
+        }
+      }, {
+        send(body) {
+          expect(body).to.equal("<p>Hej kom och hjälp mig!</p>");
+          done();
+        }
+      }, done);
+    });
+
+    it("should handle connection errors when esi:including using esi:try", (done) => {
+      let markup = "<esi:try>";
+      markup += "<esi:attempt>";
+      markup += "<esi:include src=\"/mystuff/\" dca=\"esi\"/>";
+      markup += "</esi:attempt>";
+      markup += "<esi:except>";
+      markup += "<p>Hej kom och hjälp mig!</p>";
+      markup += "</esi:except>";
+      markup += "</esi:try>";
 
       localEsi(markup, {
         socket: {
@@ -1731,7 +1787,9 @@ describe("local ESI", () => {
             <li>$(item)</li>
             <esi:choose>
               <esi:when test="$(item) == 1">
+                <li>bork</li>
                 <esi:break />
+                <li>borken</li>
               </esi:when>
             </esi:choose>
           </esi:foreach>
@@ -1742,6 +1800,7 @@ describe("local ESI", () => {
         <ul>
             <li>0</li>
             <li>1</li>
+            <li>bork</li>
         </ul>
       `.replace(/^\s+|\n/gm, "");
 

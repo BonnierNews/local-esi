@@ -66,7 +66,6 @@
     "no-use-before-define": [2, "nofunc"],
     "no-var": 2,
     "no-with": 2,
-    "prefer-arrow-callback": 2,
     "prefer-const": ["error", {"destructuring": "all"}],
     "prefer-template": 1,
     "quotes": [1, "double"],
