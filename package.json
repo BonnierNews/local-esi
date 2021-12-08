@@ -21,7 +21,7 @@
     "nock": "^13.2.1"
   },
   "dependencies": {
-    "@bonniernews/atlas-html-stream": "^1.2.2",
+    "@bonniernews/atlas-html-stream": "^2.0.0",
     "got": "^11.8.3",
     "pumpify": "^2.0.1"
   },
