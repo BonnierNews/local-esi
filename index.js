@@ -1,74 +1,67 @@
 "use strict";
 
-const {Readable, pipeline} = require("stream");
-const HtmlParser = require("@bonniernews/atlas-html-stream");
-const HTMLWriter = require("./lib/HTMLWriter");
+const {pipeline, Readable} = require("stream");
 const ESI = require("./lib/ESI");
+const HTMLStream = require("@bonniernews/atlas-html-stream");
+const HTMLWriter = require("./lib/HTMLWriter");
 
-module.exports = localEsi;
-module.exports.ESI = ESI;
-module.exports.HTMLWriter = HTMLWriter;
+module.exports = {
+  ESI,
+  HTMLWriter,
+  parse,
+};
 
-function localEsi(html, req, res, next) {
-  let completed = false;
+function parse(html, options) {
+  const response = {};
 
-  const esi = new ESI(req);
-  esi.context.emitter.on("set_response_code", onSetResponseCode);
-  esi.context.emitter.on("add_header", onAddHeader);
-  esi.context.emitter.once("set_redirect", onRedirect);
+  let body = "";
 
-  let data = "";
-  pipeline([
-    Readable.from(html),
-    new HtmlParser({ preserveWS: true }),
-    esi,
-    new HTMLWriter(),
-  ], (err) => {
-    if (err && !["ERR_STREAM_DESTROYED", "ERR_STREAM_PREMATURE_CLOSE"].includes(err.code)) return next(err);
-    if (!completed) res.send(data);
-  }).on("data", (chunk) => {
-    data += chunk;
+  const esi = new ESI(options)
+    .on("set_response_code", onSetResponseCode)
+    .on("add_header", onAddHeader)
+    .once("set_redirect", onRedirect);
+
+  return new Promise((resolve, reject) => {
+    pipeline([
+      Readable.from(html),
+      new HTMLStream({ preserveWS: true }),
+      esi,
+      new HTMLWriter(),
+    ], (err) => {
+      if (err && !["ERR_STREAM_DESTROYED", "ERR_STREAM_PREMATURE_CLOSE"].includes(err.code)) return reject(err);
+      resolve({
+        body,
+        ...response,
+      });
+    }).on("data", (chunk) => {
+      body += chunk;
+    });
   });
 
   function onRedirect(statusCode, location) {
-    completed = true;
-    res.redirect(location);
+    response.statusCode = statusCode;
+    if (location) {
+      response.headers = response.headers || {};
+      response.headers.location = location;
+    }
     this.destroy();
   }
 
   function onAddHeader(name, value) {
-    if (name.toLowerCase() === "set-cookie") {
-      const cookie = parseCookie(value);
-      if (cookie) {
-        res.cookie(cookie.name, cookie.value, cookie.attributes);
-      }
+    const headers = response.headers = response.headers || {};
+    const lname = name.toLowerCase();
+    if (lname === "set-cookie") {
+      headers[lname] = headers[lname] || [];
+      headers[lname].push(value);
     } else {
-      res.set(name, value);
+      headers[lname] = value;
     }
   }
 
-  function onSetResponseCode(statusCode, body) {
-    completed = true;
-    res.status(statusCode).send(body === undefined ? "" : body);
+  function onSetResponseCode(statusCode, withBody) {
+    response.statusCode = statusCode;
+    if (!withBody) return;
+    response.body = withBody;
+    this.destroy();
   }
-}
-
-function parseCookie(cookieStr) {
-  const attrs = (cookieStr || "").split(";");
-  const [name, value] = attrs[0].split("=");
-  if (!name || !value) return;
-
-  const attributes = attrs.reduce((acc, attr, index) => {
-    if (index > 0) {
-      const [attrName, attrValue] = attr.split("=");
-      acc[attrName.trim()] = attrValue && attrValue.trim() || "";
-    }
-    return acc;
-  }, {});
-
-  return {
-    name,
-    value,
-    attributes
-  };
 }

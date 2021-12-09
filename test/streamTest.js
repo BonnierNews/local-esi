@@ -1,17 +1,17 @@
 "use strict";
 
+const {ESI} = require("../");
 const {pipeline, Readable} = require("stream");
-const ESI = require("../lib/ESI");
 const fs = require("fs");
-const HtmlParser = require("@bonniernews/atlas-html-stream");
+const HTMLParser = require("@bonniernews/atlas-html-stream");
 const path = require("path");
 
 describe("stream", () => {
   it("takes piped object stream", (done) => {
-    const stream = fs.createReadStream(path.join(__dirname, "/esi.html"));
+    const stream = fs.createReadStream(path.join(__dirname, "/resources/esi.html"));
     const chunks = [];
 
-    stream.pipe(new HtmlParser({preserveWS: true})).pipe(new ESI({}))
+    stream.pipe(new HTMLParser({preserveWS: true})).pipe(new ESI({}))
       .on("data", (chunk) => {
         chunks.push(chunk);
       })
@@ -22,12 +22,12 @@ describe("stream", () => {
   });
 
   it("can be piped", (done) => {
-    const stream = fs.createReadStream(path.join(__dirname, "/esi.html"));
+    const stream = fs.createReadStream(path.join(__dirname, "/resources/esi.html"));
     const chunks = [];
 
     pipeline([
       stream,
-      new HtmlParser({preserveWS: true}),
+      new HTMLParser({preserveWS: true}),
       new ESI({}),
     ], (err) => {
       if (err) return done(err);
@@ -54,7 +54,7 @@ describe("stream", () => {
     let redirect;
     pipeline([
       Readable.from(markup),
-      new HtmlParser({preserveWS: true}),
+      new HTMLParser({preserveWS: true}),
       new ESI({}),
     ], (err) => {
       if (err) return done(err);
@@ -69,7 +69,7 @@ describe("stream", () => {
   });
 
   it("set redirect instruction emits redirect 302 with location", (done) => {
-    const stream = fs.createReadStream(path.join(__dirname, "/redirect.html"));
+    const stream = fs.createReadStream(path.join(__dirname, "/resources/redirect.html"));
 
     const transform = new ESI({});
     let redirect;
@@ -78,7 +78,7 @@ describe("stream", () => {
       process.nextTick(() => transform.destroy());
     });
 
-    stream.pipe(new HtmlParser({preserveWS: true})).pipe(transform).on("close", () => {
+    stream.pipe(new HTMLParser({preserveWS: true})).pipe(transform).on("close", () => {
       expect(redirect.statusCode).to.equal(302);
       expect(redirect.location).to.equal("https://blahonga.com");
       done();
@@ -103,7 +103,7 @@ describe("stream", () => {
     let send;
     pipeline([
       Readable.from(markup),
-      new HtmlParser({preserveWS: true}),
+      new HTMLParser({preserveWS: true}),
       new ESI({}),
     ], (err) => {
       if (err) return done(err);
@@ -133,7 +133,7 @@ describe("stream", () => {
     let send;
     pipeline([
       Readable.from(markup),
-      new HtmlParser({preserveWS: true}),
+      new HTMLParser({preserveWS: true}),
       new ESI({}),
     ], () => {
       expect(send.statusCode).to.equal(200);
@@ -163,7 +163,7 @@ describe("stream", () => {
     let send;
     pipeline([
       Readable.from(markup),
-      new HtmlParser({preserveWS: true}),
+      new HTMLParser({preserveWS: true}),
       new ESI({}),
     ], () => {
       expect(send.statusCode).to.equal(302);
@@ -196,7 +196,7 @@ describe("stream", () => {
     let send;
     pipeline([
       Readable.from(markup),
-      new HtmlParser({preserveWS: true}),
+      new HTMLParser({preserveWS: true}),
       new ESI({}),
     ], () => {
       expect(send.statusCode).to.equal(302);
@@ -228,7 +228,7 @@ describe("stream", () => {
     const chunks = [];
     pipeline([
       Readable.from(markup),
-      new HtmlParser({preserveWS: true}),
+      new HTMLParser({preserveWS: true}),
       new ESI({}),
     ], (err) => {
       expect(err).to.be.ok.and.match(/is not implemented/i);

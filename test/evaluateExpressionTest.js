@@ -1,5 +1,7 @@
 "use strict";
+
 const {test} = require("../lib/evaluateExpression");
+
 describe("evaluate expression", () => {
   describe("test expression", () => {
     it("casts equals right to left type", () => {
