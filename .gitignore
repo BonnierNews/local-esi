@@ -28,3 +28,7 @@ npm-debug.log
 .*.sw[a-z]
 
 package-lock.json
+
+tmp/
+
+*.log

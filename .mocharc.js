@@ -13,7 +13,7 @@ global.expect = chai.expect;
 nock.enableNetConnect(/(localhost|127\.0\.0\.1):\d+/);
 
 module.exports = {
-  timeout: 2000,
+  timeout: 1000,
   reporter: "spec",
   recursive: true,
 }

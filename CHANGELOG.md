@@ -1,10 +1,26 @@
-# Changelog
+Changelog
+=========
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [2.0.0] - 2021-12-09
+
+Change the public api and refactor to classes
+
+### Changed
+- Public API
+- Minimum node version is now 14 since URL behaves' in earlier versions
+
+### Removed
+- Previous default export function is gone, replaced by `parse`
+
+### Fixed
+- More descriptive expression error messages
 
 ## [1.2.7] - 2021-08-25
 ### Changed

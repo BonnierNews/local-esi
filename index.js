@@ -1,107 +1,67 @@
 "use strict";
 
-const ESIEvaluator = require("./lib/ESIEvaluator");
-const ListenerContext = require("./lib/ListenerContext");
-const {asStream, transform, createESIParser} = require("./lib/transformHtml");
+const {pipeline, Readable} = require("stream");
+const ESI = require("./lib/ESI");
+const HTMLStream = require("@bonniernews/atlas-html-stream");
+const HTMLWriter = require("./lib/HTMLWriter");
 
-const redirectCodes = [301, 302, 303, 307, 308];
+module.exports = {
+  ESI,
+  HTMLWriter,
+  parse,
+};
 
-module.exports = localEsi;
-module.exports.createStream = streaming;
-module.exports.createParser = createParser;
-module.exports.htmlWriter = require("./lib/htmlWriter");
+function parse(html, options) {
+  const response = {};
 
-function localEsi(html, req, res, next) {
-  const context = ListenerContext(req);
-  let completed = false;
+  let body = "";
 
-  context.on("set_response_code", (statusCode, body) => {
-    completed = true;
-    res.status(statusCode).send(body === undefined ? "" : body);
-  });
-  context.on("add_header", (name, value) => {
-    if (name.toLowerCase() === "set-cookie") {
-      const cookie = parseCookie(value);
-      if (cookie) {
-        res.cookie(cookie.name, cookie.value, cookie.attributes);
-      }
-    } else {
-      res.set(name, value);
-    }
-  });
-  context.once("set_redirect", (statusCode, location) => {
-    completed = true;
-    res.redirect(location);
-  });
-
-  const listener = ESIEvaluator(context);
-  return transform(html, listener, (err, parsed) => {
-    if (err) return next(err);
-    if (!completed) res.send(parsed);
-  });
-}
-
-function streaming(req) {
-  const context = ListenerContext(req);
-  const listener = ESIEvaluator(context);
-  const pipeline = asStream(listener);
-  context.emitter = pipeline;
-
-  let responseCode;
-  const headers = {};
-
-  pipeline
-    .on("set_response_code", onResponseCode)
+  const esi = new ESI(options)
+    .on("set_response_code", onSetResponseCode)
     .on("add_header", onAddHeader)
-    .once("set_redirect", close);
+    .once("set_redirect", onRedirect);
 
-  return pipeline;
+  return new Promise((resolve, reject) => {
+    pipeline([
+      Readable.from(html),
+      new HTMLStream({ preserveWS: true }),
+      esi,
+      new HTMLWriter(),
+    ], (err) => {
+      if (err && !["ERR_STREAM_DESTROYED", "ERR_STREAM_PREMATURE_CLOSE"].includes(err.code)) return reject(err);
+      resolve({
+        body,
+        ...response,
+      });
+    }).on("data", (chunk) => {
+      body += chunk;
+    });
+  });
 
-  function onResponseCode(int, body) {
-    responseCode = int;
-    if (int > 399 || body) return close();
-    if (headers.location && redirectCodes.includes(int)) pipeline.emit("set_redirect", responseCode, headers.location);
+  function onRedirect(statusCode, location) {
+    response.statusCode = statusCode;
+    if (location) {
+      response.headers = response.headers || {};
+      response.headers.location = location;
+    }
+    this.destroy();
   }
 
   function onAddHeader(name, value) {
-    const headerName = name.toLowerCase();
-    headers[headerName] = value;
-    if (headerName === "location" && redirectCodes.includes(responseCode)) pipeline.emit("set_redirect", responseCode, value);
-  }
-
-  function close() {
-    pipeline
-      .removeListener("set_response_code", onResponseCode)
-      .removeListener("add_header", onAddHeader)
-      .removeListener("set_redirect", close)
-      .destroy();
-  }
-}
-
-function createParser(req) {
-  const context = ListenerContext(req);
-  const listener = ESIEvaluator(context);
-  const optimusPrime = createESIParser(listener);
-  context.emitter = optimusPrime;
-  return optimusPrime;
-}
-
-function parseCookie(cookieStr) {
-  const attrs = (cookieStr || "").split(";");
-  const [name, value] = attrs[0].split("=");
-  if (!name || !value) return;
-
-  const attributes = attrs.reduce((acc, attr, index) => {
-    if (index > 0) {
-      const [attrName, attrValue] = attr.split("=");
-      acc[attrName.trim()] = attrValue && attrValue.trim() || "";
+    const headers = response.headers = response.headers || {};
+    const lname = name.toLowerCase();
+    if (lname === "set-cookie") {
+      headers[lname] = headers[lname] || [];
+      headers[lname].push(value);
+    } else {
+      headers[lname] = value;
     }
-    return acc;
-  }, {});
+  }
 
-  return {
-    name,
-    value,
-    attributes
-  };
+  function onSetResponseCode(statusCode, withBody) {
+    response.statusCode = statusCode;
+    if (!withBody) return;
+    response.body = withBody;
+    this.destroy();
+  }
 }
