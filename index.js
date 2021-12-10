@@ -1,6 +1,6 @@
 "use strict";
 
-const {pipeline, Readable} = require("stream");
+const { pipeline, Readable } = require("stream");
 const ESI = require("./lib/ESI");
 const HTMLStream = require("@bonniernews/atlas-html-stream");
 const HTMLWriter = require("./lib/HTMLWriter");
@@ -28,7 +28,7 @@ function parse(html, options) {
       esi,
       new HTMLWriter(),
     ], (err) => {
-      if (err && !["ERR_STREAM_DESTROYED", "ERR_STREAM_PREMATURE_CLOSE"].includes(err.code)) return reject(err);
+      if (err && ![ "ERR_STREAM_DESTROYED", "ERR_STREAM_PREMATURE_CLOSE" ].includes(err.code)) return reject(err);
       resolve({
         body,
         ...response,

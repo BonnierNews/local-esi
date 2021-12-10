@@ -1,6 +1,6 @@
 "use strict";
 
-const {parse, split} = require("../../lib/expression/parser");
+const { parse, split } = require("../../lib/expression/parser");
 
 describe("expression parser", () => {
   describe("Identifier", () => {
@@ -26,14 +26,14 @@ describe("expression parser", () => {
           value: "a",
           loc: {
             source: "'a'",
-            start: {line: 1, column: 10},
-            end: {line: 1, column: 13}
-          }
+            start: { line: 1, column: 10 },
+            end: { line: 1, column: 13 },
+          },
         },
         loc: {
           source: "$(someVar{'a'})",
-          start: {line: 1, column: 0},
-          end: {line: 1, column: 15}
+          start: { line: 1, column: 0 },
+          end: { line: 1, column: 15 },
         },
       });
     });
@@ -44,21 +44,21 @@ describe("expression parser", () => {
         type: "MemberExpression",
         object: {
           type: "Identifier",
-          name: "someVar"
+          name: "someVar",
         },
         property: {
           type: "Identifier",
           name: "someName",
           loc: {
             source: "$(someName)",
-            start: {line: 1, column: 10},
-            end: {line: 1, column: 21}
-          }
+            start: { line: 1, column: 10 },
+            end: { line: 1, column: 21 },
+          },
         },
         loc: {
           source: "$(someVar{$(someName)})",
-          start: {line: 1, column: 0},
-          end: {line: 1, column: 23}
+          start: { line: 1, column: 0 },
+          end: { line: 1, column: 23 },
         },
       });
     });
@@ -69,7 +69,7 @@ describe("expression parser", () => {
         type: "MemberExpression",
         object: {
           type: "Identifier",
-          name: "someVar"
+          name: "someVar",
         },
         property: {
           type: "MemberExpression",
@@ -84,36 +84,36 @@ describe("expression parser", () => {
               source: "'b'",
               start: {
                 line: 1,
-                column: 21
+                column: 21,
               },
               end: {
                 line: 1,
-                column: 24
-              }
+                column: 24,
+              },
             },
           },
           loc: {
             source: "$(someName{'b'})",
             start: {
               line: 1,
-              column: 10
+              column: 10,
             },
             end: {
               line: 1,
-              column: 26
-            }
+              column: 26,
+            },
           },
         },
         loc: {
           source: "$(someVar{$(someName{'b'})})",
           start: {
             line: 1,
-            column: 0
+            column: 0,
           },
           end: {
             line: 1,
-            column: 28
-          }
+            column: 28,
+          },
         },
       });
     });
@@ -127,14 +127,14 @@ describe("expression parser", () => {
         .to.have.property("object")
         .that.include({
           type: "Identifier",
-          name: "HTTP_COOKIE"
+          name: "HTTP_COOKIE",
         });
 
       expect(result)
         .to.have.property("property")
         .that.include({
           type: "Literal",
-          value: "remember_me"
+          value: "remember_me",
         });
     });
 
@@ -147,14 +147,14 @@ describe("expression parser", () => {
         .to.have.property("object")
         .that.include({
           type: "Identifier",
-          name: "someVar"
+          name: "someVar",
         });
 
       expect(result)
         .to.have.property("property")
         .that.include({
           type: "Literal",
-          value: 1
+          value: 1,
         });
     });
 
@@ -195,7 +195,7 @@ describe("expression parser", () => {
       const input = "true";
       expect(parse(input)).to.include({
         type: "Literal",
-        value: true
+        value: true,
       });
     });
 
@@ -203,7 +203,7 @@ describe("expression parser", () => {
       const input = "false";
       expect(parse(input)).to.include({
         type: "Literal",
-        value: false
+        value: false,
       });
     });
 
@@ -221,13 +221,13 @@ describe("expression parser", () => {
       let result = parse("'\\Program Files\\Game\\Fun.exe.'");
       expect(result).to.include({
         type: "Literal",
-        value: "Program FilesGameFun.exe."
+        value: "Program FilesGameFun.exe.",
       });
 
       result = parse("'\\\\/my\\\\stuff/'");
       expect(result).to.include({
         type: "Literal",
-        value: "\\/my\\stuff/"
+        value: "\\/my\\stuff/",
       });
     });
 
@@ -235,7 +235,7 @@ describe("expression parser", () => {
       const result = parse("'\\\\Program Files\\\\Game\\\\Fun.exe.'");
       expect(result).to.include({
         type: "Literal",
-        value: "\\Program Files\\Game\\Fun.exe."
+        value: "\\Program Files\\Game\\Fun.exe.",
       });
     });
 
@@ -243,13 +243,13 @@ describe("expression parser", () => {
       let result = parse("'''\\Program Files\\Game\\Fun.exe.'''");
       expect(result).to.include({
         type: "Literal",
-        value: "\\Program Files\\Game\\Fun.exe."
+        value: "\\Program Files\\Game\\Fun.exe.",
       });
 
       result = parse("'''\\/my\\stuff/'''");
       expect(result).to.include({
         type: "Literal",
-        value: "\\/my\\stuff/"
+        value: "\\/my\\stuff/",
       });
     });
 
@@ -260,7 +260,7 @@ describe("expression parser", () => {
       expect(result).to.have.property("type", "Literal");
       expect(result).to.include({
         type: "Literal",
-        value: "string_split HTTP_USER_AGENT,10)"
+        value: "string_split HTTP_USER_AGENT,10)",
       });
     });
 
@@ -299,7 +299,7 @@ describe("expression parser", () => {
               end: {
                 line: 1,
                 column: 12,
-              }
+              },
             },
           },
           right: {
@@ -314,7 +314,7 @@ describe("expression parser", () => {
               end: {
                 line: 1,
                 column: 18,
-              }
+              },
             },
           },
           loc: {
@@ -326,7 +326,7 @@ describe("expression parser", () => {
             end: {
               line: 1,
               column: 18,
-            }
+            },
           },
         },
         loc: {
@@ -338,7 +338,7 @@ describe("expression parser", () => {
           end: {
             line: 1,
             column: 19,
-          }
+          },
         },
       });
     });
@@ -360,7 +360,7 @@ describe("expression parser", () => {
           type: "Identifier",
           name: "substr",
         },
-        arguments: [{
+        arguments: [ {
           type: "Identifier",
           name: "myvar",
           loc: {
@@ -373,7 +373,7 @@ describe("expression parser", () => {
               line: 1,
               column: 16,
             },
-          }
+          },
         }, {
           type: "BinaryExpression",
           operator: "+",
@@ -418,7 +418,7 @@ describe("expression parser", () => {
               column: 23,
             },
           },
-        }],
+        } ],
         loc: {
           source: "$substr($(myvar), 1 + 2)",
           start: {
@@ -429,7 +429,7 @@ describe("expression parser", () => {
             line: 1,
             column: 24,
           },
-        }
+        },
       });
     });
 
@@ -446,7 +446,7 @@ describe("expression parser", () => {
         });
       expect(result)
         .to.have.property("arguments")
-        .to.deep.equal([{
+        .to.deep.equal([ {
           type: "Identifier",
           name: "user_email",
           loc: {
@@ -458,9 +458,9 @@ describe("expression parser", () => {
             end: {
               line: 1,
               column: 21,
-            }
-          }
-        }]);
+            },
+          },
+        } ]);
     });
 
     it("handles call expression without argument", () => {
@@ -472,7 +472,7 @@ describe("expression parser", () => {
         .to.have.property("callee")
         .that.include({
           type: "Identifier",
-          name: "time"
+          name: "time",
         });
       expect(result)
         .to.have.property("arguments")
@@ -488,7 +488,7 @@ describe("expression parser", () => {
         type: "CallExpression",
         callee: {
           type: "Identifier",
-          name: "string_split"
+          name: "string_split",
         },
         arguments: [
           {
@@ -535,7 +535,7 @@ describe("expression parser", () => {
                 column: 41,
               },
             },
-          }
+          },
         ],
         loc: {
           source: "$string_split($(HTTP_USER_AGENT), ';', 10)",
@@ -547,7 +547,7 @@ describe("expression parser", () => {
             line: 1,
             column: 42,
           },
-        }
+        },
       });
     });
 
@@ -560,7 +560,7 @@ describe("expression parser", () => {
         type: "CallExpression",
         callee: {
           type: "Identifier",
-          name: "digest_md5"
+          name: "digest_md5",
         },
         arguments: [
           {
@@ -607,7 +607,7 @@ describe("expression parser", () => {
                 column: 47,
               },
             },
-          }
+          },
         ],
         loc: {
           source: "$digest_md5($(REMOTE_ADDR) + $(HTTP_USER_AGENT))",
@@ -681,7 +681,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Identifier",
-          name: "someVar"
+          name: "someVar",
         });
       expect(result)
         .to.have.property("operator")
@@ -690,7 +690,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 59
+          value: 59,
         });
     });
 
@@ -703,7 +703,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Identifier",
-          name: "someVar"
+          name: "someVar",
         });
       expect(result)
         .to.have.property("operator")
@@ -712,7 +712,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: -1
+          value: -1,
         });
     });
 
@@ -725,7 +725,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Identifier",
-          name: "someVar"
+          name: "someVar",
         });
       expect(result)
         .to.have.property("operator")
@@ -734,7 +734,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 59
+          value: 59,
         });
     });
 
@@ -747,7 +747,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Identifier",
-          name: "someVar"
+          name: "someVar",
         });
       expect(result)
         .to.have.property("operator")
@@ -756,7 +756,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 590
+          value: 590,
         });
     });
 
@@ -769,7 +769,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Identifier",
-          name: "someVar"
+          name: "someVar",
         });
       expect(result)
         .to.have.property("operator")
@@ -778,7 +778,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 590
+          value: 590,
         });
     });
 
@@ -791,7 +791,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Identifier",
-          name: "someVar"
+          name: "someVar",
         });
       expect(result)
         .to.have.property("operator")
@@ -800,7 +800,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 590
+          value: 590,
         });
     });
 
@@ -815,7 +815,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Identifier",
-          name: "someVar"
+          name: "someVar",
         });
       expect(result.body)
         .to.have.property("operator")
@@ -824,7 +824,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 590
+          value: 590,
         });
     });
 
@@ -839,14 +839,14 @@ describe("expression parser", () => {
         .to.have.property("body")
         .that.include({
           type: "Identifier",
-          name: "someVar"
+          name: "someVar",
         });
       expect(result.right).to.have.property("type", "BlockStatement");
       expect(result.right)
         .to.have.property("body")
         .that.include({
           type: "Literal",
-          value: 590
+          value: 590,
         });
     });
 
@@ -859,7 +859,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Literal",
-          value: "1"
+          value: "1",
         });
       expect(result)
         .to.have.property("operator")
@@ -868,7 +868,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: "2"
+          value: "2",
         });
     });
 
@@ -881,7 +881,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Identifier",
-          name: "has"
+          name: "has",
         });
       expect(result)
         .to.have.property("operator")
@@ -890,7 +890,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: "true"
+          value: "true",
         });
     });
 
@@ -903,7 +903,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Identifier",
-          name: "has_i"
+          name: "has_i",
         });
       expect(result)
         .to.have.property("operator")
@@ -912,7 +912,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Identifier",
-          name: "has"
+          name: "has",
         });
     });
 
@@ -925,7 +925,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Literal",
-          value: 1
+          value: 1,
         });
       expect(result)
         .to.have.property("operator")
@@ -934,7 +934,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 2
+          value: 2,
         });
     });
 
@@ -947,7 +947,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Literal",
-          value: 1
+          value: 1,
         });
       expect(result)
         .to.have.property("operator")
@@ -956,7 +956,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 2
+          value: 2,
         });
     });
 
@@ -969,7 +969,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Literal",
-          value: 1
+          value: 1,
         });
       expect(result)
         .to.have.property("operator")
@@ -978,7 +978,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 2
+          value: 2,
         });
     });
 
@@ -991,7 +991,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Literal",
-          value: 1
+          value: 1,
         });
       expect(result)
         .to.have.property("operator")
@@ -1000,7 +1000,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 2
+          value: 2,
         });
     });
 
@@ -1013,7 +1013,7 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Literal",
-          value: 1
+          value: 1,
         });
       expect(result)
         .to.have.property("operator")
@@ -1022,7 +1022,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 2
+          value: 2,
         });
     });
 
@@ -1044,31 +1044,31 @@ describe("expression parser", () => {
             value: 1,
             loc: {
               source: "1 ",
-              start: {line: 1, column: 0},
-              end: {line: 1, column: 2},
-            }
+              start: { line: 1, column: 0 },
+              end: { line: 1, column: 2 },
+            },
           },
           right: {
             type: "Literal",
             value: 2,
             loc: {
               source: "2 ",
-              start: {line: 1, column: 4},
-              end: {line: 1, column: 6},
-            }
+              start: { line: 1, column: 4 },
+              end: { line: 1, column: 6 },
+            },
           },
           loc: {
             source: "1 + 2 ",
-            start: {line: 1, column: 0},
-            end: {line: 1, column: 6},
-          }
+            start: { line: 1, column: 0 },
+            end: { line: 1, column: 6 },
+          },
         });
 
       expect(result)
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 3
+          value: 3,
         });
     });
 
@@ -1090,31 +1090,31 @@ describe("expression parser", () => {
             value: 1,
             loc: {
               source: "1 ",
-              start: {line: 1, column: 0},
-              end: {line: 1, column: 2},
-            }
+              start: { line: 1, column: 0 },
+              end: { line: 1, column: 2 },
+            },
           },
           right: {
             type: "Literal",
             value: 2,
             loc: {
               source: "2 ",
-              start: {line: 1, column: 4},
-              end: {line: 1, column: 6},
-            }
+              start: { line: 1, column: 4 },
+              end: { line: 1, column: 6 },
+            },
           },
           loc: {
             source: "1 - 2 ",
-            start: {line: 1, column: 0},
-            end: {line: 1, column: 6},
-          }
+            start: { line: 1, column: 0 },
+            end: { line: 1, column: 6 },
+          },
         });
 
       expect(result)
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 3
+          value: 3,
         });
     });
 
@@ -1137,7 +1137,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 3
+          value: 3,
         });
     });
 
@@ -1160,7 +1160,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 3
+          value: 3,
         });
     });
 
@@ -1183,7 +1183,7 @@ describe("expression parser", () => {
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: 3
+          value: 3,
         });
     });
 
@@ -1199,24 +1199,24 @@ describe("expression parser", () => {
           name: "HTTP_REFERER",
           loc: {
             source: "$(HTTP_REFERER) ",
-            start: {line: 1, column: 0},
-            end: {line: 1, column: 16},
-          }
+            start: { line: 1, column: 0 },
+            end: { line: 1, column: 16 },
+          },
         },
         right: {
           type: "Literal",
           value: "(google|yahoo|bing|yandex)\\.\\d+$",
           loc: {
             source: "'''(google|yahoo|bing|yandex)\\.\\d+$'''",
-            start: {line: 1, column: 24},
-            end: {line: 1, column: 62},
-          }
+            start: { line: 1, column: 24 },
+            end: { line: 1, column: 62 },
+          },
         },
         loc: {
           source: "$(HTTP_REFERER) matches '''(google|yahoo|bing|yandex)\\.\\d+$'''",
-          start: {line: 1, column: 0},
-          end: {line: 1, column: 62},
-        }
+          start: { line: 1, column: 0 },
+          end: { line: 1, column: 62 },
+        },
       });
     });
 
@@ -1228,13 +1228,13 @@ describe("expression parser", () => {
         .to.have.property("left")
         .that.include({
           type: "Identifier",
-          name: "someVar"
+          name: "someVar",
         });
       expect(result)
         .to.have.property("right")
         .that.include({
           type: "Literal",
-          value: "my\\value"
+          value: "my\\value",
         });
     });
 
@@ -1273,30 +1273,30 @@ describe("expression parser", () => {
               value: "os",
               loc: {
                 source: "'os'",
-                start: {line: 1, column: 18},
-                end: {line: 1, column: 22},
-              }
+                start: { line: 1, column: 18 },
+                end: { line: 1, column: 22 },
+              },
             },
             loc: {
               source: "$(HTTP_USER_AGENT{'os'})",
-              start: {line: 1, column: 0},
-              end: {line: 1, column: 24},
-            }
+              start: { line: 1, column: 0 },
+              end: { line: 1, column: 24 },
+            },
           },
           right: {
             type: "Literal",
             value: "WIN",
             loc: {
               source: "'WIN' ",
-              start: {line: 1, column: 26},
-              end: {line: 1, column: 32},
-            }
+              start: { line: 1, column: 26 },
+              end: { line: 1, column: 32 },
+            },
           },
           loc: {
             source: "$(HTTP_USER_AGENT{'os'})=='WIN' ",
-            start: {line: 1, column: 0},
-            end: {line: 1, column: 32},
-          }
+            start: { line: 1, column: 0 },
+            end: { line: 1, column: 32 },
+          },
         },
         right: {
           type: "BinaryExpression",
@@ -1312,36 +1312,36 @@ describe("expression parser", () => {
               value: "browser",
               loc: {
                 source: "'browser'",
-                start: {line: 1, column: 52},
-                end: {line: 1, column: 61},
-              }
+                start: { line: 1, column: 52 },
+                end: { line: 1, column: 61 },
+              },
             },
             loc: {
               source: "$(HTTP_USER_AGENT{'browser'})",
-              start: {line: 1, column: 34},
-              end: {line: 1, column: 63},
-            }
+              start: { line: 1, column: 34 },
+              end: { line: 1, column: 63 },
+            },
           },
           right: {
             type: "Literal",
             value: "MSIE",
             loc: {
               source: "'MSIE'",
-              start: {line: 1, column: 65},
-              end: {line: 1, column: 71},
-            }
+              start: { line: 1, column: 65 },
+              end: { line: 1, column: 71 },
+            },
           },
           loc: {
             source: "$(HTTP_USER_AGENT{'browser'})=='MSIE'",
-            start: {line: 1, column: 34},
-            end: {line: 1, column: 71},
-          }
+            start: { line: 1, column: 34 },
+            end: { line: 1, column: 71 },
+          },
         },
         loc: {
           source: "$(HTTP_USER_AGENT{'os'})=='WIN' & $(HTTP_USER_AGENT{'browser'})=='MSIE'",
-          start: {line: 1, column: 0},
-          end: {line: 1, column: 71},
-        }
+          start: { line: 1, column: 0 },
+          end: { line: 1, column: 71 },
+        },
       });
     });
 
@@ -1369,8 +1369,8 @@ describe("expression parser", () => {
                 end: {
                   line: 1,
                   column: 12,
-                }
-              }
+                },
+              },
             },
             right: {
               type: "Literal",
@@ -1384,8 +1384,8 @@ describe("expression parser", () => {
                 end: {
                   line: 1,
                   column: 16,
-                }
-              }
+                },
+              },
             },
             loc: {
               source: "$(someVar) == 1",
@@ -1396,7 +1396,7 @@ describe("expression parser", () => {
               end: {
                 line: 1,
                 column: 16,
-              }
+              },
             },
           },
           loc: {
@@ -1408,7 +1408,7 @@ describe("expression parser", () => {
             end: {
               line: 1,
               column: 18,
-            }
+            },
           },
         },
         right: {
@@ -1428,8 +1428,8 @@ describe("expression parser", () => {
                 end: {
                   line: 1,
                   column: 24,
-                }
-              }
+                },
+              },
             },
             right: {
               type: "Identifier",
@@ -1443,8 +1443,8 @@ describe("expression parser", () => {
                 end: {
                   line: 1,
                   column: 42,
-                }
-              }
+                },
+              },
             },
             loc: {
               source: "2 == $(someOtherVar)",
@@ -1455,7 +1455,7 @@ describe("expression parser", () => {
               end: {
                 line: 1,
                 column: 42,
-              }
+              },
             },
           },
           loc: {
@@ -1467,7 +1467,7 @@ describe("expression parser", () => {
             end: {
               line: 1,
               column: 43,
-            }
+            },
           },
         },
         loc: {
@@ -1497,7 +1497,7 @@ describe("expression parser", () => {
             type: "Identifier",
             name: "exists",
           },
-          arguments: [{
+          arguments: [ {
             type: "MemberExpression",
             object: {
               type: "Identifier",
@@ -1508,20 +1508,20 @@ describe("expression parser", () => {
               value: "remember_me",
               loc: {
                 source: "'remember_me'",
-                start: {line: 1, column: 22},
-                end: {line: 1, column: 35},
-              }
+                start: { line: 1, column: 22 },
+                end: { line: 1, column: 35 },
+              },
             },
             loc: {
               source: "$(HTTP_COOKIE{'remember_me'})",
-              start: {line: 1, column: 8},
-              end: {line: 1, column: 37},
-            }
-          }],
+              start: { line: 1, column: 8 },
+              end: { line: 1, column: 37 },
+            },
+          } ],
           loc: {
             source: "$exists($(HTTP_COOKIE{'remember_me'})) ",
-            start: {line: 1, column: 0},
-            end: {line: 1, column: 39},
+            start: { line: 1, column: 0 },
+            end: { line: 1, column: 39 },
           },
         },
         right: {
@@ -1530,7 +1530,7 @@ describe("expression parser", () => {
             type: "Identifier",
             name: "exists",
           },
-          arguments: [{
+          arguments: [ {
             type: "MemberExpression",
             object: {
               type: "Identifier",
@@ -1541,20 +1541,20 @@ describe("expression parser", () => {
               value: "accessToken",
               loc: {
                 source: "'accessToken'",
-                start: {line: 1, column: 63},
-                end: {line: 1, column: 76},
-              }
+                start: { line: 1, column: 63 },
+                end: { line: 1, column: 76 },
+              },
             },
             loc: {
               source: "$(HTTP_COOKIE{'accessToken'})",
-              start: {line: 1, column: 49},
-              end: {line: 1, column: 78},
-            }
-          }],
+              start: { line: 1, column: 49 },
+              end: { line: 1, column: 78 },
+            },
+          } ],
           loc: {
             source: "$exists($(HTTP_COOKIE{'accessToken'}))",
-            start: {line: 1, column: 41},
-            end: {line: 1, column: 79},
+            start: { line: 1, column: 41 },
+            end: { line: 1, column: 79 },
           },
         },
         loc: {
@@ -1566,7 +1566,7 @@ describe("expression parser", () => {
           end: {
             line: 1,
             column: 79,
-          }
+          },
         },
       });
     });
@@ -1585,40 +1585,40 @@ describe("expression parser", () => {
             type: "CallExpression",
             callee: {
               type: "Identifier",
-              name: "exists"
+              name: "exists",
             },
-            arguments: [{
+            arguments: [ {
               type: "MemberExpression",
               object: {
                 type: "Identifier",
-                name: "HTTP_COOKIE"
+                name: "HTTP_COOKIE",
               },
               property: {
                 type: "Literal",
                 value: "remember_me",
                 loc: {
                   source: "'remember_me'",
-                  start: {line: 1, column: 23},
-                  end: {line: 1, column: 36},
+                  start: { line: 1, column: 23 },
+                  end: { line: 1, column: 36 },
                 },
               },
               loc: {
                 source: "$(HTTP_COOKIE{'remember_me'})",
-                start: {line: 1, column: 9},
-                end: {line: 1, column: 38},
+                start: { line: 1, column: 9 },
+                end: { line: 1, column: 38 },
               },
-            }],
+            } ],
             loc: {
               source: "$exists($(HTTP_COOKIE{'remember_me'})) ",
-              start: {line: 1, column: 1},
-              end: {line: 1, column: 40},
+              start: { line: 1, column: 1 },
+              end: { line: 1, column: 40 },
             },
           },
           loc: {
             source: "!$exists($(HTTP_COOKIE{'remember_me'})) ",
-            start: {line: 1, column: 0},
-            end: {line: 1, column: 40},
-          }
+            start: { line: 1, column: 0 },
+            end: { line: 1, column: 40 },
+          },
         },
         right: {
           type: "CallExpression",
@@ -1626,7 +1626,7 @@ describe("expression parser", () => {
             type: "Identifier",
             name: "exists",
           },
-          arguments: [{
+          arguments: [ {
             type: "MemberExpression",
             object: {
               type: "Identifier",
@@ -1637,27 +1637,27 @@ describe("expression parser", () => {
               value: "accessToken",
               loc: {
                 source: "'accessToken'",
-                start: {line: 1, column: 64},
-                end: {line: 1, column: 77},
-              }
+                start: { line: 1, column: 64 },
+                end: { line: 1, column: 77 },
+              },
             },
             loc: {
               source: "$(HTTP_COOKIE{'accessToken'})",
-              start: {line: 1, column: 50},
-              end: {line: 1, column: 79},
-            }
-          }],
+              start: { line: 1, column: 50 },
+              end: { line: 1, column: 79 },
+            },
+          } ],
           loc: {
             source: "$exists($(HTTP_COOKIE{'accessToken'}))",
-            start: {line: 1, column: 42},
-            end: {line: 1, column: 80},
+            start: { line: 1, column: 42 },
+            end: { line: 1, column: 80 },
           },
         },
         loc: {
           source: "!$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'}))",
-          start: {line: 1, column: 0},
-          end: {line: 1, column: 80},
-        }
+          start: { line: 1, column: 0 },
+          end: { line: 1, column: 80 },
+        },
       });
     });
 
@@ -1671,33 +1671,33 @@ describe("expression parser", () => {
           type: "CallExpression",
           callee: {
             type: "Identifier",
-            name: "exists"
+            name: "exists",
           },
-          arguments: [{
+          arguments: [ {
             type: "MemberExpression",
             object: {
               type: "Identifier",
-              name: "HTTP_COOKIE"
+              name: "HTTP_COOKIE",
             },
             property: {
               type: "Literal",
               value: "remember_me",
               loc: {
                 source: "'remember_me'",
-                start: {line: 1, column: 22},
-                end: {line: 1, column: 35},
+                start: { line: 1, column: 22 },
+                end: { line: 1, column: 35 },
               },
             },
             loc: {
               source: "$(HTTP_COOKIE{'remember_me'})",
-              start: {line: 1, column: 8},
-              end: {line: 1, column: 37},
+              start: { line: 1, column: 8 },
+              end: { line: 1, column: 37 },
             },
-          }],
+          } ],
           loc: {
             source: "$exists($(HTTP_COOKIE{'remember_me'})) ",
-            start: {line: 1, column: 0},
-            end: {line: 1, column: 39},
+            start: { line: 1, column: 0 },
+            end: { line: 1, column: 39 },
           },
         },
         right: {
@@ -1709,7 +1709,7 @@ describe("expression parser", () => {
               type: "Identifier",
               name: "exists",
             },
-            arguments: [{
+            arguments: [ {
               type: "MemberExpression",
               object: {
                 type: "Identifier",
@@ -1720,21 +1720,21 @@ describe("expression parser", () => {
                 value: "accessToken",
                 loc: {
                   source: "'accessToken'",
-                  start: {line: 1, column: 63},
-                  end: {line: 1, column: 76},
-                }
+                  start: { line: 1, column: 63 },
+                  end: { line: 1, column: 76 },
+                },
               },
               loc: {
                 source: "$(HTTP_COOKIE{'accessToken'})",
-                start: {line: 1, column: 49},
-                end: {line: 1, column: 78},
-              }
-            }],
+                start: { line: 1, column: 49 },
+                end: { line: 1, column: 78 },
+              },
+            } ],
             loc: {
               source: "$exists($(HTTP_COOKIE{'accessToken'})) ",
-              start: {line: 1, column: 41},
-              end: {line: 1, column: 80},
-            }
+              start: { line: 1, column: 41 },
+              end: { line: 1, column: 80 },
+            },
           },
           right: {
             type: "CallExpression",
@@ -1742,7 +1742,7 @@ describe("expression parser", () => {
               type: "Identifier",
               name: "exists",
             },
-            arguments: [{
+            arguments: [ {
               type: "MemberExpression",
               object: {
                 type: "Identifier",
@@ -1753,33 +1753,33 @@ describe("expression parser", () => {
                 value: "sessionKey",
                 loc: {
                   source: "'sessionKey'",
-                  start: {line: 1, column: 104},
-                  end: {line: 1, column: 116},
-                }
+                  start: { line: 1, column: 104 },
+                  end: { line: 1, column: 116 },
+                },
               },
               loc: {
                 source: "$(HTTP_COOKIE{'sessionKey'})",
-                start: {line: 1, column: 90},
-                end: {line: 1, column: 118},
-              }
-            }],
+                start: { line: 1, column: 90 },
+                end: { line: 1, column: 118 },
+              },
+            } ],
             loc: {
               source: "$exists($(HTTP_COOKIE{'sessionKey'}))",
-              start: {line: 1, column: 82},
-              end: {line: 1, column: 119},
-            }
+              start: { line: 1, column: 82 },
+              end: { line: 1, column: 119 },
+            },
           },
           loc: {
             source: "$exists($(HTTP_COOKIE{'accessToken'})) | $exists($(HTTP_COOKIE{'sessionKey'}))",
-            start: {line: 1, column: 41},
-            end: {line: 1, column: 119},
-          }
+            start: { line: 1, column: 41 },
+            end: { line: 1, column: 119 },
+          },
         },
         loc: {
           source: "$exists($(HTTP_COOKIE{'remember_me'})) | $exists($(HTTP_COOKIE{'accessToken'})) | $exists($(HTTP_COOKIE{'sessionKey'}))",
-          start: {column: 0, line: 1},
-          end: {column: 119, line: 1},
-        }
+          start: { column: 0, line: 1 },
+          end: { column: 119, line: 1 },
+        },
       });
     });
 
@@ -1793,22 +1793,22 @@ describe("expression parser", () => {
       expect(result.left).to.have.property("operator", "matches");
       expect(result.left).to.have.property("left").with.that.include({
         type: "Identifier",
-        name: "HTTP_REFERER"
+        name: "HTTP_REFERER",
       });
       expect(result.left).to.have.property("right").with.that.include({
         type: "Literal",
-        value: "(google|yahoo|bing|yandex)\\.\\d+$"
+        value: "(google|yahoo|bing|yandex)\\.\\d+$",
       });
 
       expect(result).to.have.property("right").with.property("type", "BinaryExpression");
       expect(result.right).to.have.property("operator", "matches");
       expect(result.right).to.have.property("left").with.that.include({
         type: "Literal",
-        value: "newyork"
+        value: "newyork",
       });
       expect(result.right).to.have.property("right").with.that.include({
         type: "Literal",
-        value: "newyorknewyork"
+        value: "newyorknewyork",
       });
     });
 
@@ -1822,22 +1822,22 @@ describe("expression parser", () => {
       expect(result.left).to.have.property("operator", "==");
       expect(result.left).to.have.property("left").with.that.include({
         type: "Identifier",
-        name: "someVar"
+        name: "someVar",
       });
       expect(result.left).to.have.property("right").with.that.include({
         type: "Literal",
-        value: "a"
+        value: "a",
       });
 
       expect(result).to.have.property("right").with.property("type", "BinaryExpression");
       expect(result.right).to.have.property("operator", "==");
       expect(result.right).to.have.property("left").with.that.include({
         type: "Identifier",
-        name: "someVar2"
+        name: "someVar2",
       });
       expect(result.right).to.have.property("right").with.that.include({
         type: "Literal",
-        value: "b"
+        value: "b",
       });
     });
 
@@ -1870,8 +1870,8 @@ describe("expression parser", () => {
               value: 1,
               loc: {
                 source: "1",
-                start: {line: 1, column: 2},
-                end: {line: 1, column: 3},
+                start: { line: 1, column: 2 },
+                end: { line: 1, column: 3 },
               },
             },
             right: {
@@ -1879,26 +1879,26 @@ describe("expression parser", () => {
               value: 2,
               loc: {
                 source: "2",
-                start: {line: 1, column: 5},
-                end: {line: 1, column: 6},
+                start: { line: 1, column: 5 },
+                end: { line: 1, column: 6 },
               },
             },
             loc: {
               source: "1==2",
-              start: {line: 1, column: 2},
-              end: {line: 1, column: 6},
+              start: { line: 1, column: 2 },
+              end: { line: 1, column: 6 },
             },
           },
           loc: {
             source: "(1==2)",
-            start: {line: 1, column: 1},
-            end: {line: 1, column: 7},
+            start: { line: 1, column: 1 },
+            end: { line: 1, column: 7 },
           },
         },
         loc: {
           source: "!(1==2)",
-          start: {line: 1, column: 0},
-          end: {line: 1, column: 7},
+          start: { line: 1, column: 0 },
+          end: { line: 1, column: 7 },
         },
       });
     });
@@ -1940,51 +1940,51 @@ describe("expression parser", () => {
       const object = parse(input);
       expect(object).to.deep.equal({
         type: "ObjectExpression",
-        properties: [{
+        properties: [ {
           type: "Property",
           key: {
             type: "Identifier",
-            name: "a"
+            name: "a",
           },
           value: {
             type: "Literal",
             value: 1,
             loc: {
               source: "1",
-              start: {line: 1, column: 6},
-              end: {line: 1, column: 7},
+              start: { line: 1, column: 6 },
+              end: { line: 1, column: 7 },
             },
           },
           loc: {
             source: "'a': 1",
-            start: {line: 1, column: 1},
-            end: {line: 1, column: 7},
+            start: { line: 1, column: 1 },
+            end: { line: 1, column: 7 },
           },
         }, {
           type: "Property",
           key: {
             type: "Identifier",
-            name: "b"
+            name: "b",
           },
           value: {
             type: "Literal",
             value: 2,
             loc: {
               source: "2",
-              start: {line: 1, column: 14},
-              end: {line: 1, column: 15},
+              start: { line: 1, column: 14 },
+              end: { line: 1, column: 15 },
             },
           },
           loc: {
             source: ", 'b': 2",
-            start: {line: 1, column: 7},
-            end: {line: 1, column: 15},
+            start: { line: 1, column: 7 },
+            end: { line: 1, column: 15 },
           },
-        }],
+        } ],
         loc: {
           source: input,
-          start: {line: 1, column: 0},
-          end: {line: 1, column: 16},
+          start: { line: 1, column: 0 },
+          end: { line: 1, column: 16 },
         },
       });
     });
@@ -2007,7 +2007,7 @@ describe("expression parser", () => {
         type: "Property",
         key: {
           type: "Identifier",
-          name: "c"
+          name: "c",
         },
         value: {
           type: "BlockStatement",
@@ -2019,8 +2019,8 @@ describe("expression parser", () => {
               value: 1,
               loc: {
                 source: "1 ",
-                start: {line: 1, column: 21},
-                end: {line: 1, column: 23},
+                start: { line: 1, column: 21 },
+                end: { line: 1, column: 23 },
               },
             },
             right: {
@@ -2028,26 +2028,26 @@ describe("expression parser", () => {
               value: 2,
               loc: {
                 source: "2",
-                start: {line: 1, column: 25},
-                end: {line: 1, column: 26},
+                start: { line: 1, column: 25 },
+                end: { line: 1, column: 26 },
               },
             },
             loc: {
               source: "1 < 2",
-              start: {line: 1, column: 21},
-              end: {line: 1, column: 26},
+              start: { line: 1, column: 21 },
+              end: { line: 1, column: 26 },
             },
           },
           loc: {
             source: "(1 < 2)",
-            start: {line: 1, column: 20},
-            end: {line: 1, column: 27},
+            start: { line: 1, column: 20 },
+            end: { line: 1, column: 27 },
           },
         },
         loc: {
           source: ", 'c': (1 < 2)",
-          start: {line: 1, column: 13},
-          end: {line: 1, column: 27},
+          start: { line: 1, column: 13 },
+          end: { line: 1, column: 27 },
         },
       });
     });
@@ -2080,35 +2080,35 @@ describe("expression parser", () => {
       const object = parse(input);
       expect(object).to.deep.equal({
         type: "ArrayExpression",
-        elements: [{
+        elements: [ {
           type: "Literal",
           value: 1,
           loc: {
             source: "1",
-            start: {line: 1, column: 1},
-            end: {line: 1, column: 2},
+            start: { line: 1, column: 1 },
+            end: { line: 1, column: 2 },
           },
         }, {
           type: "Literal",
           value: 2,
           loc: {
             source: ", 2",
-            start: {line: 1, column: 2},
-            end: {line: 1, column: 5},
+            start: { line: 1, column: 2 },
+            end: { line: 1, column: 5 },
           },
         }, {
           type: "Literal",
           value: 3,
           loc: {
             source: ", 3",
-            start: {line: 1, column: 5},
-            end: {line: 1, column: 8},
+            start: { line: 1, column: 5 },
+            end: { line: 1, column: 8 },
           },
-        }],
+        } ],
         loc: {
           source: input,
-          start: {line: 1, column: 0},
-          end: {line: 1, column: 9},
+          start: { line: 1, column: 0 },
+          end: { line: 1, column: 9 },
         },
       });
     });
@@ -2137,8 +2137,8 @@ describe("expression parser", () => {
             value: 1,
             loc: {
               source: "1 ",
-              start: {line: 1, column: 10},
-              end: {line: 1, column: 12},
+              start: { line: 1, column: 10 },
+              end: { line: 1, column: 12 },
             },
           },
           right: {
@@ -2146,20 +2146,20 @@ describe("expression parser", () => {
             value: 2,
             loc: {
               source: "2",
-              start: {line: 1, column: 14},
-              end: {line: 1, column: 15},
+              start: { line: 1, column: 14 },
+              end: { line: 1, column: 15 },
             },
           },
           loc: {
             source: "1 < 2",
-            start: {line: 1, column: 10},
-            end: {line: 1, column: 15},
+            start: { line: 1, column: 10 },
+            end: { line: 1, column: 15 },
           },
         },
         loc: {
           source: ", (1 < 2)",
-          start: {line: 1, column: 7},
-          end: {line: 1, column: 16},
+          start: { line: 1, column: 7 },
+          end: { line: 1, column: 16 },
         },
       });
     });
@@ -2171,11 +2171,11 @@ describe("expression parser", () => {
       expect(result).to.have.property("elements").with.length(2);
       expect(result.elements[0]).to.deep.include({
         type: "Identifier",
-        name: "someVar1"
+        name: "someVar1",
       });
       expect(result.elements[1]).to.deep.include({
         type: "Identifier",
-        name: "someVar2"
+        name: "someVar2",
       });
     });
 
@@ -2213,11 +2213,11 @@ describe("expression parser", () => {
       });
       expect(result.arguments[0]).to.have.property("left").that.deep.include({
         type: "Literal",
-        value: 1
+        value: 1,
       });
       expect(result.arguments[0]).to.have.property("right").that.deep.include({
         type: "Literal",
-        value: 4
+        value: 4,
       });
     });
 
@@ -2245,23 +2245,23 @@ describe("expression parser", () => {
       const text = "some text surrounding $(var) and beyond";
       const result = split(text);
 
-      expect(result).to.eql([{
+      expect(result).to.eql([ {
         type: "TEXT",
-        text: "some text surrounding "
+        text: "some text surrounding ",
       }, {
         expression: {
           type: "Identifier",
           name: "var",
           loc: {
             source: "$(var) ",
-            start: {line: 1, column: 22},
-            end: {line: 1, column: 29},
-          }
-        }
+            start: { line: 1, column: 22 },
+            end: { line: 1, column: 29 },
+          },
+        },
       }, {
         type: "TEXT",
-        text: " and beyond"
-      }]);
+        text: " and beyond",
+      } ]);
     });
 
     it("extracts identifiers from text", () => {
@@ -2270,7 +2270,7 @@ describe("expression parser", () => {
       expect(result).to.eql([
         {
           type: "TEXT",
-          text: "some text surrounding "
+          text: "some text surrounding ",
         },
         {
           expression: {
@@ -2278,14 +2278,14 @@ describe("expression parser", () => {
             name: "var1",
             loc: {
               source: "$(var1) ",
-              start: {line: 1, column: 22},
-              end: {line: 1, column: 30},
-            }
-          }
+              start: { line: 1, column: 22 },
+              end: { line: 1, column: 30 },
+            },
+          },
         },
         {
           type: "TEXT",
-          text: " and before "
+          text: " and before ",
         },
         {
           expression: {
@@ -2293,11 +2293,11 @@ describe("expression parser", () => {
             name: "var2",
             loc: {
               source: "$(var2)",
-              start: {line: 1, column: 41},
-              end: {line: 1, column: 48},
-            }
-          }
-        }
+              start: { line: 1, column: 41 },
+              end: { line: 1, column: 48 },
+            },
+          },
+        },
       ]);
     });
 
@@ -2307,14 +2307,14 @@ describe("expression parser", () => {
       expect(result).to.deep.equal([
         {
           type: "TEXT",
-          text: "\n"
+          text: "\n",
         },
         {
           expression: {
             type: "CallExpression",
             callee: {
               type: "Identifier",
-              name: "set_response_code"
+              name: "set_response_code",
             },
             arguments: [
               {
@@ -2322,22 +2322,22 @@ describe("expression parser", () => {
                 value: 401,
                 loc: {
                   source: "401 ",
-                  start: {line: 2, column: 20},
-                  end: {line: 2, column: 24},
-                }
-              }
+                  start: { line: 2, column: 20 },
+                  end: { line: 2, column: 24 },
+                },
+              },
             ],
             loc: {
               source: "$set_response_code( 401 ) ",
-              start: {line: 2, column: 0},
-              end: {line: 2, column: 26},
-            }
-          }
+              start: { line: 2, column: 0 },
+              end: { line: 2, column: 26 },
+            },
+          },
         },
         {
           type: "TEXT",
-          text: " \n"
-        }
+          text: " \n",
+        },
       ]);
     });
 
@@ -2347,14 +2347,14 @@ describe("expression parser", () => {
       expect(result).to.deep.equal([
         {
           type: "TEXT",
-          text: "/mystuff/?a=b&user="
+          text: "/mystuff/?a=b&user=",
         },
         {
           expression: {
             type: "CallExpression",
             callee: {
               type: "Identifier",
-              name: "url_encode"
+              name: "url_encode",
             },
             arguments: [
               {
@@ -2362,56 +2362,56 @@ describe("expression parser", () => {
                 name: "user_email",
                 loc: {
                   source: "$(user_email)",
-                  start: {line: 1, column: 31},
-                  end: {line: 1, column: 44},
-                }
-              }
+                  start: { line: 1, column: 31 },
+                  end: { line: 1, column: 44 },
+                },
+              },
             ],
             loc: {
               source: "$url_encode($(user_email))",
-              start: {line: 1, column: 19},
-              end: {line: 1, column: 45},
-            }
-          }
-        }
+              start: { line: 1, column: 19 },
+              end: { line: 1, column: 45 },
+            },
+          },
+        },
       ]);
     });
 
     it("extracts call expression with two arguments from text", () => {
       const text = "\n$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')\n";
       const result = split(text);
-      expect(result[0]).to.deep.equal({type: "TEXT", text: "\n"});
+      expect(result[0]).to.deep.equal({ type: "TEXT", text: "\n" });
       expect(result[1]).to.eql({
         expression: {
           type: "CallExpression",
           callee: {
             type: "Identifier",
-            name: "add_header"
+            name: "add_header",
           },
-          arguments: [{
+          arguments: [ {
             type: "Literal",
             value: "Set-Cookie",
             loc: {
               source: "'Set-Cookie'",
-              start: {line: 2, column: 12},
-              end: {line: 2, column: 24},
-            }
+              start: { line: 2, column: 12 },
+              end: { line: 2, column: 24 },
+            },
           },
           {
             type: "Literal",
             value: "MyCookie1=SomeValue; HttpOnly",
             loc: {
               source: ", 'MyCookie1=SomeValue; HttpOnly'",
-              start: {line: 2, column: 24},
-              end: {line: 2, column: 57},
-            }
-          }],
+              start: { line: 2, column: 24 },
+              end: { line: 2, column: 57 },
+            },
+          } ],
           loc: {
             source: "$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')",
-            start: {line: 2, column: 0},
-            end: {line: 2, column: 58},
-          }
-        }
+            start: { line: 2, column: 0 },
+            end: { line: 2, column: 58 },
+          },
+        },
       });
       expect(result.length).to.equal(3);
     });
@@ -2423,43 +2423,43 @@ describe("expression parser", () => {
         type: "MemberExpression",
         object: {
           type: "Identifier",
-          name: "QUERY_STRING"
+          name: "QUERY_STRING",
         },
         property: {
           type: "Literal",
           value: "b",
           loc: {
             source: "'b'",
-            start: {line: 1, column: 27},
-            end: {line: 1, column: 30},
-          }
+            start: { line: 1, column: 27 },
+            end: { line: 1, column: 30 },
+          },
         },
         loc: {
           source: "$(QUERY_STRING{'b'})",
-          start: {line: 1, column: 12},
-          end: {line: 1, column: 32},
-        }
+          start: { line: 1, column: 12 },
+          end: { line: 1, column: 32 },
+        },
       });
       expect(result[3]).to.have.property("expression").that.deep.equal({
         type: "MemberExpression",
         object: {
           type: "Identifier",
-          name: "QUERY_STRING"
+          name: "QUERY_STRING",
         },
         property: {
           type: "Literal",
           value: "user",
           loc: {
             source: "'user'",
-            start: {line: 1, column: 53},
-            end: {line: 1, column: 59},
-          }
+            start: { line: 1, column: 53 },
+            end: { line: 1, column: 59 },
+          },
         },
         loc: {
           source: "$(QUERY_STRING{'user'})",
-          start: {line: 1, column: 38},
-          end: {line: 1, column: 61},
-        }
+          start: { line: 1, column: 38 },
+          end: { line: 1, column: 61 },
+        },
       });
       expect(result.length).to.equal(4);
     });
@@ -2469,7 +2469,7 @@ describe("expression parser", () => {
       const result = split(text);
       expect(result[0]).to.deep.equal({
         type: "TEXT",
-        text: "Welcome "
+        text: "Welcome ",
       });
       expect(result[1]).to.have.property("expression").that.deep.include({
         type: "MemberExpression",
@@ -2483,7 +2483,7 @@ describe("expression parser", () => {
     it("works with pretext and new lines", () => {
       const input = "a: $int(1+1),\n b: $int(1+2),\n c: $int(1+3)";
       const hits = split(input);
-      expect(hits[0]).to.deep.equal({type: "TEXT", text: "a: "});
+      expect(hits[0]).to.deep.equal({ type: "TEXT", text: "a: " });
 
       expect(hits[1]).to.have.property("expression").that.deep.equal({
         type: "CallExpression",
@@ -2491,7 +2491,7 @@ describe("expression parser", () => {
           type: "Identifier",
           name: "int",
         },
-        arguments: [{
+        arguments: [ {
           type: "BinaryExpression",
           operator: "+",
           left: {
@@ -2499,34 +2499,34 @@ describe("expression parser", () => {
             value: 1,
             loc: {
               source: "1",
-              start: {line: 1, column: 8},
-              end: {line: 1, column: 9},
-            }
+              start: { line: 1, column: 8 },
+              end: { line: 1, column: 9 },
+            },
           },
           right: {
             type: "Literal",
             value: 1,
             loc: {
               source: "1",
-              start: {line: 1, column: 10},
-              end: {line: 1, column: 11},
-            }
+              start: { line: 1, column: 10 },
+              end: { line: 1, column: 11 },
+            },
           },
           loc: {
             source: "1+1",
-            start: {line: 1, column: 8},
-            end: {line: 1, column: 11},
-          }
-        }],
+            start: { line: 1, column: 8 },
+            end: { line: 1, column: 11 },
+          },
+        } ],
         loc: {
           source: "$int(1+1)",
-          start: {line: 1, column: 3},
-          end: {line: 1, column: 12},
-        }
+          start: { line: 1, column: 3 },
+          end: { line: 1, column: 12 },
+        },
       });
 
-      expect(hits[2]).to.deep.equal({type: "TEXT", text: ",\n"});
-      expect(hits[3]).to.deep.equal({type: "TEXT", text: " b: "});
+      expect(hits[2]).to.deep.equal({ type: "TEXT", text: ",\n" });
+      expect(hits[3]).to.deep.equal({ type: "TEXT", text: " b: " });
 
       expect(hits[4]).to.have.property("expression").that.deep.equal({
         type: "CallExpression",
@@ -2534,7 +2534,7 @@ describe("expression parser", () => {
           type: "Identifier",
           name: "int",
         },
-        arguments: [{
+        arguments: [ {
           type: "BinaryExpression",
           operator: "+",
           left: {
@@ -2542,34 +2542,34 @@ describe("expression parser", () => {
             value: 1,
             loc: {
               source: "1",
-              start: {line: 2, column: 9},
-              end: {line: 2, column: 10},
-            }
+              start: { line: 2, column: 9 },
+              end: { line: 2, column: 10 },
+            },
           },
           right: {
             type: "Literal",
             value: 2,
             loc: {
               source: "2",
-              start: {line: 2, column: 11},
-              end: {line: 2, column: 12},
-            }
+              start: { line: 2, column: 11 },
+              end: { line: 2, column: 12 },
+            },
           },
           loc: {
             source: "1+2",
-            start: {line: 2, column: 9},
-            end: {line: 2, column: 12},
-          }
-        }],
+            start: { line: 2, column: 9 },
+            end: { line: 2, column: 12 },
+          },
+        } ],
         loc: {
           source: "$int(1+2)",
-          start: {line: 2, column: 4},
-          end: {line: 2, column: 13},
-        }
+          start: { line: 2, column: 4 },
+          end: { line: 2, column: 13 },
+        },
       });
 
-      expect(hits[5]).to.deep.equal({type: "TEXT", text: ",\n"});
-      expect(hits[6]).to.deep.equal({type: "TEXT", text: " c: "});
+      expect(hits[5]).to.deep.equal({ type: "TEXT", text: ",\n" });
+      expect(hits[6]).to.deep.equal({ type: "TEXT", text: " c: " });
       expect(hits[7]).to.have.property("expression").with.property("type", "CallExpression");
 
       expect(hits.length).to.equal(8);

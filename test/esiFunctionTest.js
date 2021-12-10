@@ -1,6 +1,6 @@
 "use strict";
 
-const {parse} = require("./..");
+const { parse } = require("./..");
 const ck = require("chronokinesis");
 
 describe("functions", () => {
@@ -10,9 +10,9 @@ describe("functions", () => {
       markup += "$add_header('Set-Cookie', 'MyCookie1=SomeValue; HttpOnly')";
       markup += "</esi:vars>";
 
-      const {body, headers} = await parse(markup);
+      const { body, headers } = await parse(markup);
       expect(body).to.equal("");
-      expect(headers).to.have.property("set-cookie").that.deep.equal(["MyCookie1=SomeValue; HttpOnly"]);
+      expect(headers).to.have.property("set-cookie").that.deep.equal([ "MyCookie1=SomeValue; HttpOnly" ]);
     });
 
     it("should set multiple headers when instructed", async () => {
@@ -21,7 +21,7 @@ describe("functions", () => {
       markup += "$add_header('Set-Cookie', 'MyCookie2=SomeValue2; Path=/; Secure; SameSite=Lax')";
       markup += "</esi:vars>";
 
-      const {body, headers} = await parse(markup);
+      const { body, headers } = await parse(markup);
       expect(body).to.equal("");
       expect(headers).to.have.property("set-cookie").that.deep.equal([
         "MyCookie1=SomeValue;",
@@ -32,7 +32,7 @@ describe("functions", () => {
     it("should NOT set headers when instructed outside an ESI tag", async () => {
       const markup = "$add_header('Set-Cookie', 'MyCookie1=SomeValue;')";
 
-      const {body, headers} = await parse(markup);
+      const { body, headers } = await parse(markup);
       expect(body).to.equal(markup);
       expect(headers).to.be.undefined;
     });
@@ -54,7 +54,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body, headers} = await parse(markup);
+      const { body, headers } = await parse(markup);
       expect(body).to.equal("");
       expect(headers).to.have.property("set-cookie").that.deep.equal([
         "MyCookie1=SomeValue;",
@@ -72,7 +72,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body, headers} = await parse(markup);
+      const { body, headers } = await parse(markup);
       expect(body).to.equal("");
       expect(headers).to.be.undefined;
     });
@@ -86,7 +86,7 @@ describe("functions", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body, statusCode} = await parse(markup);
+      const { body, statusCode } = await parse(markup);
       expect(body).to.equal("");
       expect(statusCode).to.equal(401);
     });
@@ -98,7 +98,7 @@ describe("functions", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body, statusCode} = await parse(markup);
+      const { body, statusCode } = await parse(markup);
       expect(statusCode).to.equal(400);
       expect(body).to.equal("<p>hej</p>");
     });
@@ -115,7 +115,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body, statusCode} = await parse(markup);
+      const { body, statusCode } = await parse(markup);
       expect(statusCode).to.equal(400);
       expect(body).to.equal("<p>hej</p>");
     });
@@ -127,7 +127,7 @@ describe("functions", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body, statusCode} = await parse(markup);
+      const { body, statusCode } = await parse(markup);
       expect(statusCode).to.equal(400);
       expect(body).to.equal("<p>)</p>");
     });
@@ -139,7 +139,7 @@ describe("functions", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body, statusCode} = await parse(markup);
+      const { body, statusCode } = await parse(markup);
       expect(statusCode).to.equal(400);
       expect(body).to.equal("OK");
     });
@@ -157,7 +157,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body, statusCode} = await parse(markup);
+      const { body, statusCode } = await parse(markup);
       expect(statusCode).to.equal(401);
       expect(body).to.equal("<p>Unauthorized</p>");
     });
@@ -175,7 +175,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body, statusCode} = await parse(markup);
+      const { body, statusCode } = await parse(markup);
       expect(statusCode).to.be.undefined;
       expect(body).to.equal("<p>Content for you</p>");
     });
@@ -193,7 +193,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body, statusCode} = await parse(markup);
+      const { body, statusCode } = await parse(markup);
       expect(statusCode).to.be.undefined;
       expect(body).to.equal("<p>Content for you</p>");
     });
@@ -207,7 +207,7 @@ describe("functions", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const {statusCode, headers} = await parse(markup);
+      const { statusCode, headers } = await parse(markup);
       expect(statusCode).to.equal(302);
       expect(headers).to.have.property("location", "https://blahonga.com");
     });
@@ -225,7 +225,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {statusCode, headers} = await parse(markup);
+      const { statusCode, headers } = await parse(markup);
       expect(statusCode).to.equal(302);
       expect(headers).to.have.property("location", "https://blahonga.com");
     });
@@ -243,7 +243,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body, headers, statusCode} = await parse(markup);
+      const { body, headers, statusCode } = await parse(markup);
       expect(body).to.equal("<p>Content for you</p>");
       expect(headers).to.be.undefined;
       expect(statusCode).to.be.undefined;
@@ -261,7 +261,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body} = await parse(markup);
+      const { body } = await parse(markup);
       expect(body).to.equal("<p>true</p>");
     });
 
@@ -275,7 +275,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body} = await parse(markup);
+      const { body } = await parse(markup);
       expect(body).to.equal("<p>true</p>");
     });
 
@@ -291,7 +291,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body} = await parse(markup);
+      const { body } = await parse(markup);
       expect(body).to.equal("<p>false</p>");
     });
 
@@ -307,7 +307,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body} = await parse(markup);
+      const { body } = await parse(markup);
       expect(body).to.equal("<p>false</p>");
     });
   });
@@ -328,7 +328,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body} = await parse(markup);
+      const { body } = await parse(markup);
       expect(body).to.equal("<p>true</p><p>true again</p>");
     });
   });
@@ -351,7 +351,7 @@ describe("functions", () => {
         </esi:choose>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body} = await parse(markup);
+      const { body } = await parse(markup);
       expect(body).to.equal("Result: 11,Same with $str():no");
     });
 
@@ -367,7 +367,7 @@ describe("functions", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body} = await parse(markup);
+      const { body } = await parse(markup);
       expect(body).to.equal("" +
         "<ul>" +
           "<li>false" +
@@ -383,7 +383,7 @@ describe("functions", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body} = await parse(markup);
+      const { body } = await parse(markup);
       expect(body).to.equal("None");
     });
 
@@ -399,7 +399,7 @@ describe("functions", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body} = await parse(markup);
+      const { body } = await parse(markup);
       expect(body).to.equal("" +
         "<ul>" +
           "<li>[1, 2]" +
@@ -424,7 +424,7 @@ describe("functions", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body} = await parse(markup);
+      const { body } = await parse(markup);
       expect(body).to.equal("<p>3456</p><p>12345678</p><p>2345678</p><p>78</p><p>345678</p><p>34</p><p>cd</p>");
     });
 
@@ -467,7 +467,7 @@ describe("functions", () => {
       `.replace(/^\s+|\n/gm, "");
 
       const now = Math.round(Date.now() / 1000);
-      const {body} = await parse(markup);
+      const { body } = await parse(markup);
       expect(body).to.equal(`<p>${now}</p>`);
     });
   });
@@ -481,7 +481,7 @@ describe("functions", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body} = await parse(markup);
+      const { body } = await parse(markup);
       expect(body).to.equal("<p>Mon, 16 Jul 2001 21:36:56 GMT</p>");
     });
   });
@@ -498,11 +498,11 @@ describe("functions", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const {body} = await parse(markup, {
+      const { body } = await parse(markup, {
         headers: {
           "user-agent": userAgent,
           "x-forwarded-for": remoteAddress,
-        }
+        },
       });
 
       expect(body).to.equal("<p>[657885894, 693072170, -1514255750, 111706645]</p>");

@@ -1,6 +1,6 @@
 "use strict";
 
-const {Lexer} = require("../../lib/expression/lexer");
+const { Lexer } = require("../../lib/expression/lexer");
 
 describe("lexer", () => {
   describe("CallExpression", () => {
@@ -30,8 +30,8 @@ describe("lexer", () => {
           end: {
             line: 1,
             column: 11,
-          }
-        }
+          },
+        },
       });
       expect(lexer.get()).to.deep.include({
         type: "CallExpression",
@@ -45,8 +45,8 @@ describe("lexer", () => {
           end: {
             line: 1,
             column: 17,
-          }
-        }
+          },
+        },
       });
       expect(lexer.get()).to.deep.include({
         type: ")",
@@ -60,8 +60,8 @@ describe("lexer", () => {
           end: {
             line: 1,
             column: 19,
-          }
-        }
+          },
+        },
       });
       expect(lexer.get()).to.deep.include({
         type: "+",
@@ -75,8 +75,8 @@ describe("lexer", () => {
           end: {
             line: 1,
             column: 21,
-          }
-        }
+          },
+        },
       });
       expect(lexer.get()).to.deep.include({
         type: "Number",
@@ -90,8 +90,8 @@ describe("lexer", () => {
           end: {
             line: 1,
             column: 23,
-          }
-        }
+          },
+        },
       });
       expect(lexer.get()).to.deep.include({
         type: ")",
@@ -105,8 +105,8 @@ describe("lexer", () => {
           end: {
             line: 1,
             column: 24,
-          }
-        }
+          },
+        },
       });
     });
 
@@ -139,9 +139,9 @@ describe("lexer", () => {
           },
           end: {
             line: 1,
-            column: 8
-          }
-        }
+            column: 8,
+          },
+        },
       });
       expect(lexer.get()).to.deep.include({
         type: "EOL",
@@ -177,9 +177,9 @@ describe("lexer", () => {
           },
           end: {
             line: 1,
-            column: 1
-          }
-        }
+            column: 1,
+          },
+        },
       });
       expect(lexer.get()).to.deep.include({
         type: "Literal",
@@ -192,9 +192,9 @@ describe("lexer", () => {
           },
           end: {
             line: 1,
-            column: 9
-          }
-        }
+            column: 9,
+          },
+        },
       });
       expect(lexer.get()).to.deep.include({
         type: ":",
@@ -207,9 +207,9 @@ describe("lexer", () => {
           },
           end: {
             line: 1,
-            column: 11
-          }
-        }
+            column: 11,
+          },
+        },
       });
       expect(lexer.get()).to.deep.include({
         type: "Number",
@@ -222,9 +222,9 @@ describe("lexer", () => {
           },
           end: {
             line: 1,
-            column: 12
-          }
-        }
+            column: 12,
+          },
+        },
       });
       expect(lexer.get()).to.deep.include({
         type: "}",
@@ -237,9 +237,9 @@ describe("lexer", () => {
           },
           end: {
             line: 1,
-            column: 13
-          }
-        }
+            column: 13,
+          },
+        },
       });
     });
   });

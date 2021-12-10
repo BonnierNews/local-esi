@@ -1,6 +1,6 @@
 "use strict";
 
-const {parse} = require("../");
+const { parse } = require("../");
 
 describe("esi:text", () => {
   it("leaves text content of esi:text as is", async () => {
@@ -10,7 +10,7 @@ describe("esi:text", () => {
       </esi:text>
       `.replace(/^\s+|\n/gm, "");
 
-    const {body} = await parse(markup);
+    const { body } = await parse(markup);
     expect(body).to.equal("{\"approved\":\"true\"}");
   });
 
@@ -21,7 +21,7 @@ describe("esi:text", () => {
       </esi:text>
       `.replace(/^\s+|\n/gm, "");
 
-    const {body} = await parse(markup);
+    const { body } = await parse(markup);
     expect(body).to.equal("<esi:vars>{\"approved\":\"true\"}</esi:vars>");
   });
 
@@ -32,7 +32,7 @@ describe("esi:text", () => {
       </esi:text>
       `.replace(/^\s+|\n/gm, "");
 
-    const {body} = await parse(markup);
+    const { body } = await parse(markup);
     expect(body).to.equal("<esi:vars>{\"approved\":\"\\\"quote\\\"\"}</esi:vars>");
   });
 
@@ -43,7 +43,7 @@ describe("esi:text", () => {
       <esi:text><p>\\"quote 2\\"</p></esi:text>
       `.replace(/^\s+|\n/gm, "");
 
-    const {body} = await parse(markup);
+    const { body } = await parse(markup);
     expect(body).to.equal("<p>\\\"quote 0\\\"</p><p>\"quote 1\"</p><p>\\\"quote 2\\\"</p>");
   });
 
@@ -58,7 +58,7 @@ describe("esi:text", () => {
       </esi:text>
       `.replace(/^\s+|\n/gm, "");
 
-    const {body} = await parse(markup);
+    const { body } = await parse(markup);
     expect(body).to.equal("<esi:include src=\"/p\"/><esi:debug/><esi:eval src=\"/p\"/><esi:assign name=\"user_email\" value=\"No1\"/><esi:vars>No2</esi:vars>");
   });
 });

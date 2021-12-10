@@ -1,7 +1,7 @@
 "use strict";
 
-const {ESI} = require("../");
-const {pipeline, Readable} = require("stream");
+const { ESI } = require("../");
+const { pipeline, Readable } = require("stream");
 const fs = require("fs");
 const HTMLParser = require("@bonniernews/atlas-html-stream");
 const path = require("path");
@@ -11,7 +11,7 @@ describe("stream", () => {
     const stream = fs.createReadStream(path.join(__dirname, "/resources/esi.html"));
     const chunks = [];
 
-    stream.pipe(new HTMLParser({preserveWS: true})).pipe(new ESI({}))
+    stream.pipe(new HTMLParser({ preserveWS: true })).pipe(new ESI({}))
       .on("data", (chunk) => {
         chunks.push(chunk);
       })
@@ -27,7 +27,7 @@ describe("stream", () => {
 
     pipeline([
       stream,
-      new HTMLParser({preserveWS: true}),
+      new HTMLParser({ preserveWS: true }),
       new ESI({}),
     ], (err) => {
       if (err) return done(err);
@@ -39,13 +39,13 @@ describe("stream", () => {
   });
 
   it("stream can be closed if redirect instruction is used", (done) => {
-    const markup = [(`
+    const markup = [ (`
       <html><body>
       <esi:vars>
         $set_redirect('https://blahonga.com')
       </esi:vars>
       <p>Off</p>
-    `)]
+    `) ]
       .concat(Array(1000).fill().map((_, idx) => `<div><p>${idx}</p><div>`), "</body></html>")
       .join("")
       .replace(/^\s+|\n/gm, "");
@@ -54,7 +54,7 @@ describe("stream", () => {
     let redirect;
     pipeline([
       Readable.from(markup),
-      new HTMLParser({preserveWS: true}),
+      new HTMLParser({ preserveWS: true }),
       new ESI({}),
     ], (err) => {
       if (err) return done(err);
@@ -62,7 +62,7 @@ describe("stream", () => {
       expect(redirect.location).to.equal("https://blahonga.com");
       done();
     }).on("set_redirect", (statusCode, location) => {
-      redirect = {statusCode, location};
+      redirect = { statusCode, location };
     }).on("data", (chunk) => {
       chunks.push(chunk);
     });
@@ -74,11 +74,11 @@ describe("stream", () => {
     const transform = new ESI({});
     let redirect;
     transform.on("set_redirect", (statusCode, location) => {
-      redirect = {statusCode, location};
+      redirect = { statusCode, location };
       process.nextTick(() => transform.destroy());
     });
 
-    stream.pipe(new HTMLParser({preserveWS: true})).pipe(transform).on("close", () => {
+    stream.pipe(new HTMLParser({ preserveWS: true })).pipe(transform).on("close", () => {
       expect(redirect.statusCode).to.equal(302);
       expect(redirect.location).to.equal("https://blahonga.com");
       done();
@@ -86,7 +86,7 @@ describe("stream", () => {
   });
 
   it("set response code instruction emits event with response code", (done) => {
-    const markup = [(`
+    const markup = [ (`
       <html>
       <head>
       <esi:vars>
@@ -94,7 +94,7 @@ describe("stream", () => {
       </esi:vars>
       </head>
       <body>
-    `)]
+    `) ]
       .concat(Array(1000).fill().map((_, idx) => `<div><p>${idx}</p></div>`), "</body></html>")
       .join("")
       .replace(/^\s+|\n/gm, "");
@@ -103,7 +103,7 @@ describe("stream", () => {
     let send;
     pipeline([
       Readable.from(markup),
-      new HTMLParser({preserveWS: true}),
+      new HTMLParser({ preserveWS: true }),
       new ESI({}),
     ], (err) => {
       if (err) return done(err);
@@ -112,19 +112,19 @@ describe("stream", () => {
       expect(chunks).to.have.length.above(4);
       done();
     }).on("set_response_code", (statusCode, body) => {
-      send = {statusCode, body};
+      send = { statusCode, body };
     }).on("data", (chunk) => {
       chunks.push(chunk);
     });
   });
 
   it("set response code with body emits event with code and body", (done) => {
-    const markup = [(`
+    const markup = [ (`
       <html><body>
       <esi:vars>
         $set_response_code(200, 'Great success')
       </esi:vars>
-    `)]
+    `) ]
       .concat(Array(1000).fill().map((_, idx) => `<div><p>${idx}</p><div>`), "</body></html>")
       .join("")
       .replace(/^\s+|\n/gm, "");
@@ -133,14 +133,14 @@ describe("stream", () => {
     let send;
     pipeline([
       Readable.from(markup),
-      new HTMLParser({preserveWS: true}),
+      new HTMLParser({ preserveWS: true }),
       new ESI({}),
     ], () => {
       expect(send.statusCode).to.equal(200);
       expect(send.body).to.equal("Great success");
       done();
     }).on("set_response_code", function onSetResponseCode(statusCode, body) {
-      send = {statusCode, body};
+      send = { statusCode, body };
       this.destroy();
     }).on("data", (chunk) => {
       chunks.push(chunk);
@@ -148,13 +148,13 @@ describe("stream", () => {
   });
 
   it("set response code succeeded by add header emits events even if destroyed on first instruction", (done) => {
-    const markup = [(`
+    const markup = [ (`
       <html><body>
       <esi:vars>
         $set_response_code(302)
         $add_header('Location', 'https://example.com')
       </esi:vars>
-    `)]
+    `) ]
       .concat(Array(1000).fill().map((_, idx) => `<div><p>${idx}</p><div>`), "</body></html>")
       .join("")
       .replace(/^\s+|\n/gm, "");
@@ -163,7 +163,7 @@ describe("stream", () => {
     let send;
     pipeline([
       Readable.from(markup),
-      new HTMLParser({preserveWS: true}),
+      new HTMLParser({ preserveWS: true }),
       new ESI({}),
     ], () => {
       expect(send.statusCode).to.equal(302);
@@ -171,7 +171,7 @@ describe("stream", () => {
       expect(send).to.have.property("Location", "https://example.com");
       done();
     }).on("set_response_code", function onResponseCode(statusCode, body) {
-      send = {statusCode, body};
+      send = { statusCode, body };
       this.destroy(null);
     }).on("add_header", (name, value) => {
       send[name] = value;
@@ -181,13 +181,13 @@ describe("stream", () => {
   });
 
   it("set location header succeeded by set redirect response code emits both events", (done) => {
-    const markup = [(`
+    const markup = [ (`
       <html><body>
       <esi:vars>
         $add_header('Location', 'https://example.com')
         $set_response_code(302)
       </esi:vars>
-    `)]
+    `) ]
       .concat(Array(1000).fill().map((_, idx) => `<div><p>${idx}</p><div>`), "</body></html>")
       .join("")
       .replace(/^\s+|\n/gm, "");
@@ -196,7 +196,7 @@ describe("stream", () => {
     let send;
     pipeline([
       Readable.from(markup),
-      new HTMLParser({preserveWS: true}),
+      new HTMLParser({ preserveWS: true }),
       new ESI({}),
     ], () => {
       expect(send.statusCode).to.equal(302);
@@ -208,19 +208,19 @@ describe("stream", () => {
       send.body = body;
       this.destroy(null);
     }).on("add_header", (name, value) => {
-      send = {[name]: value};
+      send = { [name]: value };
     }).on("data", (chunk) => {
       chunks.push(chunk);
     });
   });
 
   it("closes stream if an esi parse error occur", (done) => {
-    const markup = [(`
+    const markup = [ (`
       <html><body>
       <esi:vars>
         $hittepa_funktion()
       </esi:vars>
-    `)]
+    `) ]
       .concat(Array(1000).fill().map((_, idx) => `<div><p>${idx}</p><div>`), "</body></html>")
       .join("")
       .replace(/^\s+|\n/gm, "");
@@ -228,7 +228,7 @@ describe("stream", () => {
     const chunks = [];
     pipeline([
       Readable.from(markup),
-      new HTMLParser({preserveWS: true}),
+      new HTMLParser({ preserveWS: true }),
       new ESI({}),
     ], (err) => {
       expect(err).to.be.ok.and.match(/is not implemented/i);
