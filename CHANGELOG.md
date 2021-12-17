@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2021-12-17
+
+### Fixed
+- Removed fallthrough behaviour of overlapping whens
+
 ## [2.0.0] - 2021-12-09
 
 Change the public api and refactor to classes

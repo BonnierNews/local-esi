@@ -529,6 +529,93 @@ describe("local ESI", () => {
       expect(body).to.equal(expectedMarkup);
     });
 
+    it("should support choose with multiple overlapping when takes the first truthy when", async () => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$int($(HTTP_COOKIE{'cookie1'})) > 1">
+            <p>First when</p>
+          </esi:when>
+          <esi:when test="$int($(HTTP_COOKIE{'cookie1'})) > 2">
+            <p>Second when</p>
+          </esi:when>
+          <esi:when test="$int($(HTTP_COOKIE{'cookie1'})) > 3">
+            <p>Third when</p>
+          </esi:when>
+          <esi:when test="$int($(HTTP_COOKIE{'cookie1'})) > 4">
+            <p>Fourth when</p>
+          </esi:when>
+          <esi:otherwise>
+            <p>Otherwise</p>
+          </esi:otherwise>
+      </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      let result;
+
+      result = await parse(markup, {
+        cookies: {
+          cookie1: "0",
+        },
+      });
+      expect(result.body, "0").to.equal("<p>Otherwise</p>");
+
+      result = await parse(markup, {
+        cookies: {
+          cookie1: "2",
+        },
+      });
+      expect(result.body, "2").to.equal("<p>First when</p>");
+
+      result = await parse(markup, {
+        cookies: {
+          cookie1: "3",
+        },
+      });
+      expect(result.body, "3").to.equal("<p>First when</p>");
+
+      result = await parse(markup, {
+        cookies: {
+          cookie1: "4",
+        },
+      });
+      expect(result.body, "4").to.equal("<p>First when</p>");
+    });
+
+    it("runs through multiple overlapping whens to detect syntax errors", async () => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="$int($(HTTP_COOKIE{'cookie1'})) > 1">
+            <p>First when</p>
+          </esi:when>
+          <esi:when test="$int($(HTTP_COOKIE{'cookie1'})) > 2">
+            <p>Second when</p>
+          </esi:when>
+          <esi:when test="$int($(HTTP_COOKIE{'cookie1'})) > 3">
+            <p>Third when</p>
+          </esi:when>
+          <esi:when test="$int($(HTTP_COOKIE{'cookie1'}) > 4">
+            <p>Fourth when</p>
+          </esi:when>
+          <esi:otherwise>
+            <p>Otherwise</p>
+          </esi:otherwise>
+      </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      let err;
+      try {
+        await parse(markup, {
+          cookies: {
+            cookie1: "2",
+          },
+        });
+      } catch (e) {
+        err = e;
+      }
+
+      expect(err).to.match(/Unclosed CallExpression/);
+    });
+
     it("should support when test with &&", async () => {
       const markup = `
         <esi:choose>
