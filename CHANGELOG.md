@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.2] - 2021-12-20
+
+### Fixed
+- Tweak performance by using for loop instead of forEach
+
 ## [2.0.1] - 2021-12-17
 
 ### Fixed
