@@ -1424,6 +1424,21 @@ describe("local ESI", () => {
       expect(body).to.equal(expectedMarkup);
     });
 
+    it("can access values from a Dictionary variable (via single-quoted key)", async () => {
+      // Note: ESI supports variable access using both with or without single-quotes, but local-esi requires the single-quotes
+      const markup = `
+        <esi:assign name="pizzaIngredients" value="{'cheese': 'true', 'avocado': 'false'}" />
+        <p><esi:vars>Does a pizza have avocado: $(pizzaIngredients{'avocado'})</esi:vars></p>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <p>Does a pizza have avocado: false</p>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup, {});
+      expect(body).to.equal(expectedMarkup);
+    });
+
     it("allows breaking out of foreach", async () => {
       const markup = `
         <ul>
