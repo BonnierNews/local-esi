@@ -1451,6 +1451,29 @@ describe("local ESI", () => {
       const { body } = await parse(markup, {});
       expect(body).to.equal(expectedMarkup);
     });
+
+    it("can handle named item variables in foreach", async () => {
+      const markup = `
+        <ul>
+          <esi:foreach item="myItemVariable" collection="[1,2,3]">
+            <esi:vars>
+              <li>$(myItemVariable)</li>
+            </esi:vars>
+          </esi:foreach>
+        </ul>
+        `.replace(/^\s+|\n/gm, "");
+
+      const expectedMarkup = `
+        <ul>
+            <li>1</li>
+            <li>2</li>
+            <li>3</li>
+        </ul>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup, {});
+      expect(body).to.equal(expectedMarkup);
+    });
   });
 
   describe("illegal characters", () => {

@@ -508,4 +508,30 @@ describe("functions", () => {
       expect(body).to.equal("<p>[657885894, 693072170, -1514255750, 111706645]</p>");
     });
   });
+
+  describe("supports $string_split", () => {
+    it("can split a string by a single character as a separator", async () => {
+      const markup = `
+      <esi:assign name="someString" value="one,two,three"/>
+      <esi:foreach collection="$string_split($(someString), ',')">
+        <p>$(item)</p>
+      </esi:foreach>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup, {});
+      expect(body).to.equal("<p>one</p><p>two</p><p>three</p>");
+    });
+
+    it("can split a string by multiple characters as a separator", async () => {
+      const markup = `
+      <esi:assign name="somesString" value="one...two...three"/>
+      <esi:foreach collection="$string_split($(somesString), '...')">
+        <p>$(item)</p>
+      </esi:foreach>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup, {});
+      expect(body).to.equal("<p>one</p><p>two</p><p>three</p>");
+    });
+  });
 });
