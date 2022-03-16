@@ -2231,12 +2231,8 @@ describe("expression parser", () => {
         type: "BinaryExpression",
         operator: "+",
       });
-      expect(result.arguments[0]).to.have.property("left").that.deep.include({
-        type: "CallExpression",
-      });
-      expect(result.arguments[0]).to.have.property("right").that.deep.include({
-        type: "CallExpression",
-      });
+      expect(result.arguments[0]).to.have.property("left").that.deep.include({ type: "CallExpression" });
+      expect(result.arguments[0]).to.have.property("right").that.deep.include({ type: "CallExpression" });
     });
   });
 
@@ -2471,12 +2467,8 @@ describe("expression parser", () => {
         type: "TEXT",
         text: "Welcome ",
       });
-      expect(result[1]).to.have.property("expression").that.deep.include({
-        type: "MemberExpression",
-      });
-      expect(result[1]).to.have.property("expression").that.deep.include({
-        type: "MemberExpression",
-      });
+      expect(result[1]).to.have.property("expression").that.deep.include({ type: "MemberExpression" });
+      expect(result[1]).to.have.property("expression").that.deep.include({ type: "MemberExpression" });
       expect(result.length).to.equal(3);
     });
 

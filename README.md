@@ -98,7 +98,6 @@ __Example express route:__
 ```javascript
 "use strict";
 
-const HTMLParser = require("@bonniernews/atlas-html-stream");
 const {parse} = require("@bonniernews/local-esi");
 
 module.exports = function render(req, res, next) {

@@ -143,9 +143,7 @@ describe("lexer", () => {
           },
         },
       });
-      expect(lexer.get()).to.deep.include({
-        type: "EOL",
-      });
+      expect(lexer.get()).to.deep.include({ type: "EOL" });
     });
 
     it("throws SyntaxError if not followed by start parantheses", () => {

@@ -209,9 +209,7 @@ describe("local ESI", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const { body } = await parse(markup, {
-        query: { q: "2", p: "1" },
-      });
+      const { body } = await parse(markup, { query: { q: "2", p: "1" } });
       expect(body).to.equal("false");
     });
 
@@ -552,32 +550,16 @@ describe("local ESI", () => {
 
       let result;
 
-      result = await parse(markup, {
-        cookies: {
-          cookie1: "0",
-        },
-      });
+      result = await parse(markup, { cookies: { cookie1: "0" } });
       expect(result.body, "0").to.equal("<p>Otherwise</p>");
 
-      result = await parse(markup, {
-        cookies: {
-          cookie1: "2",
-        },
-      });
+      result = await parse(markup, { cookies: { cookie1: "2" } });
       expect(result.body, "2").to.equal("<p>First when</p>");
 
-      result = await parse(markup, {
-        cookies: {
-          cookie1: "3",
-        },
-      });
+      result = await parse(markup, { cookies: { cookie1: "3" } });
       expect(result.body, "3").to.equal("<p>First when</p>");
 
-      result = await parse(markup, {
-        cookies: {
-          cookie1: "4",
-        },
-      });
+      result = await parse(markup, { cookies: { cookie1: "4" } });
       expect(result.body, "4").to.equal("<p>First when</p>");
     });
 
@@ -604,11 +586,7 @@ describe("local ESI", () => {
 
       let err;
       try {
-        await parse(markup, {
-          cookies: {
-            cookie1: "2",
-          },
-        });
+        await parse(markup, { cookies: { cookie1: "2" } });
       } catch (e) {
         err = e;
       }
@@ -794,11 +772,7 @@ describe("local ESI", () => {
 
       const expectedMarkup = "<div><p>hej</p></div>";
 
-      const { body } = await parse(markup, {
-        headers: {
-          host: "mystuff",
-        },
-      });
+      const { body } = await parse(markup, { headers: { host: "mystuff" } });
       expect(body).to.equal(expectedMarkup);
     });
 
@@ -819,9 +793,7 @@ describe("local ESI", () => {
       const expectedMarkup = "<div><p>hej</p></div>";
 
       const { body } = await parse(markup, {
-        headers: {
-          host: "mystuff",
-        },
+        headers: { host: "mystuff" },
         localhost: "localhost:1234",
       });
       expect(body).to.equal(expectedMarkup);
@@ -840,9 +812,7 @@ describe("local ESI", () => {
         .get("/mystuff/")
         .reply(200, "$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')");
 
-      const { body, headers } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body, headers } = await parse(markup, { localhost: "localhost:1234" });
 
       expect(body).to.equal("$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')<p>efter</p>");
       expect(headers).to.have.property("set-cookie").that.deep.equal([
@@ -862,9 +832,7 @@ describe("local ESI", () => {
         .get("/mystuff/")
         .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')</esi:vars>");
 
-      const { body, headers } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body, headers } = await parse(markup, { localhost: "localhost:1234" });
 
       expect(body).to.equal("<p>efter</p>");
       expect(headers).to.have.property("set-cookie").that.deep.equal([ "my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT" ]);
@@ -901,9 +869,7 @@ describe("local ESI", () => {
         .get("/mystuff")
         .reply(200, "Tjabo");
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
 
       expect(body).to.equal("Tjabo<p>efter</p>");
     });
@@ -918,9 +884,7 @@ describe("local ESI", () => {
       markup += "</esi:except>";
       markup += "</esi:try>";
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>Hej kom och hjälp mig!</p>");
     });
   });
@@ -933,26 +897,20 @@ describe("local ESI", () => {
         .get("/mystuff/")
         .reply(200, "<p><esi:vars>hej</esi:vars></p>");
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p><esi:vars>hej</esi:vars></p><p>efter</p>");
     });
 
     it("should fetch and evaluate esi:include with relative url when dca=esi", async () => {
       const markup = "<esi:include src=\"/mystuff/\" dca=\"esi\"/><p>efter</p>";
 
-      nock("http://localhost:1234", {
-        reqheaders: { cookie: "da_cookie=cookie_value" },
-      })
+      nock("http://localhost:1234", { reqheaders: { cookie: "da_cookie=cookie_value" } })
         .get("/mystuff/")
         .reply(200, "<p><esi:vars>hej</esi:vars></p>");
 
       const { body } = await parse(markup, {
         localhost: "localhost:1234",
-        headers: {
-          cookie: "da_cookie=cookie_value",
-        },
+        headers: { cookie: "da_cookie=cookie_value" },
       });
       expect(body).to.equal("<p>hej</p><p>efter</p>");
     });
@@ -960,15 +918,11 @@ describe("local ESI", () => {
     it("should fetch and evaluate esi:include with absolute url", async () => {
       const markup = "<esi:include src=\"http://mystuff.com/\" dca=\"esi\"/><p>efter</p>";
 
-      nock("http://mystuff.com", {
-        reqheaders: { host: "mystuff.com" },
-      })
+      nock("http://mystuff.com", { reqheaders: { host: "mystuff.com" } })
         .get("/")
         .reply(200, "<p><esi:vars>hej</esi:vars></p>");
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p><p>efter</p>");
     });
 
@@ -984,9 +938,7 @@ describe("local ESI", () => {
         })
         .reply(200, "<p>hej</p>");
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p>");
     });
 
@@ -1004,9 +956,7 @@ describe("local ESI", () => {
         .get("/mystuff/")
         .reply(500, "<p>Error</p>");
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>Hej kom och hjälp mig!</p>");
     });
 
@@ -1024,9 +974,7 @@ describe("local ESI", () => {
         .get("/mystuff/")
         .reply(500, "<p>Error</p>");
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>Hej kom och hjälp mig!</p>");
     });
 
@@ -1040,9 +988,7 @@ describe("local ESI", () => {
       markup += "</esi:except>";
       markup += "</esi:try>";
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>Hej kom och hjälp mig!</p>");
     });
 
@@ -1062,9 +1008,7 @@ describe("local ESI", () => {
         .get("/mystuff/")
         .reply(200, "<p>Frid och fröjd</p>");
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>innan</p><p>Frid och fröjd</p><p>efter</p>");
     });
 
@@ -1075,9 +1019,7 @@ describe("local ESI", () => {
         .get("/mystuff/")
         .reply(500, "<p>Error</p>");
 
-      const err = await parse(markup, {
-        localhost: "localhost:1234",
-      }).catch((e) => e);
+      const err = await parse(markup, { localhost: "localhost:1234" }).catch((e) => e);
 
       expect(err).to.match(/500/);
     });
@@ -1120,9 +1062,7 @@ describe("local ESI", () => {
         .get("/mystuff/")
         .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')</esi:vars>");
 
-      const { body, headers } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body, headers } = await parse(markup, { localhost: "localhost:1234" });
 
       expect(body).to.equal("<p>efter</p>");
       expect(headers).to.have.property("set-cookie").that.deep.equal([ "my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT" ]);
@@ -1157,9 +1097,7 @@ describe("local ESI", () => {
         .get("/mystuff/")
         .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars>");
 
-      const { body, headers } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body, headers } = await parse(markup, { localhost: "localhost:1234" });
 
       expect(body).to.equal("<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars><p>efter</p>");
       expect(headers).to.be.undefined;
@@ -1179,26 +1117,20 @@ describe("local ESI", () => {
       markup += "</esi:except>";
       markup += "</esi:try>";
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("Alles gut");
     });
 
     it("should fetch without content-type header when using esi:include", async () => {
       const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
 
-      nock("http://localhost:1234", {
-        badheaders: [ "content-type", "application/x-www-form-urlencoded" ],
-      })
+      nock("http://localhost:1234", { badheaders: [ "content-type", "application/x-www-form-urlencoded" ] })
         .get("/mystuff/")
         .reply(200, "<p><esi:vars>hej</esi:vars></p>");
 
       const { body } = await parse(markup, {
         localhost: "localhost:1234",
-        headers: {
-          "content-type": "application/x-www-form-urlencoded",
-        },
+        headers: { "content-type": "application/x-www-form-urlencoded" },
       });
       expect(body).to.equal("<p><esi:vars>hej</esi:vars></p><p>efter</p>");
     });
@@ -1206,17 +1138,13 @@ describe("local ESI", () => {
     it("should fetch without content-type header when using esi:eval", async () => {
       const markup = "<esi:eval src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
 
-      nock("http://localhost:1234", {
-        badheaders: [ "content-type", "application/x-www-form-urlencoded" ],
-      })
+      nock("http://localhost:1234", { badheaders: [ "content-type", "application/x-www-form-urlencoded" ] })
         .get("/mystuff/")
         .reply(200, "<p><esi:vars>hej</esi:vars></p>");
 
       const { body } = await parse(markup, {
         localhost: "localhost:1234",
-        headers: {
-          "content-type": "application/x-www-form-urlencoded",
-        },
+        headers: { "content-type": "application/x-www-form-urlencoded" },
       });
 
       expect(body).to.equal("<p>hej</p><p>efter</p>");
@@ -1226,15 +1154,11 @@ describe("local ESI", () => {
       let markup = "<esi:assign name=\"daurl\" value=\"'http://mystuff.com/'\"/>";
       markup += "<esi:include src=\"$(daurl)\" dca=\"esi\"/><p>efter</p>";
 
-      nock("http://mystuff.com", {
-        reqheaders: { host: "mystuff.com" },
-      })
+      nock("http://mystuff.com", { reqheaders: { host: "mystuff.com" } })
         .get("/")
         .reply(200, "<p><esi:vars>hej</esi:vars></p>");
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p><p>efter</p>");
     });
 
@@ -1242,15 +1166,11 @@ describe("local ESI", () => {
       let markup = "<esi:assign name=\"host\" value=\"'mystuff.com'\"/>";
       markup += "<esi:include src=\"http://$(host)/path/\" dca=\"esi\"/><p>efter</p>";
 
-      nock("http://mystuff.com", {
-        reqheaders: { host: "mystuff.com" },
-      })
+      nock("http://mystuff.com", { reqheaders: { host: "mystuff.com" } })
         .get("/path/")
         .reply(200, "<p><esi:vars>hej</esi:vars></p>");
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p><p>efter</p>");
     });
 
@@ -1841,9 +1761,7 @@ describe("local ESI", () => {
         .get("/mystuff/")
         .reply(200, "<p>hej</p>");
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p><p>/mystuff/</p>");
     });
 
@@ -1861,9 +1779,7 @@ describe("local ESI", () => {
         .get("/stuff/")
         .reply(200, "<p>hej</p>");
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p><p>\\/my\\stuff/</p>");
     });
 
@@ -1878,9 +1794,7 @@ describe("local ESI", () => {
         .get("/stuff/")
         .reply(200, "<p>hej</p>");
 
-      const { body } = await parse(markup, {
-        localhost: "localhost:1234",
-      });
+      const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p><p>efter</p>");
     });
   });

@@ -13,11 +13,7 @@ describe("assert", () => {
     </esi:choose>`;
 
     try {
-      await parse(markup, {
-        cookie: {
-          cookie_1: "content",
-        },
-      });
+      await parse(markup, { cookie: { cookie_1: "content" } });
     } catch (e) {
       // eslint-disable-next-line no-var
       var err = e;
@@ -39,11 +35,7 @@ describe("assert", () => {
     </esi:choose>`;
 
     try {
-      await parse(markup, {
-        cookie: {
-          cookie_1: "content",
-        },
-      });
+      await parse(markup, { cookie: { cookie_1: "content" } });
     } catch (e) {
       // eslint-disable-next-line no-var
       var err = e;
@@ -63,11 +55,7 @@ describe("assert", () => {
     </esi:choose>`;
 
     try {
-      await parse(markup, {
-        cookie: {
-          cookie_1: "content",
-        },
-      });
+      await parse(markup, { cookie: { cookie_1: "content" } });
     } catch (e) {
       // eslint-disable-next-line no-var
       var err = e;
