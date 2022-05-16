@@ -65,6 +65,56 @@ describe("assert", () => {
       expect(err).to.exist;
       expect(err.message).to.match(/esi:assign is not allowed inside a esi:choose/);
     });
+
+    it("esi:choose without esi:when throws", async () => {
+      const markup = "<esi:choose></esi:choose>";
+
+      let err;
+      try {
+        await parse(markup);
+      } catch (e) {
+        err = e;
+      }
+
+      expect(err).to.exist;
+      expect(err.message).to.match(/esi:choose without esi:when not allowed/);
+    });
+
+    it("esi:when outside of esi:choose throws", async () => {
+      const markup = `
+        <esi:vars>
+          <esi:when></esi:when>
+        </esi:vars>
+      `;
+
+      let err;
+      try {
+        await parse(markup);
+      } catch (e) {
+        err = e;
+      }
+
+      expect(err).to.exist;
+      expect(err.message).to.match(/esi:when is not allowed outside esi:choose/);
+    });
+
+    it("esi:otherwise outside of esi:choose throws", async () => {
+      const markup = `
+        <esi:vars>
+          <esi:otherwise></esi:otherwise>
+        </esi:vars>
+      `;
+
+      let err;
+      try {
+        await parse(markup);
+      } catch (e) {
+        err = e;
+      }
+
+      expect(err).to.exist;
+      expect(err.message).to.match(/esi:otherwise is not allowed outside esi:choose/);
+    });
   });
 
   describe("esi:try", () => {
@@ -133,7 +183,7 @@ describe("assert", () => {
       }
 
       expect(err).to.exist;
-      expect(err.message).to.match(/esi:attempt is not allowed outside of a esi:try/);
+      expect(err.message).to.match(/esi:attempt is not allowed outside esi:try/);
     });
 
     it("esi:except outside of esi:try throws", async () => {
@@ -151,7 +201,7 @@ describe("assert", () => {
       }
 
       expect(err).to.exist;
-      expect(err.message).to.match(/esi:except is not allowed outside of a esi:try/);
+      expect(err.message).to.match(/esi:except is not allowed outside esi:try/);
     });
   });
 });
