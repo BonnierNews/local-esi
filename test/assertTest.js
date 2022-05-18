@@ -118,7 +118,7 @@ describe("assert", () => {
   });
 
   describe("esi:try", () => {
-    it("esi:try without esi:attempt and esi:except throws", async () => {
+    it("esi:try without esi:attempt throws", async () => {
       const markup = "<esi:try></esi:try>";
 
       let err;
@@ -129,25 +129,7 @@ describe("assert", () => {
       }
 
       expect(err).to.exist;
-      expect(err.message).to.match(/esi:try without esi:attempt and esi:except not allowed/);
-    });
-
-    it("esi:try without esi:except throws", async () => {
-      const markup = `
-        <esi:try>
-          <esi:attempt></esi:attempt>
-        </esi:try>
-      `;
-
-      let err;
-      try {
-        await parse(markup);
-      } catch (e) {
-        err = e;
-      }
-
-      expect(err).to.exist;
-      expect(err.message).to.match(/esi:try without esi:attempt and esi:except not allowed/);
+      expect(err.message).to.match(/esi:try without esi:attempt not allowed/);
     });
 
     it("esi:try without esi:attempt throws", async () => {
@@ -165,7 +147,7 @@ describe("assert", () => {
       }
 
       expect(err).to.exist;
-      expect(err.message).to.match(/esi:try without esi:attempt and esi:except not allowed/);
+      expect(err.message).to.match(/esi:try without esi:attempt not allowed/);
     });
 
     it("esi:attempt outside of esi:try throws", async () => {
