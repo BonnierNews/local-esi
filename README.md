@@ -18,6 +18,7 @@ Create an ESI transform stream. Emits [events](#esi-parsing-events).
 Arguments:
 - `options`: optional options object with headers and cookies
   - `headers`: request headers, accessible through ESI globals `HTTP_<HEADER_NAME>`, `x-forwarded-for` will be accessible as `REMOTE_ADDR`
+    - `x-localesi-geo`: headers to simulate Akamai's geo location abilities. Defaults to: `country_code=SE,georegion=208`. Accessible through ESI global `GEO{}`
   - `cookies`: object with request cookies, accessible through ESI global `HTTP_COOKIE`
   - `path`: string request path, mapped to ESI global `REQUEST_PATH`
   - `query`: object request query parameters, accessible through ESI global `QUERY_STRING`

@@ -180,7 +180,7 @@ describe("local ESI", () => {
       const markup = `
         <esi:assign name="myVar" value="'false'" />
         <esi:choose>
-          <esi:when test="$(QUERY_STRING{'q'})=='2' & $(REQUEST_PATH)=='/hanubis-introversion/'">
+          <esi:when test="$(QUERY_STRING{'q'})=='2' & $(REQUEST_PATH)=='/hanubis-introversion/' & $(GEO{'country_code'})=='CN'">
             <esi:assign name="myVar" value="'true'" />
           </esi:when>
         </esi:choose>
@@ -190,6 +190,7 @@ describe("local ESI", () => {
       `.replace(/^\s+|\n/gm, "");
 
       const { body } = await parse(markup, {
+        headers: { ["x-localesi-geo"]: JSON.stringify({ country_code: "CN" }) },
         query: { q: "2", p: "1" },
         path: "/hanubis-introversion/",
       });
