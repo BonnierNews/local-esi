@@ -8,8 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- Readme parse example typo
+## [2.3.0] - 2022-09-03
+
+- Add support for GEO substructures
+
+## [2.2.1] - 2022-05-17
+
+- esi:except in esi:try should be optional
+
+## [2.2.0] - 2022-05-17
+
+- check for esi:when and otherwise in esi:choose
+- add validation for esi:try
+- fix example typo and new eslint rules
 
 ## [2.1.2] - 2022-03-03
 
