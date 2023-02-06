@@ -119,7 +119,12 @@ module.exports = function render(req, res, next) {
     return res.redirect(response.statusCode, headers.location);
   }
 
-  res.status(statusCode || 200);
+  if (statusCode) {
+    res.status(statusCode);
+  } else if (!res.statusCode) {
+    res.status(200);
+  }
+  
   return res.send(body);
 };
 ```
