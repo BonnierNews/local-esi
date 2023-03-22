@@ -116,7 +116,7 @@ module.exports = function render(req, res, next) {
 
   const {statusCode, headers, body} = await parse(html, options);
   if (statusCode < 309 && statusCode > 300) {
-    return res.redirect(statusCode, location);
+    return res.redirect(statusCode, headers.location);
   }
 
   if (statusCode) {
