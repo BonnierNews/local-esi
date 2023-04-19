@@ -319,6 +319,13 @@ describe("functions", () => {
       const { body } = await parse(markup);
       expect(body).to.equal("<script></script>");
     });
+
+    it("$html_decode supports identifier", async () => {
+      const markup = "<esi:assign name='html' value=\"'&lt;script&gt;&lt;/script&gt;'\"/><esi:vars>$html_decode($(html))</esi:vars>";
+
+      const { body } = await parse(markup);
+      expect(body).to.equal("<script></script>");
+    });
   });
 
   describe("$index", () => {
