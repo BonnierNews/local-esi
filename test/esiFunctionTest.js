@@ -312,6 +312,15 @@ describe("functions", () => {
     });
   });
 
+  describe("html", () => {
+    it("supports $html_decode", async () => {
+      const markup = "<esi:vars>$html_decode('&lt;script&gt;&lt;/script&gt;')</esi:vars>";
+
+      const { body } = await parse(markup);
+      expect(body).to.equal("<script></script>");
+    });
+  });
+
   describe("$index", () => {
     it("supports $index", async () => {
       const markup = `
