@@ -45,5 +45,8 @@
   "directories": {
     "lib": "lib",
     "test": "test"
+  },
+  "dependencies": {
+    "ent": "^2.2.0"
   }
 }

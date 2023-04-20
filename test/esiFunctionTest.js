@@ -312,6 +312,22 @@ describe("functions", () => {
     });
   });
 
+  describe("$html", () => {
+    it("supports $html_decode", async () => {
+      const markup = "<esi:vars>$html_decode('&lt;script&gt;&lt;/script&gt;')</esi:vars>";
+
+      const { body } = await parse(markup);
+      expect(body).to.equal("<script></script>");
+    });
+
+    it("$html_decode supports identifier", async () => {
+      const markup = "<esi:assign name='html' value=\"'&lt;script&gt;&lt;/script&gt;'\"/><esi:vars>$html_decode($(html))</esi:vars>";
+
+      const { body } = await parse(markup);
+      expect(body).to.equal("<script></script>");
+    });
+  });
+
   describe("$index", () => {
     it("supports $index", async () => {
       const markup = `
