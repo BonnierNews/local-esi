@@ -312,7 +312,7 @@ describe("functions", () => {
     });
   });
 
-  describe("html", () => {
+  describe("$html", () => {
     it("supports $html_decode", async () => {
       const markup = "<esi:vars>$html_decode('&lt;script&gt;&lt;/script&gt;')</esi:vars>";
 
