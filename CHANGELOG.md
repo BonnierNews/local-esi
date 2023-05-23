@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Add support for `setheader` attribute on `<esi:eval />` and `<esi:include />`
+
 ## [2.4.0] - 2023-04-20
 
 - Added $html_decode
