@@ -888,6 +888,31 @@ describe("local ESI", () => {
       const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>Hej kom och hjälp mig!</p>");
     });
+
+    it("should include header from \"setheader\" attribute", async () => {
+      nock("http://mystuff/", { reqheaders: { "Extra-Header": "Basic" } })
+        .get("/basic")
+        .reply(200, "basic header is included");
+      nock("http://mystuff", { reqheaders: { "Extra-header": "Case insensitive" } })
+        .get("/case-insensitive")
+        .reply(200, "header name is case insensitive");
+      nock("http://mystuff", { reqheaders: { "Extra-Header": "Value from expression" } })
+        .get("/value-from-expression")
+        .reply(200, "expressions are evaluated");
+
+      const { body } = await parse(`
+        <esi:assign name="headerValue" value="'Value from expression'" />
+        <esi:eval src="http://mystuff/basic" setheader="Extra-Header:Basic"/>
+        <esi:eval src="http://mystuff/case-insensitive" setheader="extra-header:Case insensitive"/>
+        <esi:eval src="http://mystuff/value-from-expression" setheader="Extra-Header:$(headerValue)"/>
+      `.replace(/^\s+|\n/gm, ""), {});
+
+      expect(body).to.equal(`
+        basic header is included
+        header name is case insensitive
+        expressions are evaluated
+      `.replace(/^\s+|\n/gm, ""));
+    });
   });
 
   describe("esi:include", () => {
@@ -1187,6 +1212,31 @@ describe("local ESI", () => {
         localhost: "localhost:1234",
       });
       expect(body).to.equal("<p>hej</p><p>efter</p>");
+    });
+
+    it("should include header from \"setheader\" attribute", async () => {
+      nock("http://mystuff/", { reqheaders: { "Extra-Header": "Basic" } })
+        .get("/basic")
+        .reply(200, "basic header is included");
+      nock("http://mystuff", { reqheaders: { "Extra-header": "Case insensitive" } })
+        .get("/case-insensitive")
+        .reply(200, "header name is case insensitive");
+      nock("http://mystuff", { reqheaders: { "Extra-Header": "Value from expression" } })
+        .get("/value-from-expression")
+        .reply(200, "expressions are evaluated");
+
+      const { body } = await parse(`
+        <esi:assign name="headerValue" value="'Value from expression'" />
+        <esi:include src="http://mystuff/basic" setheader="Extra-Header:Basic"/>
+        <esi:include src="http://mystuff/case-insensitive" setheader="extra-header:Case insensitive"/>
+        <esi:include src="http://mystuff/value-from-expression" setheader="Extra-Header:$(headerValue)"/>
+      `.replace(/^\s+|\n/gm, ""), {});
+
+      expect(body).to.equal(`
+        basic header is included
+        header name is case insensitive
+        expressions are evaluated
+      `.replace(/^\s+|\n/gm, ""));
     });
   });
 
