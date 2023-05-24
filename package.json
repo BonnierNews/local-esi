@@ -1,6 +1,6 @@
 {
   "name": "@bonniernews/local-esi",
-  "version": "2.4.0",
+  "version": "2.3.1",
   "description": "Local Edge Side Includes parser",
   "main": "index.js",
   "scripts": {
@@ -14,21 +14,19 @@
   "author": "Bonnier News",
   "license": "MIT",
   "peerDependencies": {
-    "@bonniernews/atlas-html-stream": ">=2",
-    "got": ">=11"
+    "@bonniernews/atlas-html-stream": "file://../fastly-atlas-html-stream"
   },
   "devDependencies": {
-    "@bonniernews/atlas-html-stream": "^2.0.1",
+    "@bonniernews/atlas-html-stream": "file://../fastly-atlas-html-stream",
     "chai": "^4.3.6",
     "chronokinesis": "^3.1.2",
     "eslint": "^8.23.1",
     "eslint-config-exp": "^0.1.1",
-    "got": "^11.8.5",
     "mocha": "^10.0.0",
     "nock": "^13.2.9"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=18.7"
   },
   "repository": {
     "type": "git",
@@ -47,6 +45,6 @@
     "test": "test"
   },
   "dependencies": {
-    "ent": "^2.2.0"
+    "crypto-js": "^4.1.1"
   }
 }

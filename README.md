@@ -70,7 +70,7 @@ module.exports = function streamRender(req, res, next) {
     esi,
     new HTMLWriter(),
   ], (err) => {
-    if (err?.code === "ERR_STREAM_PREMATURE_CLOSE"]) {
+    if (err?.code === "ERR_STREAM_PREMATURE_CLOSE") {
       return;
     } else if (err) {
       return next(err);
