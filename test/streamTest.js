@@ -1,10 +1,12 @@
-"use strict";
+import { pipeline, Readable } from "stream";
+import fs from "fs";
+import HTMLParser from "@bonniernews/atlas-html-stream";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const { ESI } = require("../");
-const { pipeline, Readable } = require("stream");
-const fs = require("fs");
-const HTMLParser = require("@bonniernews/atlas-html-stream");
-const path = require("path");
+import { ESI } from "../index.js";
+
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 describe("stream", () => {
   it("takes piped object stream", (done) => {

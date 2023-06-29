@@ -1,6 +1,4 @@
-"use strict";
-
-const { test } = require("../lib/evaluateExpression");
+import { test } from "../lib/evaluateExpression.js";
 
 describe("evaluate expression", () => {
   describe("test expression", () => {

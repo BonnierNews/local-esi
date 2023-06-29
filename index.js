@@ -1,17 +1,15 @@
-"use strict";
+import { pipeline, Readable } from "stream";
+import HTMLStream from "@bonniernews/atlas-html-stream";
 
-const { pipeline, Readable } = require("stream");
-const ESI = require("./lib/ESI");
-const HTMLStream = require("@bonniernews/atlas-html-stream");
-const HTMLWriter = require("./lib/HTMLWriter");
+import ESI from "./lib/ESI.js";
+import HTMLWriter from "./lib/HTMLWriter.js";
 
-module.exports = {
+export {
   ESI,
   HTMLWriter,
-  parse,
 };
 
-function parse(html, options) {
+export function parse(html, options) {
   const response = {};
 
   let body = "";

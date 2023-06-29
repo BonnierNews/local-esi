@@ -1,7 +1,6 @@
-"use strict";
+import * as ck from "chronokinesis";
 
-const { parse } = require("./..");
-const ck = require("chronokinesis");
+import { parse } from "../index.js";
 
 describe("functions", () => {
   describe("$add_header", () => {

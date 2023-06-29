@@ -3,9 +3,11 @@
   "version": "2.5.0",
   "description": "Local Edge Side Includes parser",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "mocha",
-    "posttest": "eslint . --cache"
+    "posttest": "eslint . --cache",
+    "dist": "./node_modules/.bin/rollup index.js --format cjs --file index.cjs"
   },
   "keywords": [
     "esi",
@@ -22,10 +24,11 @@
     "chai": "^4.3.6",
     "chronokinesis": "^3.1.2",
     "eslint": "^8.23.1",
-    "eslint-config-exp": "^0.1.1",
+    "eslint-config-exp": "^0.6.2",
     "got": "^11.8.5",
-    "mocha": "^10.0.0",
-    "nock": "^13.2.9"
+    "mocha": "10.2.0",
+    "nock": "^13.2.9",
+    "rollup": "^3.25.3"
   },
   "engines": {
     "node": ">=14"
