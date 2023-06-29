@@ -7,9 +7,10 @@ import HTMLWriter from "./lib/HTMLWriter.js";
 export {
   ESI,
   HTMLWriter,
+  parse,
 };
 
-export function parse(html, options) {
+function parse(html, options) {
   const response = {};
 
   let body = "";
