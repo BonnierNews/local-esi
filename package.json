@@ -49,7 +49,8 @@
   },
   "files": [
     "lib/",
-    "index.js"
+    "index.js",
+    "index.cjs"
   ],
   "bugs": {
     "url": "https://github.com/BonnierNews/local-esi/issues"
