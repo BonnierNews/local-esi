@@ -30,6 +30,10 @@
     "nock": "^13.2.9",
     "rollup": "^3.25.3"
   },
+  "exports": {
+    "import": "./index.js",
+    "require": "./index.cjs"
+  },
   "engines": {
     "node": ">=14"
   },
