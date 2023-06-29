@@ -2,6 +2,10 @@
 node_modules
 npm-debug.log
 
+# Built files for commonJS portability
+index.cjs
+voidElements.cjs
+
 # Built package
 /*.tgz
 

@@ -7,7 +7,7 @@
   "scripts": {
     "test": "mocha",
     "posttest": "eslint . --cache",
-    "dist": "./node_modules/.bin/rollup index.js --format cjs --file index.cjs && ./node_modules/.bin/rollup ./lib/voidElements.js --format cjs --file ./lib/voidElements.cjs"
+    "prepack": "./node_modules/.bin/rollup index.js --format cjs --file index.cjs && ./node_modules/.bin/rollup ./lib/voidElements.js --format cjs --file ./lib/voidElements.cjs"
   },
   "keywords": [
     "esi",
