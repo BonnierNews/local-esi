@@ -1,8 +1,9 @@
 import { pipeline, Readable } from "stream";
 import fs from "fs";
-import HTMLParser from "@bonniernews/atlas-html-stream";
 import path from "path";
 import { fileURLToPath } from "url";
+
+import HTMLParser from "@bonniernews/atlas-html-stream";
 
 import { ESI } from "../index.js";
 
