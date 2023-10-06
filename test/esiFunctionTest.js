@@ -524,6 +524,42 @@ describe("functions", () => {
     });
   });
 
+  describe("$rand", () => {
+    it("creates random number between 0 and 10 (i.e. not including 10)", async () => {
+      const markup = `
+        <esi:assign name="random_number" value="$rand(10)" />
+        <esi:vars>$(random_number)</esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+
+      expect(parseInt(body)).to.be.below(10);
+      expect(parseInt(body)).to.be.gte(0);
+    });
+
+    it("creates random number between 0 and 100 (i.e. not including 100)", async () => {
+      const markup = `
+        <esi:assign name="random_number" value="$rand(100)" />
+        <esi:vars>$(random_number)</esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+      expect(parseInt(body)).to.be.below(100);
+      expect(parseInt(body)).to.be.gte(0);
+    });
+
+    it("creates random number between 0 and 100000000 with no argument (i.e. not including 100000000)", async () => {
+      const markup = `
+        <esi:assign name="random_number" value="$rand()" />
+        <esi:vars>$(random_number)</esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+      expect(parseInt(body)).to.be.below(100000000);
+      expect(parseInt(body)).to.be.gte(0);
+    });
+  });
+
   describe("supports $string_split", () => {
     it("can split a string by a single character as a separator", async () => {
       const markup = `
