@@ -1,11 +1,11 @@
-"use strict";
+import { pipeline, Readable } from "stream";
 
-const { pipeline, Readable } = require("stream");
-const ESI = require("./lib/ESI");
-const HTMLStream = require("@bonniernews/atlas-html-stream");
-const HTMLWriter = require("./lib/HTMLWriter");
+import HTMLStream from "@bonniernews/atlas-html-stream";
 
-module.exports = {
+import ESI from "./lib/ESI.js";
+import HTMLWriter from "./lib/HTMLWriter.js";
+
+export {
   ESI,
   HTMLWriter,
   parse,

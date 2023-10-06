@@ -1,6 +1,4 @@
-"use strict";
-
-const { parse } = require("../");
+import { parse } from "../index.js";
 
 describe("esi:text", () => {
   it("leaves text content of esi:text as is", async () => {

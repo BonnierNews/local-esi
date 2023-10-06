@@ -1,6 +1,4 @@
-"use strict";
-
-const { parse, split } = require("../../lib/expression/parser");
+import { parse, split } from "../../lib/expression/parser.js";
 
 describe("expression parser", () => {
   describe("Identifier", () => {

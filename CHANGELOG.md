@@ -8,7 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Moved to esm. Backwards compatible with cjs. Breaks backwards compatibility if a cjs project requires anything
+  but the index or lib/voidElements as these are the only exposed as cjs.
 - Add support for `$rand`
+- Require node >= 18
 
 ## [2.5.0] - 2023-06-01
 

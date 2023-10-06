@@ -1,7 +1,6 @@
-"use strict";
+import nock from "nock";
 
-const nock = require("nock");
-const api = require("./..");
+import * as api from "../index.js";
 
 const { parse } = api;
 

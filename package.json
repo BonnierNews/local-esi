@@ -1,11 +1,13 @@
 {
   "name": "@bonniernews/local-esi",
-  "version": "2.5.0",
+  "version": "3.0.0-beta.1",
   "description": "Local Edge Side Includes parser",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "mocha",
-    "posttest": "eslint . --cache"
+    "posttest": "eslint . --cache",
+    "prepack": "./node_modules/.bin/rollup index.js --format cjs --file index.cjs && ./node_modules/.bin/rollup ./lib/voidElements.js --format cjs --file ./lib/voidElements.cjs"
   },
   "keywords": [
     "esi",
@@ -22,13 +24,24 @@
     "chai": "^4.3.6",
     "chronokinesis": "^3.1.2",
     "eslint": "^8.23.1",
-    "eslint-config-exp": "^0.1.1",
+    "eslint-config-exp": "^0.6.2",
     "got": "^11.8.5",
-    "mocha": "^10.0.0",
-    "nock": "^13.2.9"
+    "mocha": "10.2.0",
+    "nock": "^13.2.9",
+    "rollup": "^3.25.3"
+  },
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "require": "./index.cjs"
+    },
+    "./lib/voidElements": {
+      "import": "./lib/voidElements.js",
+      "require": "./lib/voidElements.cjs"
+    }
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=18"
   },
   "repository": {
     "type": "git",
@@ -36,7 +49,8 @@
   },
   "files": [
     "lib/",
-    "index.js"
+    "index.js",
+    "index.cjs"
   ],
   "bugs": {
     "url": "https://github.com/BonnierNews/local-esi/issues"

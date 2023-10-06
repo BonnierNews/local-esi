@@ -1,6 +1,4 @@
-"use strict";
-
-const { Lexer } = require("../../lib/expression/lexer");
+import { Lexer } from "../../lib/expression/lexer.js";
 
 describe("lexer", () => {
   describe("CallExpression", () => {
