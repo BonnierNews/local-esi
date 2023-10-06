@@ -31,8 +31,6 @@ voidElements.cjs
 # Vim swap files
 .*.sw[a-z]
 
-package-lock.json
-
 tmp/
 
 *.log
