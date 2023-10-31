@@ -1461,6 +1461,81 @@ describe("local ESI", () => {
     });
   });
 
+  describe("esi:try", () => {
+    it("outputs passing attempt block", async () => {
+      const markup = `
+        <esi:try>
+          <esi:attempt>
+            <p>hej</p>
+          </esi:attempt>
+          <esi:except>
+            <p>då</p>
+          </esi:except>
+        </esi:try>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+      expect(body).to.equal("<p>hej</p>");
+    });
+
+    it("outputs except block on failing attempt", async () => {
+      const markup = `
+        <esi:try>
+          <esi:attempt>
+            <esi:eval src="/fail" />
+          </esi:attempt>
+          <esi:except>
+            <p>då</p>
+          </esi:except>
+        </esi:try>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+      expect(body).to.equal("<p>då</p>");
+    });
+
+    it("omits failing attempt block", async () => {
+      const markup = `
+        <esi:try>
+          <esi:attempt>
+            <esi:eval src="/fail" />
+          </esi:attempt>
+        </esi:try>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+      expect(body).to.equal("");
+    });
+
+    it("attempt / except is isolated to each try", async () => {
+      const markup = `
+        <esi:try>
+          <esi:attempt>
+            <esi:eval src="/fail" />
+          </esi:attempt>
+          <esi:except>
+            <p>då 1</p>
+          </esi:except>
+        </esi:try>
+
+        <esi:try>
+          <esi:attempt>
+            <p>hej 2</p>
+          </esi:attempt>
+          <esi:except>
+            <p>då 2</p>
+          </esi:except>
+        </esi:try>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+      expect(body.replace(/^\s+|\n/gm, "")).to.equal(`
+        <p>då 1</p>
+        <p>hej 2</p>
+      `.replace(/^\s+|\n/gm, ""));
+    });
+  });
+
   describe("illegal characters", () => {
     const illegalCharacters = [
       "$",
