@@ -1512,18 +1512,37 @@ describe("local ESI", () => {
         <esi:try>
           <esi:attempt>
             <esi:eval src="/fail" />
+            <p>hej 1</p>
+
+            <esi:try>
+              <esi:attempt>
+                <p>hej 2</p>
+              </esi:attempt>
+              <esi:except>
+                <p>då 2</p>
+              </esi:except>
+            </esi:try>
           </esi:attempt>
           <esi:except>
             <p>då 1</p>
+
+            <esi:try>
+              <esi:attempt>
+                <p>hej 3</p>
+              </esi:attempt>
+              <esi:except>
+                <p>då 3</p>
+              </esi:except>
+            </esi:try>
           </esi:except>
         </esi:try>
 
         <esi:try>
           <esi:attempt>
-            <p>hej 2</p>
+            <p>hej 4</p>
           </esi:attempt>
           <esi:except>
-            <p>då 2</p>
+            <p>då 4</p>
           </esi:except>
         </esi:try>
       `.replace(/^\s+|\n/gm, "");
@@ -1531,7 +1550,8 @@ describe("local ESI", () => {
       const { body } = await parse(markup);
       expect(body.replace(/^\s+|\n/gm, "")).to.equal(`
         <p>då 1</p>
-        <p>hej 2</p>
+        <p>hej 3</p>
+        <p>hej 4</p>
       `.replace(/^\s+|\n/gm, ""));
     });
   });
