@@ -1310,8 +1310,32 @@ describe("local ESI", () => {
         `.replace(/^\s+|\n/gm, "");
 
       const expectedMarkup = "";
-      const { body } = await parse(markup, { });
+      const { body } = await parse(markup, {});
       expect(body).to.equal(expectedMarkup);
+    });
+
+    it("should not affect outside scope if inside esi:try", async () => {
+      const markup = `
+        <esi:assign name="var" value="a" />
+        <esi:try>
+          <esi:attempt>
+            <esi:assign name="var" value="b" />
+            <esi:vars>
+              var: $(var), 
+            </esi:vars>
+          </esi:attempt>
+        </esi:try>
+
+        <esi:vars>
+          var: $(var)
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup, {});
+      expect(body).to.equal(`
+        var: b, 
+        var: a
+      `.replace(/^\s+|\n/gm, ""));
     });
   });
 
