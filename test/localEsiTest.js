@@ -1337,6 +1337,37 @@ describe("local ESI", () => {
         var: a
       `.replace(/^\s+|\n/gm, ""));
     });
+
+    it("should handle re-assign from esi:eval even if inside esi:try", async () => {
+      const markup = `
+        <esi:assign name="var" value="a" />
+        <esi:try>
+          <esi:attempt>
+            <esi:eval src="http://mystuff/" dca="none"/>
+            <esi:assign name="var" value="b" />
+            <esi:vars>
+              var: $(var), 
+            </esi:vars>
+          </esi:attempt>
+        </esi:try>
+
+        <esi:vars>
+          var: $(var)
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      const evalResponse = "<esi:assign name=\"var\" value=\"'c'\" />".replace(/^\s+|\n/gm, "");
+
+      nock("http://mystuff")
+        .get("/")
+        .reply(200, evalResponse);
+
+      const { body } = await parse(markup, {});
+      expect(body).to.equal(`
+        var: b, 
+        var: c
+      `.replace(/^\s+|\n/gm, ""));
+    });
   });
 
   describe("esi:foreach", () => {
