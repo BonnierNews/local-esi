@@ -1401,7 +1401,7 @@ describe("local ESI", () => {
       const { body } = await parse(markup, {});
       expect(body).to.equal(`
         var in except: 1, 
-        var2 in except: ,
+        var2 in except: , 
         var in outer scope: 1, 
         var2 in outer scope: 
       `.replace(/^\s+|\n/gm, ""));
