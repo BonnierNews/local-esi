@@ -1338,7 +1338,7 @@ describe("local ESI", () => {
       `.replace(/^\s+|\n/gm, ""));
     });
 
-    it("should affect nested scopes if inside esi:try", async () => {
+    it("should affect nested scopes", async () => {
       const markup = `
         <esi:assign name="var" value="1" />
         <esi:try>
