@@ -1696,6 +1696,28 @@ describe("local ESI", () => {
         <p>hej 4</p>
       `.replace(/^\s+|\n/gm, ""));
     });
+
+    it("omits passing attempt inside non matching choose/when block", async () => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="0">
+            don't render this
+
+            <esi:try>
+              <esi:attempt>
+                or this
+              </esi:attempt>
+            </esi:try>
+          </esi:when>
+          <esi:otherwise>
+            instead render this
+          </esi:otherwise>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+      expect(body).to.equal("instead render this");
+    });
   });
 
   describe("illegal characters", () => {
