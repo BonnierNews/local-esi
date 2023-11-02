@@ -1316,16 +1316,15 @@ describe("local ESI", () => {
 
     it("should not affect outside scope if inside esi:try", async () => {
       const markup = `
-        <esi:assign name="var" value="a" />
+        <esi:assign name="var" value="1" />
         <esi:try>
           <esi:attempt>
-            <esi:assign name="var" value="b" />
-            <esi:vars>
-              var: $(var), 
-            </esi:vars>
+            var: $(var), 
+            <esi:assign name="var" value="1 + 1" />
+            var: $(var), 
           </esi:attempt>
         </esi:try>
-
+        
         <esi:vars>
           var: $(var)
         </esi:vars>
@@ -1333,21 +1332,21 @@ describe("local ESI", () => {
 
       const { body } = await parse(markup, {});
       expect(body).to.equal(`
-        var: b, 
-        var: a
+        var: 1, 
+        var: 2, 
+        var: 1
       `.replace(/^\s+|\n/gm, ""));
     });
 
     it("should handle re-assign from esi:eval even if inside esi:try", async () => {
       const markup = `
-        <esi:assign name="var" value="a" />
+        <esi:assign name="var" value="1" />
         <esi:try>
           <esi:attempt>
+            var: $(var), 
             <esi:eval src="http://mystuff/" dca="none"/>
-            <esi:assign name="var" value="b" />
-            <esi:vars>
-              var: $(var), 
-            </esi:vars>
+            <esi:assign name="var" value="1 + 1" />
+            var: $(var), 
           </esi:attempt>
         </esi:try>
 
@@ -1356,7 +1355,7 @@ describe("local ESI", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      const evalResponse = "<esi:assign name=\"var\" value=\"'c'\" />".replace(/^\s+|\n/gm, "");
+      const evalResponse = "<esi:assign name=\"var\" value=\"'3'\" />".replace(/^\s+|\n/gm, "");
 
       nock("http://mystuff")
         .get("/")
@@ -1364,8 +1363,9 @@ describe("local ESI", () => {
 
       const { body } = await parse(markup, {});
       expect(body).to.equal(`
-        var: b, 
-        var: c
+        var: 1, 
+        var: 2, 
+        var: 3
       `.replace(/^\s+|\n/gm, ""));
     });
   });
