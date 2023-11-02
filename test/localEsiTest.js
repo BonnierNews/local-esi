@@ -1338,6 +1338,43 @@ describe("local ESI", () => {
       `.replace(/^\s+|\n/gm, ""));
     });
 
+    it("should affect nested scopes if inside esi:try", async () => {
+      const markup = `
+        <esi:assign name="var" value="1" />
+        <esi:try>
+          <esi:attempt>
+            var: $(var), 
+            <esi:assign name="var" value="1 + 1" />
+            var: $(var), 
+            <esi:try>
+              <esi:attempt>
+                var: $(var), 
+                <esi:assign name="var" value="1 + 1 + 1" />
+                <esi:try>
+                  <esi:attempt>
+                    var: $(var), 
+                  </esi:attempt>
+                </esi:try>
+              </esi:attempt>
+          </esi:try>
+          </esi:attempt>
+        </esi:try>
+        
+        <esi:vars>
+          var: $(var)
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup, {});
+      expect(body).to.equal(`
+        var: 1, 
+        var: 2, 
+        var: 2, 
+        var: 3, 
+        var: 1
+      `.replace(/^\s+|\n/gm, ""));
+    });
+
     it("should handle re-assign from esi:eval even if inside esi:try", async () => {
       const markup = `
         <esi:assign name="var" value="1" />
