@@ -1507,6 +1507,24 @@ describe("local ESI", () => {
       expect(body).to.equal("");
     });
 
+    it("omits content before failing attempt", async () => {
+      const markup = `
+        <esi:try>
+          <esi:attempt>
+            <p>hej</p>
+            <esi:eval src="/fail" />
+            <p>hopp</>
+          </esi:attempt>
+          <esi:except>
+            <p>då</p>
+          </esi:except>
+        </esi:try>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+      expect(body).to.equal("<p>då</p>");
+    });
+
     it("attempt / except is isolated to each try", async () => {
       const markup = `
         <esi:try>
