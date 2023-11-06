@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - omit entire `<esi:attempt>` block on exception – https://github.com/BonnierNews/local-esi/issues/66
 - isolated success state of `<esi:try>` – https://github.com/BonnierNews/local-esi/issues/65
+- local assignment inside `<esi:try>` - https://github.com/BonnierNews/local-esi/issues/64
 
 ## [3.0.0] - 2023-09-06
 

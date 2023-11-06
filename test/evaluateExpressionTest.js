@@ -3,7 +3,7 @@ import { test } from "../lib/evaluateExpression.js";
 describe("evaluate expression", () => {
   describe("test expression", () => {
     it("casts equals right to left type", () => {
-      const context = { assigns: { var: "true", falsy: "false", myVar: "1" } };
+      const context = { assigns: { var: "true", falsy: "false", myVar: "1" }, tries: [] };
       expect(test("$(var) == true", context)).to.be.true;
       expect(test("true == $(var)", context)).to.be.true;
 
@@ -24,7 +24,7 @@ describe("evaluate expression", () => {
     });
 
     it("casts not equals right to left type", () => {
-      const context = { assigns: { var: "true", falsy: "false" } };
+      const context = { assigns: { var: "true", falsy: "false" }, tries: [] };
       expect(test("$(var) != true", context)).to.be.false;
       expect(test("true != $(var)", context)).to.be.false;
 

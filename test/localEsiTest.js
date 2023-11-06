@@ -1310,8 +1310,132 @@ describe("local ESI", () => {
         `.replace(/^\s+|\n/gm, "");
 
       const expectedMarkup = "";
-      const { body } = await parse(markup, { });
+      const { body } = await parse(markup, {});
       expect(body).to.equal(expectedMarkup);
+    });
+
+    it("should not affect outside scope if inside esi:try", async () => {
+      const markup = `
+        <esi:assign name="var" value="1" />
+        <esi:try>
+          <esi:attempt>
+            var: $(var), 
+            <esi:assign name="var" value="1 + 1" />
+            var: $(var), 
+          </esi:attempt>
+        </esi:try>
+        
+        <esi:vars>
+          var: $(var)
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup, {});
+      expect(body).to.equal(`
+        var: 1, 
+        var: 2, 
+        var: 1
+      `.replace(/^\s+|\n/gm, ""));
+    });
+
+    it("should affect nested scopes", async () => {
+      const markup = `
+        <esi:assign name="var" value="1" />
+        <esi:try>
+          <esi:attempt>
+            var: $(var), 
+            <esi:assign name="var" value="1 + 1" />
+            var: $(var), 
+            <esi:try>
+              <esi:attempt>
+                var: $(var), 
+                <esi:assign name="var" value="1 + 1 + 1" />
+                <esi:try>
+                  <esi:attempt>
+                    var: $(var), 
+                  </esi:attempt>
+                </esi:try>
+              </esi:attempt>
+          </esi:try>
+          </esi:attempt>
+        </esi:try>
+        
+        <esi:vars>
+          var: $(var)
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup, {});
+      expect(body).to.equal(`
+        var: 1, 
+        var: 2, 
+        var: 2, 
+        var: 3, 
+        var: 1
+      `.replace(/^\s+|\n/gm, ""));
+    });
+
+    it("should only be accessible in esi:attempt when defined there", async () => {
+      const markup = `
+        <esi:assign name="var" value="1" />
+        <esi:try>
+          <esi:attempt>
+            var in attempt1: $(var), 
+            <esi:assign name="var" value="1 + 1" />
+            var in attempt2: $(var),
+            <esi:assign name="var2" value="a" />
+            <esi:eval src="/fail" dca="none" /> 
+          </esi:attempt>
+          <esi:except>
+            var in except: $(var), 
+            var2 in except: $(var2), 
+          </esi:except>
+        </esi:try>
+        
+        <esi:vars>
+          var in outer scope: $(var), 
+          var2 in outer scope: $(var2)
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup, {});
+      expect(body).to.equal(`
+        var in except: 1, 
+        var2 in except: , 
+        var in outer scope: 1, 
+        var2 in outer scope: 
+      `.replace(/^\s+|\n/gm, ""));
+    });
+
+    it("should handle re-assign from esi:eval even if inside esi:try", async () => {
+      const markup = `
+        <esi:assign name="var" value="1" />
+        <esi:try>
+          <esi:attempt>
+            var: $(var), 
+            <esi:eval src="http://mystuff/" dca="none"/>
+            <esi:assign name="var" value="1 + 1" />
+            var: $(var), 
+          </esi:attempt>
+        </esi:try>
+
+        <esi:vars>
+          var: $(var)
+        </esi:vars>
+      `.replace(/^\s+|\n/gm, "");
+
+      const evalResponse = "<esi:assign name=\"var\" value=\"'3'\" />".replace(/^\s+|\n/gm, "");
+
+      nock("http://mystuff")
+        .get("/")
+        .reply(200, evalResponse);
+
+      const { body } = await parse(markup, {});
+      expect(body).to.equal(`
+        var: 1, 
+        var: 2, 
+        var: 3
+      `.replace(/^\s+|\n/gm, ""));
     });
   });
 
