@@ -1461,6 +1461,123 @@ describe("local ESI", () => {
     });
   });
 
+  describe("esi:try", () => {
+    it("outputs passing attempt block", async () => {
+      const markup = `
+        <esi:try>
+          <esi:attempt>
+            <p>hej</p>
+          </esi:attempt>
+          <esi:except>
+            <p>då</p>
+          </esi:except>
+        </esi:try>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+      expect(body).to.equal("<p>hej</p>");
+    });
+
+    it("outputs except block on failing attempt", async () => {
+      const markup = `
+        <esi:try>
+          <esi:attempt>
+            <esi:eval src="/fail" />
+          </esi:attempt>
+          <esi:except>
+            <p>då</p>
+          </esi:except>
+        </esi:try>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+      expect(body).to.equal("<p>då</p>");
+    });
+
+    it("omits failing attempt block", async () => {
+      const markup = `
+        <esi:try>
+          <esi:attempt>
+            <esi:eval src="/fail" />
+          </esi:attempt>
+        </esi:try>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+      expect(body).to.equal("");
+    });
+
+    it("attempt / except is isolated to each try", async () => {
+      const markup = `
+        <esi:try>
+          <esi:attempt>
+            <esi:eval src="/fail" />
+            <p>hej 1</p>
+
+            <esi:try>
+              <esi:attempt>
+                <p>hej 2</p>
+              </esi:attempt>
+              <esi:except>
+                <p>då 2</p>
+              </esi:except>
+            </esi:try>
+          </esi:attempt>
+          <esi:except>
+            <p>då 1</p>
+
+            <esi:try>
+              <esi:attempt>
+                <p>hej 3</p>
+              </esi:attempt>
+              <esi:except>
+                <p>då 3</p>
+              </esi:except>
+            </esi:try>
+          </esi:except>
+        </esi:try>
+
+        <esi:try>
+          <esi:attempt>
+            <p>hej 4</p>
+          </esi:attempt>
+          <esi:except>
+            <p>då 4</p>
+          </esi:except>
+        </esi:try>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+      expect(body.replace(/^\s+|\n/gm, "")).to.equal(`
+        <p>då 1</p>
+        <p>hej 3</p>
+        <p>hej 4</p>
+      `.replace(/^\s+|\n/gm, ""));
+    });
+
+    it("omits passing attempt inside non matching choose/when block", async () => {
+      const markup = `
+        <esi:choose>
+          <esi:when test="0">
+            don't render this
+
+            <esi:try>
+              <esi:attempt>
+                or this
+              </esi:attempt>
+            </esi:try>
+          </esi:when>
+          <esi:otherwise>
+            instead render this
+          </esi:otherwise>
+        </esi:choose>
+      `.replace(/^\s+|\n/gm, "");
+
+      const { body } = await parse(markup);
+      expect(body).to.equal("instead render this");
+    });
+  });
+
   describe("illegal characters", () => {
     const illegalCharacters = [
       "$",
