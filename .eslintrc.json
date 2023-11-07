@@ -1,4 +1,11 @@
 {
   "root": true,
-  "extends": ["eslint-config-exp"]
+  "extends": ["eslint-config-exp"],
+  "globals": {
+    "CustomEvent": "readonly",
+    "EventTarget": "readonly",
+    "ReadableStream": "readonly",
+    "TransformStream": "readonly",
+    "WritableStream": "readonly"
+  }
 }

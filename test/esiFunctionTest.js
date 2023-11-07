@@ -96,7 +96,6 @@ describe("functions", () => {
           $set_response_code(400, '<p>hej</p>')
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
-
       const { body, statusCode } = await parse(markup);
       expect(statusCode).to.equal(400);
       expect(body).to.equal("<p>hej</p>");
@@ -569,7 +568,7 @@ describe("functions", () => {
       </esi:foreach>
       `.replace(/^\s+|\n/gm, "");
 
-      const { body } = await parse(markup, {});
+      const { body } = await parse(markup);
       expect(body).to.equal("<p>one</p><p>two</p><p>three</p>");
     });
 

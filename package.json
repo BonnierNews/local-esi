@@ -15,19 +15,13 @@
   ],
   "author": "Bonnier News",
   "license": "MIT",
-  "peerDependencies": {
-    "@bonniernews/atlas-html-stream": ">=2",
-    "got": ">=11"
-  },
   "devDependencies": {
-    "@bonniernews/atlas-html-stream": "^2.0.1",
+    "@bonniernews/atlas-html-stream": "bonniernews/atlas-html-stream#acme/migrate-to-web-streams",
     "chai": "^4.3.6",
     "chronokinesis": "^3.1.2",
     "eslint": "^8.23.1",
     "eslint-config-exp": "^0.6.2",
-    "got": "^11.8.5",
     "mocha": "10.2.0",
-    "nock": "^13.2.9",
     "rollup": "^3.25.3"
   },
   "exports": {

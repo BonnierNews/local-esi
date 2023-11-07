@@ -1,7 +1,8 @@
-import { pipeline, Readable } from "stream";
-import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { open } from "node:fs/promises";
+import { Readable } from "node:stream";
+import { pipeline } from "node:stream/promises";
 
 import HTMLParser from "@bonniernews/atlas-html-stream";
 
@@ -10,38 +11,47 @@ import { ESI } from "../index.js";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 describe("stream", () => {
-  it("takes piped object stream", (done) => {
-    const stream = fs.createReadStream(path.join(__dirname, "/resources/esi.html"));
+  it("takes piped object stream", async () => {
+    const options = { encoding: "utf-8" };
+    const file = await open(path.join(__dirname, "/resources/esi.html"));
+    const stream = Readable.toWeb(file.createReadStream(options));
     const chunks = [];
+    const transformedStream = stream.pipeThrough(new HTMLParser({ preserveWS: true })).pipeThrough(new ESI());
+    const reader = transformedStream.getReader();
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-    stream.pipe(new HTMLParser({ preserveWS: true })).pipe(new ESI({}))
-      .on("data", (chunk) => {
-        chunks.push(chunk);
-      })
-      .on("finish", () => {
-        expect(chunks).to.have.length(29);
-        done();
-      });
+      chunks.push(value);
+    }
+    await file.close();
+
+    expect(chunks).to.have.length(29);
   });
 
-  it("can be piped", (done) => {
-    const stream = fs.createReadStream(path.join(__dirname, "/resources/esi.html"));
+  it("can be piped", async () => {
+    const options = { encoding: "utf-8" };
+    const file = await open(path.join(__dirname, "/resources/esi.html"));
+    const stream = Readable.toWeb(file.createReadStream(options));
     const chunks = [];
 
-    pipeline([
+    const streams = [
       stream,
       new HTMLParser({ preserveWS: true }),
       new ESI({}),
-    ], (err) => {
-      if (err) return done(err);
-      expect(chunks).to.have.length(29);
-      done();
-    }).on("data", (chunk) => {
-      chunks.push(chunk);
-    });
+      new WritableStream({
+        write(chunk) {
+          chunks.push(chunk);
+        },
+      }),
+    ];
+    await pipeline(streams);
+
+    await file.close();
+    expect(chunks).to.have.length(29);
   });
 
-  it("stream can be closed if redirect instruction is used", (done) => {
+  it("stream can be closed if redirect instruction is used", async () => {
     const markup = [ (`
       <html><body>
       <esi:vars>
@@ -54,41 +64,47 @@ describe("stream", () => {
       .replace(/^\s+|\n/gm, "");
 
     const chunks = [];
+    const esi = new ESI({});
     let redirect;
-    pipeline([
-      Readable.from(markup),
-      new HTMLParser({ preserveWS: true }),
-      new ESI({}),
-    ], (err) => {
-      if (err) return done(err);
-      expect(redirect.statusCode).to.equal(302);
-      expect(redirect.location).to.equal("https://blahonga.com");
-      done();
-    }).on("set_redirect", (statusCode, location) => {
-      redirect = { statusCode, location };
-    }).on("data", (chunk) => {
-      chunks.push(chunk);
+    esi.addEventListener("set_redirect", (event) => {
+      redirect = event.detail;
     });
+
+    await pipeline([
+      ReadableStream.from(markup),
+      new HTMLParser({ preserveWS: true }),
+      esi,
+      new WritableStream({
+        write(chunk) {
+          chunks.push(chunk);
+        },
+      }),
+    ]);
+    expect(redirect.statusCode).to.equal(302);
+    expect(redirect.location).to.equal("https://blahonga.com");
   });
 
-  it("set redirect instruction emits redirect 302 with location", (done) => {
-    const stream = fs.createReadStream(path.join(__dirname, "/resources/redirect.html"));
-
+  it("set redirect instruction emits redirect 302 with location", async () => {
+    const options = { encoding: "utf-8" };
+    const file = await open(path.join(__dirname, "/resources/redirect.html"));
+    const stream = Readable.toWeb(file.createReadStream(options));
     const transform = new ESI({});
     let redirect;
-    transform.on("set_redirect", (statusCode, location) => {
-      redirect = { statusCode, location };
-      process.nextTick(() => transform.destroy());
+    transform.addEventListener("set_redirect", (event) => {
+      redirect = event.detail;
+      process.nextTick(() => transform.readable.cancel());
     });
-
-    stream.pipe(new HTMLParser({ preserveWS: true })).pipe(transform).on("close", () => {
-      expect(redirect.statusCode).to.equal(302);
-      expect(redirect.location).to.equal("https://blahonga.com");
-      done();
-    });
+    const chunks = [];
+    await stream.pipeThrough(new HTMLParser({ preserveWS: true })).pipeThrough(transform).pipeTo(new WritableStream({
+      write(chunk) {
+        chunks.push(chunk);
+      },
+    }));
+    expect(redirect.statusCode).to.equal(302);
+    expect(redirect.location).to.equal("https://blahonga.com");
   });
 
-  it("set response code instruction emits event with response code", (done) => {
+  it("set response code instruction emits event with response code", async () => {
     const markup = [ (`
       <html>
       <head>
@@ -102,26 +118,28 @@ describe("stream", () => {
       .join("")
       .replace(/^\s+|\n/gm, "");
 
-    const chunks = [];
+    const esi = new ESI({});
     let send;
-    pipeline([
-      Readable.from(markup),
-      new HTMLParser({ preserveWS: true }),
-      new ESI({}),
-    ], (err) => {
-      if (err) return done(err);
-      expect(send.statusCode).to.equal(200);
-      expect(send.body).to.undefined;
-      expect(chunks).to.have.length.above(4);
-      done();
-    }).on("set_response_code", (statusCode, body) => {
-      send = { statusCode, body };
-    }).on("data", (chunk) => {
-      chunks.push(chunk);
+    esi.addEventListener("set_response_code", (event) => {
+      send = event.detail;
     });
+    const chunks = [];
+    await pipeline([
+      ReadableStream.from(markup),
+      new HTMLParser({ preserveWS: true }),
+      esi,
+      new WritableStream({
+        write(chunk) {
+          chunks.push(chunk);
+        },
+      }),
+    ]);
+    expect(send.statusCode).to.equal(200);
+    expect(send.body).to.undefined;
+    expect(chunks).to.have.length.above(4);
   });
 
-  it("set response code with body emits event with code and body", (done) => {
+  it("set response code with body emits event with code and body", async () => {
     const markup = [ (`
       <html><body>
       <esi:vars>
@@ -132,25 +150,27 @@ describe("stream", () => {
       .join("")
       .replace(/^\s+|\n/gm, "");
 
-    const chunks = [];
+    const esi = new ESI({});
     let send;
-    pipeline([
-      Readable.from(markup),
-      new HTMLParser({ preserveWS: true }),
-      new ESI({}),
-    ], () => {
-      expect(send.statusCode).to.equal(200);
-      expect(send.body).to.equal("Great success");
-      done();
-    }).on("set_response_code", function onSetResponseCode(statusCode, body) {
-      send = { statusCode, body };
-      this.destroy();
-    }).on("data", (chunk) => {
-      chunks.push(chunk);
+    esi.addEventListener("set_response_code", (event) => {
+      send = event.detail;
     });
+    const chunks = [];
+    await pipeline([
+      ReadableStream.from(markup),
+      new HTMLParser({ preserveWS: true }),
+      esi,
+      new WritableStream({
+        write(chunk) {
+          chunks.push(chunk);
+        },
+      }),
+    ]);
+    expect(send.statusCode).to.equal(200);
+    expect(send.withBody).to.equal("Great success");
   });
 
-  it("set response code succeeded by add header emits events even if destroyed on first instruction", (done) => {
+  it("set response code succeeded by add header emits events even if destroyed on first instruction", async () => {
     const markup = [ (`
       <html><body>
       <esi:vars>
@@ -161,29 +181,33 @@ describe("stream", () => {
       .concat(Array(1000).fill().map((_, idx) => `<div><p>${idx}</p><div>`), "</body></html>")
       .join("")
       .replace(/^\s+|\n/gm, "");
-
-    const chunks = [];
+    const esi = new ESI({});
     let send;
-    pipeline([
-      Readable.from(markup),
-      new HTMLParser({ preserveWS: true }),
-      new ESI({}),
-    ], () => {
-      expect(send.statusCode).to.equal(302);
-      expect(send.body).to.undefined;
-      expect(send).to.have.property("Location", "https://example.com");
-      done();
-    }).on("set_response_code", function onResponseCode(statusCode, body) {
-      send = { statusCode, body };
-      this.destroy(null);
-    }).on("add_header", (name, value) => {
+    esi.addEventListener("set_response_code", (event) => {
+      send = event.detail;
+      esi.readable.cancel();
+    });
+    esi.addEventListener("add_header", (event) => {
+      const { name, value } = event.detail;
       send[name] = value;
-    }).on("data", (chunk) => {
-      chunks.push(chunk);
     });
+    const chunks = [];
+    await pipeline([
+      ReadableStream.from(markup),
+      new HTMLParser({ preserveWS: true }),
+      esi,
+      new WritableStream({
+        write(chunk) {
+          chunks.push(chunk);
+        },
+      }),
+    ]);
+    expect(send.statusCode).to.equal(302);
+    expect(send.body).to.undefined;
+    expect(send).to.have.property("Location", "https://example.com");
   });
 
-  it("set location header succeeded by set redirect response code emits both events", (done) => {
+  it("set location header succeeded by set redirect response code emits both events", async () => {
     const markup = [ (`
       <html><body>
       <esi:vars>
@@ -195,29 +219,34 @@ describe("stream", () => {
       .join("")
       .replace(/^\s+|\n/gm, "");
 
-    const chunks = [];
+    const esi = new ESI({});
     let send;
-    pipeline([
-      Readable.from(markup),
-      new HTMLParser({ preserveWS: true }),
-      new ESI({}),
-    ], () => {
-      expect(send.statusCode).to.equal(302);
-      expect(send.body).to.undefined;
-      expect(send).to.have.property("Location", "https://example.com");
-      done();
-    }).on("set_response_code", function onResponseCode(statusCode, body) {
-      send.statusCode = statusCode;
-      send.body = body;
-      this.destroy(null);
-    }).on("add_header", (name, value) => {
-      send = { [name]: value };
-    }).on("data", (chunk) => {
-      chunks.push(chunk);
+    esi.addEventListener("set_response_code", (event) => {
+      send.statusCode = event.detail.statusCode;
+      send.withBody = event.detail.withBody;
+      esi.readable.cancel();
     });
+    esi.addEventListener("add_header", (event) => {
+      const { name, value } = event.detail;
+      send = { [name]: value };
+    });
+    const chunks = [];
+    await pipeline([
+      ReadableStream.from(markup),
+      new HTMLParser({ preserveWS: true }),
+      esi,
+      new WritableStream({
+        write(chunk) {
+          chunks.push(chunk);
+        },
+      }),
+    ]);
+    expect(send.statusCode).to.equal(302);
+    expect(send.withBody).to.undefined;
+    expect(send).to.have.property("Location", "https://example.com");
   });
 
-  it("closes stream if an esi parse error occur", (done) => {
+  it("closes stream if an esi parse error occur", async () => {
     const markup = [ (`
       <html><body>
       <esi:vars>
@@ -229,15 +258,21 @@ describe("stream", () => {
       .replace(/^\s+|\n/gm, "");
 
     const chunks = [];
-    pipeline([
-      Readable.from(markup),
-      new HTMLParser({ preserveWS: true }),
-      new ESI({}),
-    ], (err) => {
-      expect(err).to.be.ok.and.match(/is not implemented/i);
-      done();
-    }).on("data", (chunk) => {
-      chunks.push(chunk);
-    });
+    let err;
+    try {
+      await pipeline([
+        ReadableStream.from(markup),
+        new HTMLParser({ preserveWS: true }),
+        new ESI({}),
+        new WritableStream({
+          write(chunk) {
+            chunks.push(chunk);
+          },
+        }),
+      ]);
+    } catch (e) {
+      err = e;
+    }
+    expect(err).to.be.ok.and.match(/is not implemented/i);
   });
 });

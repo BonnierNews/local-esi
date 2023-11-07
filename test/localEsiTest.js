@@ -1,4 +1,4 @@
-import nock from "nock";
+import { mock } from "node:test";
 
 import * as api from "../index.js";
 
@@ -747,9 +747,12 @@ describe("local ESI", () => {
         </esi:otherwise>
       </esi:choose>`.replace(/^\s+|\n/gm, "");
 
-      nock("http://mystuff")
-        .get("/")
-        .reply(200, evalResponse);
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from(evalResponse), status: 200 };
+      }, { times: 1 });
       const expectedMarkup = "<div><p>hej</p></div>";
 
       const { body } = await parse(markup, {});
@@ -766,9 +769,12 @@ describe("local ESI", () => {
         </esi:otherwise>
       </esi:choose>`.replace(/^\s+|\n/gm, "");
 
-      nock("http://mystuff")
-        .get("/")
-        .reply(200, evalResponse);
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from(evalResponse), status: 200 };
+      }, { times: 1 });
 
       const expectedMarkup = "<div><p>hej</p></div>";
 
@@ -786,9 +792,12 @@ describe("local ESI", () => {
         </esi:otherwise>
       </esi:choose>`.replace(/^\s+|\n/gm, "");
 
-      nock("http://localhost:1234")
-        .get("/")
-        .reply(200, evalResponse);
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/" && options.method === "GET" && !options.headers["content-type"])) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from(evalResponse), status: 200 };
+      }, { times: 1 });
 
       const expectedMarkup = "<div><p>hej</p></div>";
 
@@ -808,9 +817,12 @@ describe("local ESI", () => {
       markup += "</esi:when>";
       markup += "</esi:choose>";
 
-      nock("http://localhost:1234")
-        .get("/mystuff/")
-        .reply(200, "$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')"), status: 200 };
+      }, { times: 1 });
 
       const { body, headers } = await parse(markup, { localhost: "localhost:1234" });
 
@@ -828,9 +840,12 @@ describe("local ESI", () => {
       markup += "</esi:when>";
       markup += "</esi:choose>";
 
-      nock("http://localhost:1234")
-        .get("/mystuff/")
-        .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')</esi:vars>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')</esi:vars>"), status: 200 };
+      }, { times: 1 });
 
       const { body, headers } = await parse(markup, { localhost: "localhost:1234" });
 
@@ -852,9 +867,12 @@ describe("local ESI", () => {
 
       const evalResponse = "<esi:assign name=\"some_variable\" value=\"'false'\" />".replace(/^\s+|\n/gm, "");
 
-      nock("http://mystuff")
-        .get("/")
-        .reply(200, evalResponse);
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from(evalResponse), status: 200 };
+      }, { times: 1 });
 
       const expectedMarkup = "<p>då</p>";
 
@@ -865,9 +883,12 @@ describe("local ESI", () => {
     it("should be able to eval source without trailing slash", async () => {
       const markup = "<esi:eval src=\"/mystuff\" dca=\"none\"/><p>efter</p>";
 
-      nock("http://localhost:1234")
-        .get("/mystuff")
-        .reply(200, "Tjabo");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff" && options.method === "GET" && !options.headers["content-type"])) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("Tjabo"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
 
@@ -889,15 +910,18 @@ describe("local ESI", () => {
     });
 
     it("should include header from \"setheader\" attribute", async () => {
-      nock("http://mystuff/", { reqheaders: { "Extra-Header": "Basic" } })
-        .get("/basic")
-        .reply(200, "basic header is included");
-      nock("http://mystuff", { reqheaders: { "Extra-header": "Case insensitive" } })
-        .get("/case-insensitive")
-        .reply(200, "header name is case insensitive");
-      nock("http://mystuff", { reqheaders: { "Extra-Header": "Value from expression" } })
-        .get("/value-from-expression")
-        .reply(200, "expressions are evaluated");
+      mock.method(global, "fetch", (url, options) => {
+        if (url === "http://mystuff/basic" && options.method === "GET" && options.headers["Extra-Header"] === "Basic") {
+          return { body: ReadableStream.from("basic header is included"), status: 200 };
+        }
+        if (url === "http://mystuff/case-insensitive" && options.method === "GET" && options.headers["extra-header"] === "Case insensitive") {
+          return { body: ReadableStream.from("header name is case insensitive"), status: 200 };
+        }
+        if (url === "http://mystuff/value-from-expression" && options.method === "GET" && options.headers["Extra-Header"] === "Value from expression") {
+          return { body: ReadableStream.from("expressions are evaluated"), status: 200 };
+        }
+        return { status: 404 };
+      }, { times: 3 });
 
       const { body } = await parse(`
         <esi:assign name="headerValue" value="'Value from expression'" />
@@ -918,9 +942,12 @@ describe("local ESI", () => {
     it("should fetch and insert esi:include with relative url when dca=none", async () => {
       const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
 
-      nock("http://localhost:1234")
-        .get("/mystuff/")
-        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p><esi:vars>hej</esi:vars></p><p>efter</p>");
@@ -929,9 +956,12 @@ describe("local ESI", () => {
     it("should fetch and evaluate esi:include with relative url when dca=esi", async () => {
       const markup = "<esi:include src=\"/mystuff/\" dca=\"esi\"/><p>efter</p>";
 
-      nock("http://localhost:1234", { reqheaders: { cookie: "da_cookie=cookie_value" } })
-        .get("/mystuff/")
-        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, {
         localhost: "localhost:1234",
@@ -943,9 +973,12 @@ describe("local ESI", () => {
     it("should fetch and evaluate esi:include with absolute url", async () => {
       const markup = "<esi:include src=\"http://mystuff.com/\" dca=\"esi\"/><p>efter</p>";
 
-      nock("http://mystuff.com", { reqheaders: { host: "mystuff.com" } })
-        .get("/")
-        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://mystuff.com/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p><p>efter</p>");
@@ -954,14 +987,12 @@ describe("local ESI", () => {
     it("should handle include source query parameters", async () => {
       let markup = "<esi:assign name=\"user_email\" value=\"'sammy_g@test.com'\"/>";
       markup += "<esi:include src=\"/mystuff/?a=b&user=$url_encode($(user_email))\" dca=\"esi\"/>";
-
-      nock("http://localhost:1234")
-        .get("/mystuff/")
-        .query({
-          a: "b",
-          user: "sammy_g@test.com",
-        })
-        .reply(200, "<p>hej</p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/?a=b&user=sammy_g%40test.com" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p>hej</p>"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p>");
@@ -977,9 +1008,12 @@ describe("local ESI", () => {
       markup += "</esi:except>";
       markup += "</esi:try>";
 
-      nock("http://localhost:1234")
-        .get("/mystuff/")
-        .reply(500, "<p>Error</p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p>Error</p>"), status: 500 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>Hej kom och hjälp mig!</p>");
@@ -995,9 +1029,12 @@ describe("local ESI", () => {
       markup += "</esi:except>";
       markup += "</esi:try>";
 
-      nock("http://localhost:1234")
-        .get("/mystuff/")
-        .reply(500, "<p>Error</p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p>Error</p>"), status: 500 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>Hej kom och hjälp mig!</p>");
@@ -1029,9 +1066,12 @@ describe("local ESI", () => {
       markup += "</esi:try>";
       markup += "<p>efter</p>";
 
-      nock("http://localhost:1234")
-        .get("/mystuff/")
-        .reply(200, "<p>Frid och fröjd</p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p>Frid och fröjd</p>"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>innan</p><p>Frid och fröjd</p><p>efter</p>");
@@ -1040,9 +1080,12 @@ describe("local ESI", () => {
     it("should call next with error when the response to an esi:include returns 500 (outside try/attempt)", async () => {
       const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/>";
 
-      nock("http://localhost:1234")
-        .get("/mystuff/")
-        .reply(500, "<p>Error</p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p>Error</p>"), status: 500 };
+      }, { times: 1 });
 
       const err = await parse(markup, { localhost: "localhost:1234" }).catch((e) => e);
 
@@ -1071,9 +1114,12 @@ describe("local ESI", () => {
           </esi:otherwise>
         </esi:choose>`.replace(/^\s+|\n/gm, "");
 
-      nock("http://mystuff")
-        .get("/")
-        .reply(200, includeResponse);
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://mystuff/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from(includeResponse), status: 200 };
+      }, { times: 1 });
 
       const expectedMarkup = "<p>då</p><p>hej</p>";
       const { body } = await parse(markup, { });
@@ -1083,9 +1129,12 @@ describe("local ESI", () => {
     it("should add header when instructed from included source when dca=esi", async () => {
       const markup = "<esi:include src=\"/mystuff/\" dca=\"esi\"/><p>efter</p>";
 
-      nock("http://localhost:1234")
-        .get("/mystuff/")
-        .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')</esi:vars>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')</esi:vars>"), status: 200 };
+      }, { times: 1 });
 
       const { body, headers } = await parse(markup, { localhost: "localhost:1234" });
 
@@ -1118,9 +1167,12 @@ describe("local ESI", () => {
     it("should not add header when instructed from included source when dca=none", async () => {
       const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
 
-      nock("http://localhost:1234")
-        .get("/mystuff/")
-        .reply(200, "<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars>"), status: 200 };
+      }, { times: 1 });
 
       const { body, headers } = await parse(markup, { localhost: "localhost:1234" });
 
@@ -1129,9 +1181,13 @@ describe("local ESI", () => {
     });
 
     it("should handle path without trailing slash, even when in esi:try", async () => {
-      nock("http://localhost:1234")
-        .get("/mystuff")
-        .reply(200, "Alles gut");
+
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("Alles gut"), status: 200 };
+      }, { times: 1 });
 
       let markup = "<esi:try>";
       markup += "<esi:attempt>";
@@ -1149,9 +1205,12 @@ describe("local ESI", () => {
     it("should fetch without content-type header when using esi:include", async () => {
       const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
 
-      nock("http://localhost:1234", { badheaders: [ "content-type", "application/x-www-form-urlencoded" ] })
-        .get("/mystuff/")
-        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, {
         localhost: "localhost:1234",
@@ -1163,9 +1222,12 @@ describe("local ESI", () => {
     it("should fetch without content-type header when using esi:eval", async () => {
       const markup = "<esi:eval src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
 
-      nock("http://localhost:1234", { badheaders: [ "content-type", "application/x-www-form-urlencoded" ] })
-        .get("/mystuff/")
-        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, {
         localhost: "localhost:1234",
@@ -1179,9 +1241,12 @@ describe("local ESI", () => {
       let markup = "<esi:assign name=\"daurl\" value=\"'http://mystuff.com/'\"/>";
       markup += "<esi:include src=\"$(daurl)\" dca=\"esi\"/><p>efter</p>";
 
-      nock("http://mystuff.com", { reqheaders: { host: "mystuff.com" } })
-        .get("/")
-        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://mystuff.com/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p><p>efter</p>");
@@ -1191,9 +1256,12 @@ describe("local ESI", () => {
       let markup = "<esi:assign name=\"host\" value=\"'mystuff.com'\"/>";
       markup += "<esi:include src=\"http://$(host)/path/\" dca=\"esi\"/><p>efter</p>";
 
-      nock("http://mystuff.com", { reqheaders: { host: "mystuff.com" } })
-        .get("/path/")
-        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://mystuff.com/path/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p><p>efter</p>");
@@ -1202,9 +1270,12 @@ describe("local ESI", () => {
     it("should support esi:include when URL contains a HTTP_COOKIE", async () => {
       const markup = "<esi:include src=\"/foo$(HTTP_COOKIE{'MyCookie'})/\" dca=\"esi\"/><p>efter</p>";
 
-      nock("http://localhost:1234")
-        .get("/foobar/")
-        .reply(200, "<p><esi:vars>hej</esi:vars></p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/foobar/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, {
         cookies: { MyCookie: "bar" },
@@ -1214,15 +1285,19 @@ describe("local ESI", () => {
     });
 
     it("should include header from \"setheader\" attribute", async () => {
-      nock("http://mystuff/", { reqheaders: { "Extra-Header": "Basic" } })
-        .get("/basic")
-        .reply(200, "basic header is included");
-      nock("http://mystuff", { reqheaders: { "Extra-header": "Case insensitive" } })
-        .get("/case-insensitive")
-        .reply(200, "header name is case insensitive");
-      nock("http://mystuff", { reqheaders: { "Extra-Header": "Value from expression" } })
-        .get("/value-from-expression")
-        .reply(200, "expressions are evaluated");
+
+      mock.method(global, "fetch", (url, options) => {
+        if (url === "http://mystuff/basic" && options.method === "GET" && options.headers["Extra-Header"] === "Basic") {
+          return { body: ReadableStream.from("basic header is included"), status: 200 };
+        }
+        if (url === "http://mystuff/case-insensitive" && options.method === "GET" && options.headers["extra-header"] === "Case insensitive") {
+          return { body: ReadableStream.from("header name is case insensitive"), status: 200 };
+        }
+        if (url === "http://mystuff/value-from-expression" && options.method === "GET" && options.headers["Extra-Header"] === "Value from expression") {
+          return { body: ReadableStream.from("expressions are evaluated"), status: 200 };
+        }
+        return { status: 404 };
+      }, { times: 3 });
 
       const { body } = await parse(`
         <esi:assign name="headerValue" value="'Value from expression'" />
@@ -1942,9 +2017,12 @@ describe("local ESI", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      nock("http://localhost:1234")
-        .get("/mystuff/")
-        .reply(200, "<p>hej</p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p>hej</p>"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p><p>/mystuff/</p>");
@@ -1960,9 +2038,12 @@ describe("local ESI", () => {
         </esi:vars>
       `.replace(/^\s+|\n/gm, "");
 
-      nock("http://my:80")
-        .get("/stuff/")
-        .reply(200, "<p>hej</p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://my/stuff/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p>hej</p>"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p><p>\\/my\\stuff/</p>");
@@ -1975,9 +2056,12 @@ describe("local ESI", () => {
         <esi:include src="$(daurl)" dca="none"/><p>efter</p>
       `.replace(/^\s+|\n/gm, "");
 
-      nock("http://my:80")
-        .get("/stuff/")
-        .reply(200, "<p>hej</p>");
+      mock.method(global, "fetch", (url, options) => {
+        if (!(url === "http://my/stuff/" && options.method === "GET")) {
+          return { status: 404 };
+        }
+        return { body: ReadableStream.from("<p>hej</p>"), status: 200 };
+      }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
       expect(body).to.equal("<p>hej</p><p>efter</p>");
