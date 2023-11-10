@@ -1312,6 +1312,29 @@ describe("local ESI", () => {
         expressions are evaluated
       `.replace(/^\s+|\n/gm, ""));
     });
+
+    describe("compute @ edge", () => {
+      it("should fetch and insert esi:include with relative url using compute @ edge default backend", async () => {
+        const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
+
+        mock.method(global, "fetch", (url, options) => {
+          if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET" && options.backend === "origin" && options.headers.foo === "bar")) {
+            return { status: 404 };
+          }
+          return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+        }, { times: 1 });
+
+        const opts = {
+          localhost: "localhost:1234",
+          computeAtEdge: {
+            backendHeaders: { origin: { foo: "bar" } },
+            defaultBackend: "origin",
+          },
+        };
+        const { body } = await parse(markup, opts);
+        expect(body).to.equal("<p><esi:vars>hej</esi:vars></p><p>efter</p>");
+      });
+    });
   });
 
   describe("esi:text", () => {
