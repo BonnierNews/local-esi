@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Complete re-write to use webstreams and fetch.
+
 ## [3.0.1] - 2023-11-06
 
 ### Fixed
