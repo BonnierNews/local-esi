@@ -978,7 +978,7 @@ describe("local ESI", () => {
           computeAtEdge: {
             backendHeaders: { origin: { foo: "bar" }, personalized: { foo: "baz" } },
             defaultBackend: "origin",
-            pathToBackend: { "/personalized": "personalized" },
+            pathToBackend: { "/personalized": { backend: "personalized", host: "localhost:1234" } },
           },
         };
         const { body } = await parse(markup, opts);
@@ -1428,7 +1428,7 @@ describe("local ESI", () => {
           computeAtEdge: {
             backendHeaders: { origin: { foo: "bar" }, personalized: { foo: "baz" } },
             defaultBackend: "origin",
-            pathToBackend: { "/personalized": "personalized" },
+            pathToBackend: { "/personalized": { backend: "personalized", host: "localhost:1234" } },
           },
         };
         const { body } = await parse(markup, opts);
