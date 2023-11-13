@@ -1313,7 +1313,7 @@ describe("local ESI", () => {
       `.replace(/^\s+|\n/gm, ""));
     });
 
-    describe("compute @ edge", () => {
+    describe.only("using compute @ edge", () => {
       it("should fetch and insert esi:include with relative url using compute @ edge default backend", async () => {
         const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter</p>";
 
@@ -1333,6 +1333,57 @@ describe("local ESI", () => {
         };
         const { body } = await parse(markup, opts);
         expect(body).to.equal("<p><esi:vars>hej</esi:vars></p><p>efter</p>");
+      });
+
+      it("should fetch and insert esi:include with relative url using compute @ edge prefix matched backend", async () => {
+        const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter första</p><esi:include src=\"/personalized/auth\" dca=\"none\"/>";
+
+        mock.method(global, "fetch", (url, options) => {
+          if (url === "http://localhost:1234/mystuff/" && options.method === "GET" && options.backend === "origin" && options.headers.foo === "bar") {
+            return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+          }
+          if (url === "http://localhost:1234/personalized/auth" && options.method === "GET" && options.backend === "personalized" && options.headers.foo === "baz") {
+            return { body: ReadableStream.from("<p><esi:vars>då</esi:vars></p>"), status: 200 };
+          }
+
+          return { status: 404 };
+        }, { times: 2 });
+
+        const opts = {
+          localhost: "localhost:1234",
+          computeAtEdge: {
+            backendHeaders: { origin: { foo: "bar" }, personalized: { foo: "baz" } },
+            defaultBackend: "origin",
+            pathToBackend: { "/personalized": "personalized" },
+          },
+        };
+        const { body } = await parse(markup, opts);
+        expect(body).to.equal("<p><esi:vars>hej</esi:vars></p><p>efter första</p><p><esi:vars>då</esi:vars></p>");
+      });
+
+      it("should fetch and insert esi:include with relative url using compute @ edge but not absolut urls", async () => {
+        const markup = "<esi:include src=\"/mystuff/\" dca=\"none\"/><p>efter första</p><esi:include src=\"https://tapet.se\" dca=\"none\"/>";
+
+        mock.method(global, "fetch", (url, options) => {
+          if (url === "http://localhost:1234/mystuff/" && options.method === "GET" && options.backend === "origin" && options.headers.foo === "bar") {
+            return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+          }
+          if (url === "https://tapet.se" && options.method === "GET" && !options.backend) {
+            return { body: ReadableStream.from("<p><esi:vars>tapet</esi:vars></p>"), status: 200 };
+          }
+
+          return { status: 404 };
+        }, { times: 2 });
+
+        const opts = {
+          localhost: "localhost:1234",
+          computeAtEdge: {
+            backendHeaders: { origin: { foo: "bar" } },
+            defaultBackend: "origin",
+          },
+        };
+        const { body } = await parse(markup, opts);
+        expect(body).to.equal("<p><esi:vars>hej</esi:vars></p><p>efter första</p><p><esi:vars>tapet</esi:vars></p>");
       });
     });
   });
