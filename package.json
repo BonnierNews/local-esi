@@ -15,6 +15,9 @@
   ],
   "author": "Bonnier News",
   "license": "MIT",
+  "peerDependencies": {
+    "@bonniernews/atlas-html-stream": "bonniernews/atlas-html-stream#acme/migrate-to-web-streams"
+  },
   "devDependencies": {
     "@bonniernews/atlas-html-stream": "bonniernews/atlas-html-stream#acme/migrate-to-web-streams",
     "chai": "^4.3.6",
@@ -55,6 +58,6 @@
     "test": "test"
   },
   "dependencies": {
-    "ent": "^2.2.0"
+    "he": "^1.2.0"
   }
 }
