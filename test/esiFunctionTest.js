@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 import * as ck from "chronokinesis";
 
 import { parse } from "../index.js";
@@ -517,6 +519,7 @@ describe("functions", () => {
           "user-agent": userAgent,
           "x-forwarded-for": remoteAddress,
         },
+        md5digest: (data) => crypto.createHash("md5").update(data).digest(),
       });
 
       expect(body).to.equal("<p>[657885894, 693072170, -1514255750, 111706645]</p>");
