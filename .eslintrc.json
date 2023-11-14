@@ -6,6 +6,7 @@
     "EventTarget": "readonly",
     "ReadableStream": "readonly",
     "TransformStream": "readonly",
-    "WritableStream": "readonly"
+    "WritableStream": "readonly",
+    "TextEncoderStream": "readonly"
   }
 }

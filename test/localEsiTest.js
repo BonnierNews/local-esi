@@ -749,9 +749,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from(evalResponse), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from(evalResponse).pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
       const expectedMarkup = "<div><p>hej</p></div>";
 
@@ -771,9 +771,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from(evalResponse), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from(evalResponse).pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const expectedMarkup = "<div><p>hej</p></div>";
@@ -794,9 +794,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/" && options.method === "GET" && !options.headers["content-type"])) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from(evalResponse), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from(evalResponse).pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const expectedMarkup = "<div><p>hej</p></div>";
@@ -819,9 +819,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body, headers } = await parse(markup, { localhost: "localhost:1234" });
@@ -842,9 +842,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')</esi:vars>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')</esi:vars>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body, headers } = await parse(markup, { localhost: "localhost:1234" });
@@ -869,9 +869,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from(evalResponse), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from(evalResponse).pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const expectedMarkup = "<p>då</p>";
@@ -885,9 +885,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff" && options.method === "GET" && !options.headers["content-type"])) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("Tjabo"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("Tjabo").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
@@ -912,15 +912,15 @@ describe("local ESI", () => {
     it("should include header from \"setheader\" attribute", async () => {
       mock.method(global, "fetch", (url, options) => {
         if (url === "http://mystuff/basic" && options.method === "GET" && options.headers["Extra-Header"] === "Basic") {
-          return { body: ReadableStream.from("basic header is included"), status: 200 };
+          return Promise.resolve({ body: ReadableStream.from("basic header is included").pipeThrough(new TextEncoderStream()), status: 200 });
         }
         if (url === "http://mystuff/case-insensitive" && options.method === "GET" && options.headers["extra-header"] === "Case insensitive") {
-          return { body: ReadableStream.from("header name is case insensitive"), status: 200 };
+          return Promise.resolve({ body: ReadableStream.from("header name is case insensitive").pipeThrough(new TextEncoderStream()), status: 200 });
         }
         if (url === "http://mystuff/value-from-expression" && options.method === "GET" && options.headers["Extra-Header"] === "Value from expression") {
-          return { body: ReadableStream.from("expressions are evaluated"), status: 200 };
+          return Promise.resolve({ body: ReadableStream.from("expressions are evaluated").pipeThrough(new TextEncoderStream()), status: 200 });
         }
-        return { status: 404 };
+        return Promise.resolve({ status: 404 });
       }, { times: 3 });
 
       const { body } = await parse(`
@@ -943,9 +943,9 @@ describe("local ESI", () => {
 
         mock.method(global, "fetch", (url, options) => {
           if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET" && options.backend === "origin" && options.headers.foo === "bar")) {
-            return { status: 404 };
+            return Promise.resolve({ status: 404 });
           }
-          return { body: ReadableStream.from("Haj"), status: 200 };
+          return Promise.resolve({ body: ReadableStream.from("Haj").pipeThrough(new TextEncoderStream()), status: 200 });
         }, { times: 1 });
 
         const opts = {
@@ -964,13 +964,13 @@ describe("local ESI", () => {
 
         mock.method(global, "fetch", (url, options) => {
           if (url === "http://localhost:1234/mystuff/" && options.method === "GET" && options.backend === "origin" && options.headers.foo === "bar") {
-            return { body: ReadableStream.from("<p>hej</p>"), status: 200 };
+            return Promise.resolve({ body: ReadableStream.from("<p>hej</p>").pipeThrough(new TextEncoderStream()), status: 200 });
           }
           if (url === "http://localhost:1234/personalized/auth" && options.method === "GET" && options.backend === "personalized" && options.headers.foo === "baz") {
-            return { body: ReadableStream.from("<p>då</p>"), status: 200 };
+            return Promise.resolve({ body: ReadableStream.from("<p>då</p>").pipeThrough(new TextEncoderStream()), status: 200 });
           }
 
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }, { times: 2 });
 
         const opts = {
@@ -990,10 +990,10 @@ describe("local ESI", () => {
 
         mock.method(global, "fetch", (url, options) => {
           if (url === "http://localhost:1234/mystuff/" && options.method === "GET" && options.backend === "origin" && options.headers.foo === "bar") {
-            return { body: ReadableStream.from("<p>Haj</p>"), status: 200 };
+            return Promise.resolve({ body: ReadableStream.from("<p>Haj</p>").pipeThrough(new TextEncoderStream()), status: 200 });
           }
           if (url === "https://tapet.se" && options.method === "GET" && !options.backend) {
-            return { body: ReadableStream.from("<p>tapet</p>"), status: 200 };
+            return Promise.resolve({ body: ReadableStream.from("<p>tapet</p>").pipeThrough(new TextEncoderStream()), status: 200 });
           }
 
           return { status: 404 };
@@ -1018,9 +1018,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
@@ -1032,9 +1032,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, {
@@ -1049,9 +1049,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://mystuff.com/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
@@ -1063,9 +1063,9 @@ describe("local ESI", () => {
       markup += "<esi:include src=\"/mystuff/?a=b&user=$url_encode($(user_email))\" dca=\"esi\"/>";
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/?a=b&user=sammy_g%40test.com" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p>hej</p>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<p>hej</p>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
@@ -1084,9 +1084,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p>Error</p>"), status: 500 };
+        return Promise.resolve({ body: ReadableStream.from("<p>Error</p>").pipeThrough(new TextEncoderStream()), status: 500 });
       }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
@@ -1105,9 +1105,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p>Error</p>"), status: 500 };
+        return Promise.resolve({ body: ReadableStream.from("<p>Error</p>").pipeThrough(new TextEncoderStream()), status: 500 });
       }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
@@ -1142,9 +1142,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p>Frid och fröjd</p>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<p>Frid och fröjd</p>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
@@ -1156,9 +1156,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p>Error</p>"), status: 500 };
+        return Promise.resolve({ body: ReadableStream.from("<p>Error</p>").pipeThrough(new TextEncoderStream()), status: 500 });
       }, { times: 1 });
 
       const err = await parse(markup, { localhost: "localhost:1234" }).catch((e) => e);
@@ -1190,9 +1190,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://mystuff/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from(includeResponse), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from(includeResponse).pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const expectedMarkup = "<p>då</p><p>hej</p>";
@@ -1205,9 +1205,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')</esi:vars>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly; Expires=Wed, 30 Aug 2019 00:00:00 GMT')</esi:vars>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body, headers } = await parse(markup, { localhost: "localhost:1234" });
@@ -1243,9 +1243,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<esi:vars>$add_header('Set-Cookie', 'my_cookie=val1; path=/; HttpOnly')</esi:vars>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body, headers } = await parse(markup, { localhost: "localhost:1234" });
@@ -1258,9 +1258,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("Alles gut"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("Alles gut").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       let markup = "<esi:try>";
@@ -1281,9 +1281,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, {
@@ -1298,9 +1298,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET" && !options.headers["content-type"])) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, {
@@ -1317,9 +1317,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://mystuff.com/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
@@ -1332,9 +1332,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://mystuff.com/path/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
@@ -1346,9 +1346,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/foobar/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, {
@@ -1362,15 +1362,15 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (url === "http://mystuff/basic" && options.method === "GET" && options.headers["Extra-Header"] === "Basic") {
-          return { body: ReadableStream.from("basic header is included"), status: 200 };
+          return Promise.resolve({ body: ReadableStream.from("basic header is included").pipeThrough(new TextEncoderStream()), status: 200 });
         }
         if (url === "http://mystuff/case-insensitive" && options.method === "GET" && options.headers["extra-header"] === "Case insensitive") {
-          return { body: ReadableStream.from("header name is case insensitive"), status: 200 };
+          return Promise.resolve({ body: ReadableStream.from("header name is case insensitive").pipeThrough(new TextEncoderStream()), status: 200 });
         }
         if (url === "http://mystuff/value-from-expression" && options.method === "GET" && options.headers["Extra-Header"] === "Value from expression") {
-          return { body: ReadableStream.from("expressions are evaluated"), status: 200 };
+          return Promise.resolve({ body: ReadableStream.from("expressions are evaluated").pipeThrough(new TextEncoderStream()), status: 200 });
         }
-        return { status: 404 };
+        return Promise.resolve({ status: 404 });
       }, { times: 3 });
 
       const { body } = await parse(`
@@ -1393,9 +1393,9 @@ describe("local ESI", () => {
 
         mock.method(global, "fetch", (url, options) => {
           if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET" && options.backend === "origin" && options.headers.foo === "bar")) {
-            return { status: 404 };
+            return Promise.resolve({ status: 404 });
           }
-          return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+          return Promise.resolve({ body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>").pipeThrough(new TextEncoderStream()), status: 200 });
         }, { times: 1 });
 
         const opts = {
@@ -1414,13 +1414,13 @@ describe("local ESI", () => {
 
         mock.method(global, "fetch", (url, options) => {
           if (url === "http://localhost:1234/mystuff/" && options.method === "GET" && options.backend === "origin" && options.headers.foo === "bar") {
-            return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+            return Promise.resolve({ body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>").pipeThrough(new TextEncoderStream()), status: 200 });
           }
           if (url === "http://localhost:1234/personalized/auth" && options.method === "GET" && options.backend === "personalized" && options.headers.foo === "baz") {
-            return { body: ReadableStream.from("<p><esi:vars>då</esi:vars></p>"), status: 200 };
+            return Promise.resolve({ body: ReadableStream.from("<p><esi:vars>då</esi:vars></p>").pipeThrough(new TextEncoderStream()), status: 200 });
           }
 
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }, { times: 2 });
 
         const opts = {
@@ -1440,10 +1440,10 @@ describe("local ESI", () => {
 
         mock.method(global, "fetch", (url, options) => {
           if (url === "http://localhost:1234/mystuff/" && options.method === "GET" && options.backend === "origin" && options.headers.foo === "bar") {
-            return { body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>"), status: 200 };
+            return Promise.resolve({ body: ReadableStream.from("<p><esi:vars>hej</esi:vars></p>").pipeThrough(new TextEncoderStream()), status: 200 });
           }
           if (url === "https://tapet.se" && options.method === "GET" && !options.backend) {
-            return { body: ReadableStream.from("<p><esi:vars>tapet</esi:vars></p>"), status: 200 };
+            return Promise.resolve({ body: ReadableStream.from("<p><esi:vars>tapet</esi:vars></p>").pipeThrough(new TextEncoderStream()), status: 200 });
           }
 
           return { status: 404 };
@@ -2167,9 +2167,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://localhost:1234/mystuff/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p>hej</p>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<p>hej</p>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
@@ -2188,9 +2188,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://my/stuff/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p>hej</p>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<p>hej</p>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
@@ -2206,9 +2206,9 @@ describe("local ESI", () => {
 
       mock.method(global, "fetch", (url, options) => {
         if (!(url === "http://my/stuff/" && options.method === "GET")) {
-          return { status: 404 };
+          return Promise.resolve({ status: 404 });
         }
-        return { body: ReadableStream.from("<p>hej</p>"), status: 200 };
+        return Promise.resolve({ body: ReadableStream.from("<p>hej</p>").pipeThrough(new TextEncoderStream()), status: 200 });
       }, { times: 1 });
 
       const { body } = await parse(markup, { localhost: "localhost:1234" });
