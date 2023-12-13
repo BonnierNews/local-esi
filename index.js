@@ -1,5 +1,3 @@
-import { pipeline, Readable } from "stream";
-
 import HTMLStream from "@bonniernews/atlas-html-stream";
 
 import ESI from "./lib/ESI.js";
@@ -11,43 +9,49 @@ export {
   parse,
 };
 
-function parse(html, options) {
+async function parse(html, options) {
   const response = {};
 
   let body = "";
 
-  const esi = new ESI(options)
-    .on("set_response_code", onSetResponseCode)
-    .on("add_header", onAddHeader)
-    .once("set_redirect", onRedirect);
+  const esi = new ESI(options);
+  esi.addEventListener("set_response_code", onSetResponseCode);
+  esi.addEventListener("add_header", onAddHeader);
+  esi.addEventListener("set_redirect", onRedirect);
 
-  return new Promise((resolve, reject) => {
-    pipeline([
-      Readable.from(html),
-      new HTMLStream({ preserveWS: true }),
-      esi,
-      new HTMLWriter(),
-    ], (err) => {
-      if (err && ![ "ERR_STREAM_DESTROYED", "ERR_STREAM_PREMATURE_CLOSE" ].includes(err.code)) return reject(err);
-      resolve({
-        body,
-        ...response,
-      });
-    }).on("data", (chunk) => {
-      body += chunk;
-    });
-  });
+  const readableStream = ReadableStream.from(html);
+  const htmlTransformer = new HTMLStream({ preserveWS: true });
+  const htmlWriter = new HTMLWriter();
 
-  function onRedirect(statusCode, location) {
+  const transformedStream = readableStream
+    .pipeThrough(htmlTransformer)
+    .pipeThrough(esi)
+    .pipeThrough(htmlWriter);
+
+  const reader = transformedStream.getReader();
+
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) {
+      break;
+    } else {
+      body += value;
+    }
+  }
+
+  return { body, ...response };
+
+  function onRedirect(event) {
+    const { statusCode, location } = event.detail;
     response.statusCode = statusCode;
     if (location) {
       response.headers = response.headers || {};
       response.headers.location = location;
     }
-    this.destroy();
   }
 
-  function onAddHeader(name, value) {
+  function onAddHeader(event) {
+    const { name, value } = event.detail;
     const headers = response.headers = response.headers || {};
     const lname = name.toLowerCase();
     if (lname === "set-cookie") {
@@ -58,10 +62,10 @@ function parse(html, options) {
     }
   }
 
-  function onSetResponseCode(statusCode, withBody) {
+  function onSetResponseCode(event) {
+    const { statusCode, withBody } = event.detail;
     response.statusCode = statusCode;
     if (!withBody) return;
     response.body = withBody;
-    this.destroy();
   }
 }
